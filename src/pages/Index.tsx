@@ -1,77 +1,82 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { TelegramProvider } from '@/components/TelegramProvider';
-import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { AddTaskButton } from '@/components/AddTaskButton';
-import { AddTaskModal } from '@/components/AddTaskModal';
-import { HomeView } from '@/components/views/HomeView';
-import { TasksView } from '@/components/views/TasksView';
+import { InfoView } from '@/components/views/InfoView';
+import { SubscriptionView } from '@/components/views/SubscriptionView';
+import { PromotionView } from '@/components/views/PromotionView';
+import { VPNView } from '@/components/views/VPNView';
 import { ProfileView } from '@/components/views/ProfileView';
-import { SettingsView } from '@/components/views/SettingsView';
 
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  completed: boolean;
-  priority: 'low' | 'medium' | 'high';
-  dueDate?: string;
-}
-
-const initialTasks: Task[] = [
-  { id: '1', title: 'Настроить Telegram бота', description: 'Создать бота через BotFather и получить токен', completed: false, priority: 'high', dueDate: 'Сегодня' },
-  { id: '2', title: 'Подключить базу данных', description: 'Настроить таблицы в Lovable Cloud', completed: true, priority: 'high' },
-  { id: '3', title: 'Добавить авторизацию', completed: false, priority: 'medium', dueDate: 'Завтра' },
-  { id: '4', title: 'Протестировать WebApp', completed: false, priority: 'low' },
-];
+const viewVariants = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
+};
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('home');
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleToggleTask = (id: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
-  };
-
-  const handleAddTask = (newTask: { title: string; description: string; priority: 'low' | 'medium' | 'high' }) => {
-    setTasks(prev => [...prev, {
-      id: Date.now().toString(),
-      ...newTask,
-      completed: false,
-    }]);
-  };
+  const [activeTab, setActiveTab] = useState('info');
 
   const renderView = () => {
     switch (activeTab) {
-      case 'home':
-        return <HomeView tasks={tasks} onToggleTask={handleToggleTask} />;
-      case 'tasks':
-        return <TasksView tasks={tasks} onToggleTask={handleToggleTask} />;
+      case 'info':
+        return <InfoView key="info" />;
+      case 'subscription':
+        return <SubscriptionView key="subscription" />;
+      case 'promotion':
+        return <PromotionView key="promotion" />;
+      case 'vpn':
+        return <VPNView key="vpn" />;
       case 'profile':
-        return <ProfileView />;
-      case 'settings':
-        return <SettingsView />;
+        return <ProfileView key="profile" />;
       default:
-        return <HomeView tasks={tasks} onToggleTask={handleToggleTask} />;
+        return <InfoView key="info" />;
     }
   };
 
   return (
     <TelegramProvider>
-      <div className="min-h-screen bg-background max-w-md mx-auto">
-        <Header />
+      <div className="min-h-screen bg-background max-w-md mx-auto overflow-x-hidden">
+        {/* Logo header */}
+        <motion.header 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border"
+        >
+          <div className="flex items-center justify-center h-14 px-4">
+            <motion.h1 
+              className="text-lg font-bold gold-gradient-text"
+              animate={{ 
+                textShadow: [
+                  '0 0 10px hsl(45 93% 47% / 0.3)',
+                  '0 0 20px hsl(45 93% 47% / 0.5)',
+                  '0 0 10px hsl(45 93% 47% / 0.3)',
+                ]
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              Keystone Tech
+            </motion.h1>
+          </div>
+        </motion.header>
+
+        {/* Main content */}
         <main className="min-h-[calc(100vh-3.5rem-4rem)]">
-          {renderView()}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              variants={viewVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              {renderView()}
+            </motion.div>
+          </AnimatePresence>
         </main>
-        <AddTaskButton onClick={() => setIsModalOpen(true)} />
-        <AddTaskModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)}
-          onAdd={handleAddTask}
-        />
+
+        {/* Bottom navigation */}
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
     </TelegramProvider>
