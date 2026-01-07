@@ -7,7 +7,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Получаем параметры подключения из переменных окружения
-DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL", os.getenv("DATABASE_URL"))
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+
+# Формируем строку подключения
+if DB_HOST and DB_USER and DB_PASSWORD and DB_NAME:
+    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+else:
+    # Резервный вариант - старые переменные
+    DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL", os.getenv("DATABASE_URL"))
 
 class Database:
     def __init__(self):

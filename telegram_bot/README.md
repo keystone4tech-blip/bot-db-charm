@@ -37,8 +37,15 @@ pip install -r requirements.txt
 Используется файл `.env` в корне проекта:
 
 ```env
-TELEGRAM_BOT_TOKEN=ваш_токен_бота_от_BotFather
-POSTGRES_DATABASE_URL=ваша_строка_подключения_к_postgres
+BOT_TOKEN=ваш_токен_бота_от_BotFather
+ADMIN_IDS=238264393
+
+# Настройки базы данных PostgreSQL
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=ваш_пароль_от_postgres
+DB_NAME=ваше_имя_базы_данных
 WEBAPP_URL=https://ваш-домен.com
 ```
 
@@ -55,8 +62,15 @@ pip install -r requirements.txt
 
 2. Убедитесь, что в корне проекта есть файл `.env` с необходимыми переменными:
 ```env
-TELEGRAM_BOT_TOKEN=ваш_токен_бота_от_BotFather
-POSTGRES_DATABASE_URL=ваша_строка_подключения_к_postgres
+BOT_TOKEN=ваш_токен_бота_от_BotFather
+ADMIN_IDS=238264393
+
+# Настройки базы данных PostgreSQL
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=ваш_пароль_от_postgres
+DB_NAME=ваше_имя_базы_данных
 WEBAPP_URL=https://ваш-домен.com
 ```
 

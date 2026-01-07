@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 
 # Загружаем переменные окружения
 load_dotenv()
-
 # Получаем токен бота из переменных окружения
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN", os.getenv("TELEGRAM_BOT_TOKEN"))
+
 
 # Создаем экземпляр бота
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
