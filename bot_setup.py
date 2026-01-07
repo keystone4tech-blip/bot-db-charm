@@ -76,13 +76,12 @@ def get_webapp_keyboard(start_param=None):
     Создает клавиатуру с кнопкой для открытия WebApp
     """
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-    
     # Формируем URL для WebApp с параметром start
     webapp_url = WEBAPP_URL
     if start_param:
         webapp_url = f"{WEBAPP_URL}?startapp={start_param}"
     else:
-        webapp_url = f"{WEBAPP_URL}?startapp=main"
+        webapp_url = f"{WEBAPP_URL}"
     
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -96,6 +95,7 @@ def get_webapp_keyboard(start_param=None):
     )
     
     return keyboard
+
 
 @dp.message()
 async def handle_message(message: Message) -> None:

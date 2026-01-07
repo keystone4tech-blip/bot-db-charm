@@ -92,7 +92,7 @@ def get_webapp_keyboard(start_param=None):
     if start_param:
         webapp_url = f"{WEBAPP_URL}?startapp={start_param}"
     else:
-        webapp_url = f"{WEBAPP_URL}?startapp=main"
+        webapp_url = f"{WEBAPP_URL}"
     
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[

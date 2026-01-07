@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { tg, isTelegramWebApp } from '@/lib/telegram';
+import { tg, isTelegramWebApp, getReferralCode } from '@/lib/telegram';
 import { toast } from 'sonner';
 
 export interface AuthProfile {
@@ -73,10 +73,11 @@ export const useTelegramAuth = () => {
       }));
       return;
     }
+// Extract referral code from multiple sources
+const startParam = tg.initDataUnsafe?.start_param;
+const urlReferralCode = getReferralCode();
+const referralCode = startParam || urlReferralCode || null;
 
-    // Extract referral code from start_param
-    const startParam = tg.initDataUnsafe?.start_param;
-    const referralCode = startParam || null;
 
     console.log('Authenticating with Telegram...', { 
       hasInitData: !!initData, 

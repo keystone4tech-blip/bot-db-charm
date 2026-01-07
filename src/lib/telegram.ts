@@ -70,3 +70,31 @@ export const showTelegramConfirm = (message: string): Promise<boolean> => {
     }
   });
 };
+
+// Функция для получения параметра из URL
+export const getUrlParameter = (name: string): string | null => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+};
+
+// Функция для получения реферального кода из всех возможных источников
+export const getReferralCode = (): string | null => {
+  // Сначала проверяем параметр из Telegram WebApp
+  if (typeof window !== 'undefined' && typeof WebApp !== 'undefined' && WebApp.initDataUnsafe?.start_param) {
+    return WebApp.initDataUnsafe.start_param;
+  }
+  
+  // Затем проверяем URL-параметр startapp (для WebApp, открытого через inline-кнопку)
+  const urlStartParam = getUrlParameter('startapp');
+  if (urlStartParam && urlStartParam !== 'main') {
+    return urlStartParam;
+  }
+  
+  // Также проверяем общий параметр referral или ref
+  const urlRefParam = getUrlParameter('referral') || getUrlParameter('ref');
+  if (urlRefParam) {
+    return urlRefParam;
+  }
+  
+  return null;
+};
