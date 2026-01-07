@@ -48,6 +48,19 @@ WEBAPP_URL=https://ваш-домен.com
 
 ### Запуск бота
 
+1. Установите зависимости:
+```bash
+pip install -r requirements.txt
+```
+
+2. Убедитесь, что в корне проекта есть файл `.env` с необходимыми переменными:
+```env
+TELEGRAM_BOT_TOKEN=ваш_токен_бота_от_BotFather
+POSTGRES_DATABASE_URL=ваша_строка_подключения_к_postgres
+WEBAPP_URL=https://ваш-домен.com
+```
+
+3. Запустите бота:
 ```bash
 python -m telegram_bot.main
 ```
