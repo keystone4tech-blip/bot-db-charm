@@ -6,17 +6,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Импортируем бота и диспетчер
-from .bot_instance import bot
-from .dispatcher import dp
+from telegram_bot.bot_instance import bot
+from telegram_bot.dispatcher import dp
 
 # Импортируем роутеры
-from .handlers import komanda_start_router
+from telegram_bot.handlers import komanda_start_router
 
 # Регистрируем роутеры
 dp.include_router(komanda_start_router)
 
 # Импортируем базу данных
-from .database import database
+from telegram_bot.database import database
 
 async def main():
     """
