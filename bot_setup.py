@@ -20,10 +20,11 @@ load_dotenv()
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # URL для WebApp
-WEBAPP_URL = "https://your-app-domain.com"  # Замените на ваш домен
+WEBAPP_URL = "https://bot-db-charm.lovable.app/"  # Замените на ваш домен
 
 # Создаем бота и диспетчер
-bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
+from aiogram.client.default import DefaultBotProperties
+bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 

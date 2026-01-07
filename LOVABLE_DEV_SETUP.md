@@ -19,6 +19,7 @@ from aiogram.types import Message
 from aiogram.filters import CommandStart
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties
 import os
 import logging
 
@@ -32,7 +33,8 @@ BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://your-app-domain.com")
 
 # Создаем бота и диспетчер
-bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
+from aiogram.client.default import DefaultBotProperties
+bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 
