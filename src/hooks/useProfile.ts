@@ -209,9 +209,19 @@ export const useProfile = () => {
     }
   }, [isAuthenticated, authProfile?.id, isAuthLoading]);
 
-  const referralLink = profile?.referral_code 
-    ? `https://t.me/YourBotUsername?start=${profile.referral_code}`
+  const referralLink = profile?.referral_code
+    ? (() => {
+        // Используем переменную окружения для имени бота
+        // Так как Telegram WebApp не предоставляет напрямую имя бота
+        const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME;
+        
+        // Если переменная окружения не установлена, используем placeholder
+        const actualBotUsername = botUsername || 'YourBotUsername';
+        
+        return `https://t.me/${actualBotUsername}?start=${profile.referral_code}`;
+      })()
     : null;
+
 
   return {
     profile,
