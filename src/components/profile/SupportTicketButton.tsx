@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
+// Используем API клиент для взаимодействия с Node.js сервером
+// TODO: Реализовать поддержку тикетов в Node.js API
 import { toast } from 'sonner';
 
 interface SupportTicketButtonProps {
@@ -42,17 +43,24 @@ export const SupportTicketButton = ({ profileId }: SupportTicketButtonProps) => 
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('support_tickets')
-        .insert({
+      // Отправляем тикет через API
+      const response = await fetch(`${import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000'}/api/support-tickets`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           user_id: profileId,
           subject: subject.trim(),
           message: message.trim(),
           category,
           priority: 'medium',
-        });
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Failed to submit support ticket');
+      }
 
       toast.success('Тикет создан успешно!');
       setIsOpen(false);

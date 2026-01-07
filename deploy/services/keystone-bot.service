@@ -1,0 +1,18 @@
+[Unit]
+Description=Keystone Telegram Bot
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+User=deploy
+ExecStart=/usr/bin/python3 /home/deploy/keystone-bot/run_bot.py
+WorkingDirectory=/home/deploy/keystone-bot
+EnvironmentFile=/home/deploy/keystone-bot/.env
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

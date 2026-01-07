@@ -1,0 +1,48 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy to server via SSH
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          cd /home/deploy/keystone-bot
+          git fetch origin
+          git reset --hard origin/main
+          
+          # Обновляем зависимости
+          cd telegram_bot
+          pip install -r requirements.txt
+          
+          cd ../
+          npm install
+          
+          # Собираем фронтенд
+          npm run build
+          
+          # Перезапускаем сервисы
+          sudo systemctl restart keystone-bot.service
+          sudo systemctl restart keystone-backend.service
+          
+          # Проверяем статус
+          sudo systemctl status keystone-bot.service --no-pager
+          sudo systemctl status keystone-backend.service --no-pager
+          
+          echo "Деплой завершен успешно!"

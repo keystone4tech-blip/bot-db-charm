@@ -2,21 +2,23 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**GitHub Repository**: https://github.com/keystone4tech-blip/bot-db-charm
 
 ## How can I edit this code?
 
 There are several ways of editing your application.
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+If you want to work locally using your own IDE, you can clone this repo and push changes.
+
+**Use GitHub Codespaces**
+
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -24,10 +26,10 @@ Follow these steps:
 
 ```sh
 # Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+git clone https://github.com/keystone4tech-blip/bot-db-charm.git
 
 # Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+cd bot-db-charm
 
 # Step 3: Install the necessary dependencies.
 npm i
@@ -60,14 +62,33 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+For deployment instructions, see [DEPLOY.md](DEPLOY.md)
 
-## Can I connect a custom domain to my Lovable project?
+Quick installation:
+```bash
+curl -sSL https://raw.githubusercontent.com/keystone4tech-blip/bot-db-charm/main/install.sh | bash
+```
 
-Yes, you can!
+## Configuration
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Before running the project, make sure to configure your `.env` file with the following settings:
+- `BOT_TOKEN`: Your Telegram bot token from @BotFather
+- `DB_PASSWORD`: Password for PostgreSQL database (default is 2046)
+- `WEBAPP_URL`: Your domain URL (e.g., https://keystone-tech.ru)
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Technologies Used
+
+This project is built with:
+
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
+- Node.js
+- Python (Aiogram)
+- PostgreSQL (local database)
+- Docker
+- Docker Compose

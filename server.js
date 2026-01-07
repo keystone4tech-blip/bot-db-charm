@@ -307,12 +307,15 @@ app.get('/api/balances/:userId', async (req, res) => {
     const { userId } = req.params;
     const query = 'SELECT * FROM balances WHERE user_id = $1';
     const result = await pool.query(query, [userId]);
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Balance not found' });
     }
-    
-    res.json(result.rows[0]);
+
+    res.json({
+      success: true,
+      balance: result.rows[0],
+    });
   } catch (error) {
     console.error('Error fetching balance:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
@@ -493,6 +496,124 @@ app.get('/api/users/:telegramId', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching user:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Маршрут для получения VPN ключей пользователя
+app.get('/api/vpn-keys/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const query = 'SELECT * FROM vpn_keys WHERE user_id = $1';
+    const result = await pool.query(query, [userId]);
+
+    res.json({
+      success: true,
+      vpnKeys: result.rows,
+    });
+  } catch (error) {
+    console.error('Error fetching vpn keys:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Маршрут для получения телеграм каналов пользователя
+app.get('/api/telegram-channels/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const query = 'SELECT * FROM telegram_channels WHERE user_id = $1';
+    const result = await pool.query(query, [userId]);
+
+    res.json({
+      success: true,
+      channels: result.rows,
+    });
+  } catch (error) {
+    console.error('Error fetching telegram channels:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Маршрут для получения ботов пользователя
+app.get('/api/user-bots/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const query = 'SELECT * FROM user_bots WHERE user_id = $1';
+    const result = await pool.query(query, [userId]);
+
+    res.json({
+      success: true,
+      bots: result.rows,
+    });
+  } catch (error) {
+    console.error('Error fetching user bots:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Маршрут для получения подписок пользователя
+app.get('/api/subscriptions/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const query = 'SELECT * FROM subscriptions WHERE user_id = $1 AND status = $2';
+    const result = await pool.query(query, [userId, 'active']);
+
+    res.json({
+      success: true,
+      subscriptions: result.rows,
+    });
+  } catch (error) {
+    console.error('Error fetching subscriptions:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Маршрут для обновления профиля пользователя
+app.put('/api/profiles/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { first_name, last_name, avatar_url } = req.body;
+
+    const query = `
+      UPDATE profiles
+      SET first_name = $1, last_name = $2, avatar_url = $3, updated_at = NOW()
+      WHERE id = $4
+      RETURNING *
+    `;
+    const result = await pool.query(query, [first_name, last_name, avatar_url, userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      profile: result.rows[0],
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Маршрут для создания тикета в поддержку
+app.post('/api/support-tickets', async (req, res) => {
+  try {
+    const { user_id, category, subject, message } = req.body;
+
+    const query = `
+      INSERT INTO support_tickets (user_id, category, subject, message, status)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `;
+    const result = await pool.query(query, [user_id, category, subject, message, 'open']);
+
+    res.json({
+      success: true,
+      ticket: result.rows[0],
+    });
+  } catch (error) {
+    console.error('Error creating support ticket:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });

@@ -1,9 +1,6 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_SUPABASE_URL: string;
-  readonly VITE_SUPABASE_PUBLISHABLE_KEY: string;
-  readonly VITE_SUPABASE_PROJECT_ID: string;
   readonly VITE_TELEGRAM_BOT_USERNAME?: string;
   readonly VITE_SERVER_BASE_URL?: string;
 }

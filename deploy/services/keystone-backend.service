@@ -1,0 +1,18 @@
+[Unit]
+Description=Keystone Backend Server
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+User=deploy
+ExecStart=/usr/bin/node /home/deploy/keystone-bot/server.js
+WorkingDirectory=/home/deploy/keystone-bot
+EnvironmentFile=/home/deploy/keystone-bot/.env
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

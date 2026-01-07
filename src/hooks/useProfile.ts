@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+// Используем API клиент для взаимодействия с Node.js сервером
+import { getUserProfile, getUserBalance, getUserReferralStats } from '@/lib/api';
 import { useTelegramContext } from '@/components/TelegramProvider';
 import { toast } from 'sonner';
 
@@ -126,49 +127,55 @@ export const useProfile = () => {
 
       // Fetch additional data not in auth context
       const [vpnRes, channelRes, botRes, subscriptionRes] = await Promise.all([
-        supabase.from('vpn_keys').select('*').eq('user_id', authProfile.id).eq('status', 'active').maybeSingle(),
-        supabase.from('telegram_channels').select('*').eq('user_id', authProfile.id).maybeSingle(),
-        supabase.from('user_bots').select('*').eq('user_id', authProfile.id).maybeSingle(),
-        supabase.from('subscriptions').select('*').eq('user_id', authProfile.id).eq('status', 'active').maybeSingle(),
+        fetch(`${import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000'}/api/vpn-keys/${authProfile.id}`).then(r => r.json()),
+        fetch(`${import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000'}/api/telegram-channels/${authProfile.id}`).then(r => r.json()),
+        fetch(`${import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000'}/api/user-bots/${authProfile.id}`).then(r => r.json()),
+        fetch(`${import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000'}/api/subscriptions/${authProfile.id}`).then(r => r.json()),
       ]);
 
-      if (vpnRes.data) {
+      // Обрабатываем результаты
+      const vpnData = vpnRes.vpnKeys?.[0] || null;
+      const channelData = channelRes.channels?.[0] || null;
+      const botData = botRes.bots?.[0] || null;
+      const subscriptionData = subscriptionRes.subscriptions?.[0] || null;
+
+      if (vpnData) {
         setVpnKey({
-          id: vpnRes.data.id,
-          status: vpnRes.data.status,
-          expires_at: vpnRes.data.expires_at,
-          server_location: vpnRes.data.server_location,
+          id: vpnData.id,
+          status: vpnData.status,
+          expires_at: vpnData.expires_at,
+          server_location: vpnData.server_location,
         });
       }
 
-      if (channelRes.data) {
+      if (channelData) {
         setChannel({
-          id: channelRes.data.id,
-          channel_title: channelRes.data.channel_title,
-          channel_username: channelRes.data.channel_username,
-          subscribers_count: channelRes.data.subscribers_count,
-          is_verified: channelRes.data.is_verified,
+          id: channelData.id,
+          channel_title: channelData.channel_title,
+          channel_username: channelData.channel_username,
+          subscribers_count: channelData.subscribers_count,
+          is_verified: channelData.is_verified,
         });
       }
 
-      if (botRes.data) {
+      if (botData) {
         setUserBot({
-          id: botRes.data.id,
-          bot_name: botRes.data.bot_name,
-          bot_username: botRes.data.bot_username,
-          bot_type: botRes.data.bot_type,
-          is_active: botRes.data.is_active,
-          created_at: botRes.data.created_at,
+          id: botData.id,
+          bot_name: botData.bot_name,
+          bot_username: botData.bot_username,
+          bot_type: botData.bot_type,
+          is_active: botData.is_active,
+          created_at: botData.created_at,
         });
       }
 
-      if (subscriptionRes.data) {
+      if (subscriptionData) {
         setSubscription({
-          id: subscriptionRes.data.id,
-          plan_name: subscriptionRes.data.plan_name,
-          plan_type: subscriptionRes.data.plan_type,
-          status: subscriptionRes.data.status,
-          expires_at: subscriptionRes.data.expires_at,
+          id: subscriptionData.id,
+          plan_name: subscriptionData.plan_name,
+          plan_type: subscriptionData.plan_type,
+          status: subscriptionData.status,
+          expires_at: subscriptionData.expires_at,
         });
       }
     } catch (err) {
@@ -183,13 +190,21 @@ export const useProfile = () => {
     if (!profile?.id) return false;
 
     try {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', profile.id);
+      const response = await fetch(`${import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000'}/api/profiles/${profile.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
 
-      if (updateError) throw updateError;
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
 
+      const result = await response.json();
+
+      // Обновляем локальное состояние
       setProfile(prev => prev ? { ...prev, ...updates } : null);
       toast.success('Профиль обновлён');
       return true;
