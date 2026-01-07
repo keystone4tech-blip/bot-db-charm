@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { authenticateUser, UserProfile, UserBalance, ReferralStats } from '@/lib/api';
+import { authenticateUser } from '@/lib/api';
 import { tg, isTelegramWebApp, getReferralCode } from '@/lib/telegram';
 import { toast } from 'sonner';
 
@@ -86,6 +86,7 @@ export const useTelegramAuth = () => {
     });
 
     try {
+      // Используем наш новый API клиент для аутентификации
       const result = await authenticateUser(initData, referralCode);
 
       if (!result.success) {

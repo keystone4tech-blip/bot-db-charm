@@ -6,51 +6,69 @@ from dotenv import load_dotenv
 # Загружаем переменные окружения
 load_dotenv()
 
-# Получаем параметры подключения из переменных окружения
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_NAME = os.getenv("DB_NAME")
+# Определяем способ подключения: через API клиент или напрямую к БД
+USE_API_CLIENT = os.getenv("USE_API_CLIENT", "false").lower() == "true"
 
-# Формируем строку подключения
-if DB_HOST and DB_USER and DB_PASSWORD and DB_NAME:
-    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+if USE_API_CLIENT:
+    # Используем API клиент для взаимодействия с Node.js сервером
+    from ..api_client import api_client
 else:
-    # Резервный вариант - старые переменные
-    DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL", os.getenv("DATABASE_URL"))
+    # Используем прямое подключение к базе данных
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PORT = os.getenv("DB_PORT", "5432")
+    DB_USER = os.getenv("DB_USER", "postgres")
+    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    DB_NAME = os.getenv("DB_NAME")
+
+    # Формируем строку подключения
+    if DB_HOST and DB_USER and DB_PASSWORD and DB_NAME:
+        DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    else:
+        # Резервный вариант - старые переменные
+        DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL", os.getenv("DATABASE_URL"))
 
 class Database:
     def __init__(self):
         self.pool: Optional[asyncpg.Pool] = None
 
     async def connect(self):
-        """Создает пул соединений с базой данных"""
-        if not DATABASE_URL:
-            raise ValueError("Не найдена строка подключения к базе данных. Установите переменную окружения SUPABASE_DATABASE_URL")
-        
-        self.pool = await asyncpg.create_pool(
-            DATABASE_URL,
-            min_size=5,
-            max_size=20,
-            command_timeout=60
-        )
-        print("Подключение к базе данных установлено")
-        
-        # Проверяем и создаем таблицы при подключении
-        await self.check_and_create_tables()
+        """Создает пул соединений с базой данных или инициализирует API клиент"""
+        if USE_API_CLIENT:
+            print("Используется API клиент для взаимодействия с Node.js сервером")
+            # При использовании API клиента не нужно подключаться к БД напрямую
+        else:
+            if not DATABASE_URL:
+                raise ValueError("Не найдена строка подключения к базе данных. Установите переменную окружения SUPABASE_DATABASE_URL")
+
+            self.pool = await asyncpg.create_pool(
+                DATABASE_URL,
+                min_size=5,
+                max_size=20,
+                command_timeout=60
+            )
+            print("Подключение к базе данных установлено")
+
+            # Проверяем и создаем таблицы при подключении
+            await self.check_and_create_tables()
 
     async def disconnect(self):
-        """Закрывает пул соединений"""
-        if self.pool:
+        """Закрывает пул соединений или завершает работу с API клиентом"""
+        if not USE_API_CLIENT and self.pool:
             await self.pool.close()
             print("Подключение к базе данных закрыто")
+        elif USE_API_CLIENT:
+            print("Отключение от API клиента завершено")
 
     async def check_and_create_tables(self):
         """Проверяет наличие всех таблиц и столбцов в базе данных и создает/обновляет их при необходимости"""
+        if USE_API_CLIENT:
+            # При использовании API клиента, управление схемой базы данных осуществляется Node.js сервером
+            print("Пропускаем проверку и создание таблиц - используется API клиент")
+            return
+
         if not self.pool:
             raise Exception("База данных не подключена")
-            
+
         async with self.pool.acquire() as connection:
             # Проверяем и создаем/обновляем таблицы
             await self.ensure_profiles_table(connection)
@@ -64,7 +82,7 @@ class Database:
             await self.ensure_user_bots_table(connection)
             await self.ensure_user_roles_table(connection)
             await self.ensure_support_tickets_table(connection)
-            
+
             print("Структура базы данных проверена и обновлена при необходимости")
 
     async def ensure_profiles_table(self, connection):
@@ -717,93 +735,130 @@ class Database:
 
     async def get_user_by_telegram_id(self, telegram_id: int):
         """Получает пользователя по telegram_id"""
-        if not self.pool:
-            raise Exception("База данных не подключена")
-        
-        async with self.pool.acquire() as connection:
-            query = """
-                SELECT id, telegram_id, telegram_username, first_name, last_name, 
-                       avatar_url, referral_code, referred_by, created_at
-                FROM profiles 
-                WHERE telegram_id = $1
-            """
-            return await connection.fetchrow(query, telegram_id)
+        if USE_API_CLIENT:
+            # Используем API клиент для получения пользователя
+            return await api_client.get_user(telegram_id)
+        else:
+            if not self.pool:
+                raise Exception("База данных не подключена")
 
-    async def create_user(self, telegram_id: int, first_name: str, last_name: str = None, 
-                          username: str = None, avatar_url: str = None, referral_code: str = None, 
+            async with self.pool.acquire() as connection:
+                query = """
+                    SELECT id, telegram_id, telegram_username, first_name, last_name,
+                           avatar_url, referral_code, referred_by, created_at
+                    FROM profiles
+                    WHERE telegram_id = $1
+                """
+                return await connection.fetchrow(query, telegram_id)
+
+    async def create_user(self, telegram_id: int, first_name: str, last_name: str = None,
+                          username: str = None, avatar_url: str = None, referral_code: str = None,
                           referred_by: str = None):
         """Создает нового пользователя"""
-        if not self.pool:
-            raise Exception("База данных не подключена")
-        
-        async with self.pool.acquire() as connection:
-            query = """
-                INSERT INTO profiles (
-                    telegram_id, telegram_username, first_name, last_name, 
-                    avatar_url, referral_code, referred_by
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING id, telegram_id, created_at
-            """
-            return await connection.fetchrow(
-                query, 
-                telegram_id, username, first_name, last_name, 
-                avatar_url, referral_code, referred_by
+        if USE_API_CLIENT:
+            # Используем API клиент для создания пользователя
+            return await api_client.register_user(
+                telegram_id=telegram_id,
+                first_name=first_name,
+                last_name=last_name,
+                username=username,
+                avatar_url=avatar_url,
+                referral_code=referral_code
             )
+        else:
+            if not self.pool:
+                raise Exception("База данных не подключена")
+
+            async with self.pool.acquire() as connection:
+                query = """
+                    INSERT INTO profiles (
+                        telegram_id, telegram_username, first_name, last_name,
+                        avatar_url, referral_code, referred_by
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    RETURNING id, telegram_id, created_at
+                """
+                return await connection.fetchrow(
+                    query,
+                    telegram_id, username, first_name, last_name,
+                    avatar_url, referral_code, referred_by
+                )
 
     async def get_referral_stats(self, user_id: str):
         """Получает статистику по рефералам пользователя"""
-        if not self.pool:
-            raise Exception("База данных не подключена")
-        
-        async with self.pool.acquire() as connection:
-            # Получаем количество рефералов на каждом уровне
-            query = """
-                WITH RECURSIVE referral_tree AS (
-                  -- Начальный уровень (непосредственные рефералы)
-                  SELECT id, referred_by, 1 as level
-                  FROM profiles
-                  WHERE referred_by = $1
-                  
-                  UNION ALL
-                  
-                  -- Рекурсивно находим рефералов рефералов
-                  SELECT p.id, p.referred_by, rt.level + 1
-                  FROM profiles p
-                  JOIN referral_tree rt ON p.referred_by = rt.id
-                  WHERE rt.level < 5  -- Максимум 5 уровней
-                )
-                SELECT 
-                  COUNT(*) FILTER (WHERE level = 1) as level_1_count,
-                  COUNT(*) FILTER (WHERE level = 2) as level_2_count,
-                  COUNT(*) FILTER (WHERE level = 3) as level_3_count,
-                  COUNT(*) FILTER (WHERE level = 4) as level_4_count,
-                  COUNT(*) FILTER (WHERE level = 5) as level_5_count,
-                  COUNT(*) as total_referrals
-                FROM referral_tree;
-            """
-            return await connection.fetchrow(query, user_id)
+        if USE_API_CLIENT:
+            # При использовании API клиента, статистика получается через веб-приложение
+            # Возвращаем заглушку, так как полная реализация требует дополнительных API эндпоинтов
+            return {
+                'level_1_count': 0,
+                'level_2_count': 0,
+                'level_3_count': 0,
+                'level_4_count': 0,
+                'level_5_count': 0,
+                'total_referrals': 0
+            }
+        else:
+            if not self.pool:
+                raise Exception("База данных не подключена")
+
+            async with self.pool.acquire() as connection:
+                # Получаем количество рефералов на каждом уровне
+                query = """
+                    WITH RECURSIVE referral_tree AS (
+                      -- Начальный уровень (непосредственные рефералы)
+                      SELECT id, referred_by, 1 as level
+                      FROM profiles
+                      WHERE referred_by = $1
+
+                      UNION ALL
+
+                      -- Рекурсивно находим рефералов рефералов
+                      SELECT p.id, p.referred_by, rt.level + 1
+                      FROM profiles p
+                      JOIN referral_tree rt ON p.referred_by = rt.id
+                      WHERE rt.level < 5  -- Максимум 5 уровней
+                    )
+                    SELECT
+                      COUNT(*) FILTER (WHERE level = 1) as level_1_count,
+                      COUNT(*) FILTER (WHERE level = 2) as level_2_count,
+                      COUNT(*) FILTER (WHERE level = 3) as level_3_count,
+                      COUNT(*) FILTER (WHERE level = 4) as level_4_count,
+                      COUNT(*) FILTER (WHERE level = 5) as level_5_count,
+                      COUNT(*) as total_referrals
+                    FROM referral_tree;
+                """
+                return await connection.fetchrow(query, user_id)
 
     async def get_user_referral_code(self, referral_code: str):
         """Получает пользователя по реферальному коду"""
-        if not self.pool:
-            raise Exception("База данных не подключена")
-        
-        async with self.pool.acquire() as connection:
-            query = "SELECT id, telegram_id FROM profiles WHERE referral_code = $1"
-            return await connection.fetchrow(query, referral_code)
+        if USE_API_CLIENT:
+            # При использовании API клиента, поиск по реферальному коду требует дополнительного API эндпоинта
+            # Возвращаем заглушку, так как полная реализация требует дополнительных API эндпоинтов
+            return None
+        else:
+            if not self.pool:
+                raise Exception("База данных не подключена")
+
+            async with self.pool.acquire() as connection:
+                query = "SELECT id, telegram_id FROM profiles WHERE referral_code = $1"
+                return await connection.fetchrow(query, referral_code)
 
     async def create_referral_record(self, referrer_id: str, referred_id: str, level: int = 1):
         """Создает запись о реферале"""
-        if not self.pool:
-            raise Exception("База данных не подключена")
-        
-        async with self.pool.acquire() as connection:
-            query = """
-                INSERT INTO referrals (referrer_id, referred_id, level, is_active)
-                VALUES ($1, $2, $3, TRUE)
-                ON CONFLICT (referrer_id, referred_id) 
-                DO UPDATE SET is_active = TRUE
-            """
-            await connection.execute(query, referrer_id, referred_id, level)
+        if USE_API_CLIENT:
+            # При использовании API клиента, создание реферальных записей требует дополнительного API эндпоинта
+            # Возвращаем заглушку, так как полная реализация требует дополнительных API эндпоинтов
+            return
+        else:
+            if not self.pool:
+                raise Exception("База данных не подключена")
+
+            async with self.pool.acquire() as connection:
+                query = """
+                    INSERT INTO referrals (referrer_id, referred_id, level, is_active)
+                    VALUES ($1, $2, $3, TRUE)
+                    ON CONFLICT (referrer_id, referred_id)
+                    DO UPDATE SET is_active = TRUE
+                """
+                await connection.execute(query, referrer_id, referred_id, level)
 
 database = Database()

@@ -75,7 +75,7 @@ export const useProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProfileData = async () => {
+  const fetchProfileData = useCallback(async () => {
     // Use authenticated profile from context
     if (!authProfile?.id) {
       setIsLoading(false);
@@ -177,7 +177,7 @@ export const useProfile = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [authProfile, authBalance, authReferralStats, isAuthenticated, isAuthLoading]);
 
   const updateProfile = async (updates: { first_name?: string; last_name?: string; avatar_url?: string }) => {
     if (!profile?.id) return false;
@@ -207,7 +207,7 @@ export const useProfile = () => {
       setIsLoading(false);
       setError('Необходима авторизация');
     }
-  }, [isAuthenticated, authProfile?.id, isAuthLoading]);
+  }, [isAuthenticated, authProfile?.id, isAuthLoading, fetchProfileData]);
 
   const referralLink = profile?.referral_code
     ? (() => {

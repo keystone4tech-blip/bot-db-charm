@@ -1,12 +1,10 @@
-/**
- * API клиент для взаимодействия с нашим бэкенд-сервером
- */
-
+// Клиент для прямого взаимодействия с API и PostgreSQL базой данных
 import { getReferralCode } from './telegram';
 
-/**
- * Интерфейс для профиля пользователя
- */
+// Базовый URL для API
+const API_BASE_URL = 'http://localhost:3000/api'; // В продакшене замените на URL вашего сервера
+
+// Интерфейсы для данных
 export interface UserProfile {
   id: string;
   telegram_id: number;
@@ -20,9 +18,6 @@ export interface UserProfile {
   updated_at: string;
 }
 
-/**
- * Интерфейс для баланса пользователя
- */
 export interface UserBalance {
   id: string;
   user_id: string;
@@ -33,9 +28,6 @@ export interface UserBalance {
   updated_at: string;
 }
 
-/**
- * Интерфейс для статистики рефералов
- */
 export interface ReferralStats {
   id: string;
   user_id: string;
@@ -49,9 +41,6 @@ export interface ReferralStats {
   updated_at: string;
 }
 
-/**
- * Интерфейс для ответа аутентификации
- */
 export interface AuthResponse {
   success: boolean;
   profile?: UserProfile;
@@ -61,43 +50,24 @@ export interface AuthResponse {
   error?: string;
 }
 
-/**
- * Аутентификация пользователя через Telegram
- */
-export const authenticateUser = async (initData: string, referralCode?: string): Promise<AuthResponse> => {
+// Функция аутентификации через Telegram
+export const authenticateWithTelegram = async (initData: string, referralCode?: string): Promise<AuthResponse> => {
   try {
-    // Используем переменную окружения для базового URL сервера или локальный по умолчанию
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    
-    const response = await fetch(`${serverBaseUrl}/api/telegram-auth`, {
+    // Используем базовый URL для API
+    const response = await fetch(`${API_BASE_URL}/telegram-auth`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         initData,
         referralCode: referralCode || getReferralCode() || null
       }),
     });
 
-    // Проверяем, является ли ответ валидным JSON
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const responseText = await response.text();
-      console.error('Non-JSON response received:', responseText);
-      throw new Error('Сервер вернул некорректный ответ. Пожалуйста, проверьте конфигурацию сервера.');
-    }
-
     const data = await response.json();
 
     if (!response.ok) {
-      return {
-        success: false,
-        error: data.error || 'Ошибка аутентификации'
-      };
-    }
-
-    if (!data.success) {
       return {
         success: false,
         error: data.error || 'Ошибка аутентификации'
@@ -115,18 +85,15 @@ export const authenticateUser = async (initData: string, referralCode?: string):
     console.error('Ошибка аутентификации:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Неизвестная ошибка при аутентификации'
+      error: error instanceof Error ? error.message : 'Неизвестная ошибка'
     };
   }
 };
 
-/**
- * Получение профиля пользователя по Telegram ID
- */
-export const getUserProfile = async (telegramId: number) => {
+// Функция получения профиля пользователя
+export const getUserProfile = async (userId: string) => {
   try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${serverBaseUrl}/api/profiles/${telegramId}`, {
+    const response = await fetch(`${API_BASE_URL}/profiles/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -144,13 +111,32 @@ export const getUserProfile = async (telegramId: number) => {
   }
 };
 
-/**
- * Получение баланса пользователя
- */
+// Функция обновления профиля пользователя
+export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/profiles/${userId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+      throw new Error('Не удалось обновить профиль пользователя');
+    }
+
+    return await response.json() as UserProfile;
+  } catch (error) {
+    console.error('Ошибка обновления профиля:', error);
+    throw error;
+  }
+};
+
+// Функция получения баланса пользователя
 export const getUserBalance = async (userId: string) => {
   try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${serverBaseUrl}/api/balances/${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/balances/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -168,13 +154,10 @@ export const getUserBalance = async (userId: string) => {
   }
 };
 
-/**
- * Получение статистики по рефералам
- */
+// Функция получения статистики по рефералам
 export const getUserReferralStats = async (userId: string) => {
   try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${serverBaseUrl}/api/referral-stats/${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/referral-stats/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
