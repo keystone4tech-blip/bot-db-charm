@@ -38,7 +38,7 @@ pip install -r requirements.txt
 
 ```env
 TELEGRAM_BOT_TOKEN=ваш_токен_бота_от_BotFather
-SUPABASE_DATABASE_URL=ваша_строка_подключения_к_supabase
+POSTGRES_DATABASE_URL=ваша_строка_подключения_к_postgres
 WEBAPP_URL=https://ваш-домен.com
 ```
 

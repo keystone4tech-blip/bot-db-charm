@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Получаем параметры подключения из переменных окружения
-DATABASE_URL = os.getenv("SUPABASE_DATABASE_URL", os.getenv("DATABASE_URL"))
+DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL", os.getenv("DATABASE_URL"))
 
 class Database:
     def __init__(self):
