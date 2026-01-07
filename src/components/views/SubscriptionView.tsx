@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Zap, Star, Crown, Check } from 'lucide-react';
+import { Zap, Star, Crown, Check, Shield, Bot, Megaphone, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { hapticFeedback } from '@/lib/telegram';
@@ -12,6 +12,12 @@ interface Plan {
   period: string;
   features: string[];
   popular?: boolean;
+  includes: {
+    vpn: boolean;
+    bot: boolean;
+    channels: number;
+    subscribers: number;
+  };
 }
 
 const plans: Plan[] = [
@@ -22,11 +28,18 @@ const plans: Plan[] = [
     price: 299,
     period: 'месяц',
     features: [
-      '1 канал',
+      '1 канал для продвижения',
       'До 30 постов/месяц',
       'Базовая аналитика',
       'Email поддержка',
+      '500 подписчиков в месяц',
     ],
+    includes: {
+      vpn: false,
+      bot: false,
+      channels: 1,
+      subscribers: 500,
+    },
   },
   {
     id: 'pro',
@@ -36,12 +49,20 @@ const plans: Plan[] = [
     period: 'месяц',
     popular: true,
     features: [
-      '5 каналов',
+      '5 каналов для продвижения',
       'Безлимит постов',
       'Расширенная аналитика',
       'Приоритетная поддержка',
       'Реферальный бот',
+      'VPN доступ',
+      '2000 подписчиков в месяц',
     ],
+    includes: {
+      vpn: true,
+      bot: true,
+      channels: 5,
+      subscribers: 2000,
+    },
   },
   {
     id: 'business',
@@ -56,7 +77,15 @@ const plans: Plan[] = [
       'Персональный менеджер',
       'API доступ',
       'Кастомные боты',
+      'VPN доступ',
+      '10000 подписчиков в месяц',
     ],
+    includes: {
+      vpn: true,
+      bot: true,
+      channels: -1, // unlimited
+      subscribers: 10000,
+    },
   },
 ];
 
@@ -83,6 +112,8 @@ export const SubscriptionView = () => {
     setSelectedPlan(planId);
   };
 
+  const selectedPlanData = plans.find(p => p.id === selectedPlan);
+
   return (
     <motion.div
       className="px-4 py-6 pb-24 space-y-6"
@@ -96,9 +127,55 @@ export const SubscriptionView = () => {
         <p className="text-muted-foreground">Выберите план для вашего бизнеса</p>
       </motion.div>
 
+      {/* Plan Includes Summary */}
+      {selectedPlanData && (
+        <motion.div 
+          variants={itemVariants}
+          className="bg-card rounded-2xl p-4 border border-primary/30"
+        >
+          <h3 className="font-semibold mb-3 text-sm text-muted-foreground">
+            Что включено в план "{selectedPlanData.name}":
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              <div className={`p-1.5 rounded-lg ${selectedPlanData.includes.vpn ? 'bg-green-500/20' : 'bg-muted'}`}>
+                <Shield className={`w-4 h-4 ${selectedPlanData.includes.vpn ? 'text-green-500' : 'text-muted-foreground'}`} />
+              </div>
+              <span className={`text-sm ${selectedPlanData.includes.vpn ? '' : 'text-muted-foreground'}`}>
+                VPN {selectedPlanData.includes.vpn ? '✓' : '✗'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`p-1.5 rounded-lg ${selectedPlanData.includes.bot ? 'bg-primary/20' : 'bg-muted'}`}>
+                <Bot className={`w-4 h-4 ${selectedPlanData.includes.bot ? 'text-primary' : 'text-muted-foreground'}`} />
+              </div>
+              <span className={`text-sm ${selectedPlanData.includes.bot ? '' : 'text-muted-foreground'}`}>
+                Бот {selectedPlanData.includes.bot ? '✓' : '✗'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-blue-500/20">
+                <Megaphone className="w-4 h-4 text-blue-400" />
+              </div>
+              <span className="text-sm">
+                {selectedPlanData.includes.channels === -1 ? '∞' : selectedPlanData.includes.channels} канал{selectedPlanData.includes.channels === 1 ? '' : selectedPlanData.includes.channels === -1 ? 'ов' : 'ов'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-purple-500/20">
+                <Users className="w-4 h-4 text-purple-400" />
+              </div>
+              <span className="text-sm">
+                {selectedPlanData.includes.subscribers.toLocaleString()} подп./мес
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Plans */}
       <div className="space-y-4">
-        {plans.map((plan, index) => {
+        {plans.map((plan) => {
           const Icon = plan.icon;
           const isSelected = selectedPlan === plan.id;
           
@@ -179,6 +256,15 @@ export const SubscriptionView = () => {
           );
         })}
       </div>
+
+      {/* Additional Info */}
+      <motion.div 
+        variants={itemVariants}
+        className="text-center text-sm text-muted-foreground py-4"
+      >
+        <p>Все планы включают 7-дневный пробный период</p>
+        <p className="mt-1">Отмена подписки в любое время</p>
+      </motion.div>
     </motion.div>
   );
 };

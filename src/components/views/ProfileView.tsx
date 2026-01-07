@@ -8,11 +8,34 @@ import { BalanceCards } from '@/components/profile/BalanceCards';
 import { ReferralSection } from '@/components/profile/ReferralSection';
 import { EditProfileModal } from '@/components/profile/EditProfileModal';
 import { SupportTicketButton } from '@/components/profile/SupportTicketButton';
+import { VPNStatusCard } from '@/components/profile/VPNStatusCard';
+import { ChannelStatusCard } from '@/components/profile/ChannelStatusCard';
+import { BotStatusCard } from '@/components/profile/BotStatusCard';
 
-export const ProfileView = () => {
+interface ProfileViewProps {
+  onNavigate?: (tab: string) => void;
+}
+
+export const ProfileView = ({ onNavigate }: ProfileViewProps) => {
   const { user: telegramUser } = useTelegramContext();
-  const { profile, balance, referralStats, referralLink, isLoading, error, updateProfile } = useProfile();
+  const { 
+    profile, 
+    balance, 
+    referralStats, 
+    vpnKey, 
+    channel, 
+    userBot, 
+    subscription,
+    referralLink, 
+    isLoading, 
+    error, 
+    updateProfile 
+  } = useProfile();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const handleNavigate = (tab: string) => {
+    onNavigate?.(tab);
+  };
 
   if (isLoading) {
     return (
@@ -49,7 +72,7 @@ export const ProfileView = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-6 space-y-0"
+        className="mt-6 space-y-4"
       >
         {/* Profile Header */}
         <ProfileHeader 
@@ -60,6 +83,30 @@ export const ProfileView = () => {
 
         {/* Balance Cards */}
         <BalanceCards balance={balance} />
+
+        {/* Services Status Section */}
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold px-1">Мои услуги</h2>
+          
+          {/* VPN Status */}
+          <VPNStatusCard 
+            vpnKey={vpnKey} 
+            onNavigate={handleNavigate} 
+          />
+
+          {/* Channel Status */}
+          <ChannelStatusCard 
+            channel={channel} 
+            onNavigate={handleNavigate} 
+          />
+
+          {/* Bot Status */}
+          <BotStatusCard 
+            bot={userBot} 
+            subscriptionExpiresAt={subscription?.expires_at || null}
+            onNavigate={handleNavigate} 
+          />
+        </div>
 
         {/* Referral Section with Chart */}
         <ReferralSection 

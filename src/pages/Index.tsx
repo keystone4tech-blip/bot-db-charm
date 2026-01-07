@@ -17,6 +17,10 @@ const viewVariants = {
 const Index = () => {
   const [activeTab, setActiveTab] = useState('info');
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
+
   const renderView = () => {
     switch (activeTab) {
       case 'info':
@@ -28,7 +32,7 @@ const Index = () => {
       case 'vpn':
         return <VPNView key="vpn" />;
       case 'profile':
-        return <ProfileView key="profile" />;
+        return <ProfileView key="profile" onNavigate={handleTabChange} />;
       default:
         return <InfoView key="info" />;
     }
@@ -77,7 +81,7 @@ const Index = () => {
         </main>
 
         {/* Bottom navigation */}
-        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
       </div>
     </TelegramProvider>
   );
