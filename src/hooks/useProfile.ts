@@ -64,7 +64,7 @@ export interface SubscriptionData {
 }
 
 export const useProfile = () => {
-  const { user: telegramUser } = useTelegramContext();
+  const { authProfile, authBalance, authReferralStats, isAuthenticated, isAuthLoading } = useTelegramContext();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [balance, setBalance] = useState<BalanceData | null>(null);
   const [referralStats, setReferralStats] = useState<ReferralStatsData | null>(null);
@@ -76,8 +76,12 @@ export const useProfile = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchProfileData = async () => {
-    if (!telegramUser?.id) {
+    // Use authenticated profile from context
+    if (!authProfile?.id) {
       setIsLoading(false);
+      if (!isAuthLoading && !isAuthenticated) {
+        setError('Необходима авторизация');
+      }
       return;
     }
 
@@ -85,54 +89,48 @@ export const useProfile = () => {
       setIsLoading(true);
       setError(null);
 
-      // Fetch profile by telegram_id
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('telegram_id', telegramUser.id)
-        .single();
+      // Set profile from auth context
+      setProfile({
+        id: authProfile.id,
+        telegram_id: authProfile.telegram_id,
+        telegram_username: authProfile.telegram_username,
+        first_name: authProfile.first_name,
+        last_name: authProfile.last_name,
+        avatar_url: authProfile.avatar_url,
+        referral_code: authProfile.referral_code,
+        created_at: null,
+      });
 
-      if (profileError) {
-        if (profileError.code === 'PGRST116') {
-          setError('Профиль не найден. Необходима авторизация.');
-        } else {
-          throw profileError;
-        }
-        return;
-      }
-
-      setProfile(profileData);
-
-      // Fetch all related data in parallel
-      const [balanceRes, referralRes, vpnRes, channelRes, botRes, subscriptionRes] = await Promise.all([
-        supabase.from('balances').select('*').eq('user_id', profileData.id).maybeSingle(),
-        supabase.from('referral_stats').select('*').eq('user_id', profileData.id).maybeSingle(),
-        supabase.from('vpn_keys').select('*').eq('user_id', profileData.id).eq('status', 'active').maybeSingle(),
-        supabase.from('telegram_channels').select('*').eq('user_id', profileData.id).maybeSingle(),
-        supabase.from('user_bots').select('*').eq('user_id', profileData.id).maybeSingle(),
-        supabase.from('subscriptions').select('*').eq('user_id', profileData.id).eq('status', 'active').maybeSingle(),
-      ]);
-
-      if (balanceRes.data) {
+      // Set balance from auth context if available
+      if (authBalance) {
         setBalance({
-          internal_balance: Number(balanceRes.data.internal_balance) || 0,
-          external_balance: Number(balanceRes.data.external_balance) || 0,
-          total_earned: Number(balanceRes.data.total_earned) || 0,
-          total_withdrawn: Number(balanceRes.data.total_withdrawn) || 0,
+          internal_balance: authBalance.internal_balance || 0,
+          external_balance: authBalance.external_balance || 0,
+          total_earned: authBalance.total_earned || 0,
+          total_withdrawn: authBalance.total_withdrawn || 0,
         });
       }
 
-      if (referralRes.data) {
+      // Set referral stats from auth context if available
+      if (authReferralStats) {
         setReferralStats({
-          total_referrals: referralRes.data.total_referrals || 0,
-          total_earnings: Number(referralRes.data.total_earnings) || 0,
-          level_1_count: referralRes.data.level_1_count || 0,
-          level_2_count: referralRes.data.level_2_count || 0,
-          level_3_count: referralRes.data.level_3_count || 0,
-          level_4_count: referralRes.data.level_4_count || 0,
-          level_5_count: referralRes.data.level_5_count || 0,
+          total_referrals: authReferralStats.total_referrals || 0,
+          total_earnings: authReferralStats.total_earnings || 0,
+          level_1_count: authReferralStats.level_1_count || 0,
+          level_2_count: authReferralStats.level_2_count || 0,
+          level_3_count: authReferralStats.level_3_count || 0,
+          level_4_count: authReferralStats.level_4_count || 0,
+          level_5_count: authReferralStats.level_5_count || 0,
         });
       }
+
+      // Fetch additional data not in auth context
+      const [vpnRes, channelRes, botRes, subscriptionRes] = await Promise.all([
+        supabase.from('vpn_keys').select('*').eq('user_id', authProfile.id).eq('status', 'active').maybeSingle(),
+        supabase.from('telegram_channels').select('*').eq('user_id', authProfile.id).maybeSingle(),
+        supabase.from('user_bots').select('*').eq('user_id', authProfile.id).maybeSingle(),
+        supabase.from('subscriptions').select('*').eq('user_id', authProfile.id).eq('status', 'active').maybeSingle(),
+      ]);
 
       if (vpnRes.data) {
         setVpnKey({
@@ -203,8 +201,13 @@ export const useProfile = () => {
   };
 
   useEffect(() => {
-    fetchProfileData();
-  }, [telegramUser?.id]);
+    if (isAuthenticated && authProfile?.id) {
+      fetchProfileData();
+    } else if (!isAuthLoading && !isAuthenticated) {
+      setIsLoading(false);
+      setError('Необходима авторизация');
+    }
+  }, [isAuthenticated, authProfile?.id, isAuthLoading]);
 
   const referralLink = profile?.referral_code 
     ? `https://t.me/YourBotUsername?start=${profile.referral_code}`
