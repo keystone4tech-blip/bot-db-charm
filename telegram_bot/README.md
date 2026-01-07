@@ -76,7 +76,7 @@ WEBAPP_URL=https://ваш-домен.com
 
 3. Запустите бота:
 ```bash
-python -m telegram_bot.main
+python run_bot.py
 ```
 
 ## Функциональность

@@ -40,7 +40,7 @@ def install_packages():
         "python-dotenv==1.0.1",
         "requests",
         "aiohttp",
-        "@supabase/supabase-js"
+        "psycopg2-binary"
     ]
     
     for package in packages:
@@ -75,7 +75,8 @@ def main():
         print("  source .venv/bin/activate")
     
     print("\nПосле активации окружения вы можете запустить бота командой:")
-    print("  python -m telegram_bot.main")
+    print("  python run_bot.py")
+
 
 if __name__ == "__main__":
     main()

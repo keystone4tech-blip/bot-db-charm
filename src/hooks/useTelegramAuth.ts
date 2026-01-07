@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { authenticateUser, UserProfile, UserBalance, ReferralStats } from '@/lib/api';
 import { tg, isTelegramWebApp, getReferralCode } from '@/lib/telegram';
 import { toast } from 'sonner';
 
@@ -73,50 +73,40 @@ export const useTelegramAuth = () => {
       }));
       return;
     }
-// Extract referral code from multiple sources
-const startParam = tg.initDataUnsafe?.start_param;
-const urlReferralCode = getReferralCode();
-const referralCode = startParam || urlReferralCode || null;
 
+    // Extract referral code from multiple sources
+    const startParam = tg.initDataUnsafe?.start_param;
+    const urlReferralCode = getReferralCode();
+    const referralCode = startParam || urlReferralCode || null;
 
-    console.log('Authenticating with Telegram...', { 
-      hasInitData: !!initData, 
+    console.log('Authenticating with Telegram...', {
+      hasInitData: !!initData,
       referralCode,
-      userId: tg.initDataUnsafe?.user?.id 
+      userId: tg.initDataUnsafe?.user?.id
     });
 
     try {
-      const { data, error } = await supabase.functions.invoke('telegram-auth', {
-        body: { 
-          initData,
-          referralCode,
-        },
-      });
+      const result = await authenticateUser(initData, referralCode);
 
-      if (error) {
-        console.error('Auth function error:', error);
-        throw new Error(error.message || 'Ошибка авторизации');
+      if (!result.success) {
+        console.error('Auth failed:', result.error);
+        throw new Error(result.error || 'Авторизация не удалась');
       }
 
-      if (!data?.success) {
-        console.error('Auth failed:', data?.error);
-        throw new Error(data?.error || 'Авторизация не удалась');
-      }
-
-      console.log('Authentication successful:', data.profile?.id);
+      console.log('Authentication successful:', result.profile?.id);
 
       setAuthState({
         isAuthenticated: true,
         isLoading: false,
         error: null,
-        profile: data.profile,
-        balance: data.balance,
-        referralStats: data.referralStats,
-        role: data.role || 'user',
+        profile: result.profile,
+        balance: result.balance,
+        referralStats: result.referralStats,
+        role: result.role || 'user',
       });
 
       // Show welcome message for new users
-      if (referralCode && data.profile) {
+      if (referralCode && result.profile) {
         toast.success('Добро пожаловать! Вы зарегистрированы по реферальной ссылке');
       }
 
