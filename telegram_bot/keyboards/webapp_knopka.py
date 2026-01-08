@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # URL для WebApp
-WEBAPP_URL = os.getenv("WEBAPP_URL", "https://your-app-domain.com")
+WEBAPP_URL = os.getenv("WEBAPP_URL", "https://bot-db-charm.lovable.app/")
 
 
 def get_webapp_keyboard(start_param: str | None = None) -> InlineKeyboardMarkup:
@@ -15,6 +15,10 @@ def get_webapp_keyboard(start_param: str | None = None) -> InlineKeyboardMarkup:
     webapp_url = WEBAPP_URL
     if start_param:
         webapp_url = f"{WEBAPP_URL}?startapp={start_param}"
+
+    # Проверяем, что URL начинается с https://
+    if not webapp_url.startswith(('http://', 'https://')):
+        webapp_url = f"https://{webapp_url.lstrip('https://').lstrip('http://')}"
 
     return InlineKeyboardMarkup(
         inline_keyboard=[

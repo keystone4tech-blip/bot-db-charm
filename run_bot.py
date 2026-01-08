@@ -7,6 +7,14 @@
 import asyncio
 import sys
 import os
+import logging
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Добавляем директорию проекта в путь для импорта
 project_dir = os.path.dirname(os.path.abspath(__file__))
@@ -34,15 +42,32 @@ async def main():
     """
     Основная функция запуска бота
     """
-    # Подключаемся к базе данных
-    await database.connect()
-    
     try:
+        # Подключаемся к базе данных
+        await database.connect()
+        logger.info("Подключение к базе данных установлено")
+    except Exception as e:
+        logger.error(f"Ошибка подключения к базе данных: {e}")
+        return
+
+    try:
+        logger.info("Запуск бота...")
         # Запускаем бота
-        await dp.start_polling(bot)
+        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    except Exception as e:
+        logger.error(f"Ошибка при работе бота: {e}")
     finally:
         # Закрываем соединение с базой данных при завершении
-        await database.disconnect()
+        try:
+            await database.disconnect()
+            logger.info("Соединение с базой данных закрыто")
+        except Exception as e:
+            logger.error(f"Ошибка при закрытии соединения с базой данных: {e}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Бот остановлен пользователем")
+    except Exception as e:
+        logger.error(f"Критическая ошибка: {e}")
