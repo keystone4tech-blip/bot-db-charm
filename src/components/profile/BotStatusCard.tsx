@@ -51,7 +51,10 @@ export const BotStatusCard = ({ bot, subscriptionExpiresAt, onNavigate }: BotSta
               </div>
             </div>
             <Button
-              className={isActive ? "bg-green-500 hover:bg-green-600 text-white" : "gold-gradient text-white hover:shadow-lg hover:shadow-primary/30 transition-all duration-300"}
+              variant={isActive ? "secondary" : "default"}
+              className={isActive ?
+                "text-purple-500 border-purple-500/30 hover:bg-purple-500/10" :
+                "gold-gradient text-white hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:animate-pulse-gold"}
               size="sm"
               onClick={() => onNavigate('subscription')}
             >

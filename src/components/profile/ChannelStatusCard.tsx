@@ -57,7 +57,10 @@ export const ChannelStatusCard = ({ channel, onNavigate }: ChannelStatusCardProp
               </div>
             </div>
             <Button
-              className={isActive ? "bg-green-500 hover:bg-green-600 text-white" : "gold-gradient text-white hover:shadow-lg hover:shadow-primary/30 transition-all duration-300"}
+              variant={isActive ? "secondary" : "default"}
+              className={isActive ?
+                "text-blue-500 border-blue-500/30 hover:bg-blue-500/10" :
+                "gold-gradient text-white hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:animate-pulse-gold"}
               size="sm"
               onClick={() => onNavigate('promotion')}
             >

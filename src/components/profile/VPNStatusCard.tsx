@@ -53,7 +53,10 @@ export const VPNStatusCard = ({ vpnKey, onNavigate }: VPNStatusCardProps) => {
             </div>
             <div className="flex gap-2">
               <Button
-                className={isActive && !isExpired ? "bg-green-500 hover:bg-green-600 text-white" : "gold-gradient text-white hover:shadow-lg hover:shadow-primary/30 transition-all duration-300"}
+                variant={isActive && !isExpired ? "secondary" : "default"}
+                className={isActive && !isExpired ?
+                  "text-green-500 border-green-500/30 hover:bg-green-500/10" :
+                  "gold-gradient text-white hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:animate-pulse-gold"}
                 size="sm"
                 onClick={() => onNavigate('vpn')}
               >
