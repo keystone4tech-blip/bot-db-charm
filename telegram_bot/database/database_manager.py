@@ -6,12 +6,17 @@ from dotenv import load_dotenv
 # Загружаем переменные окружения
 load_dotenv()
 
-# Определяем способ подключения: через API клиент или напрямую к БД
+# Определяем способ подключения: через API клиент, Supabase или напрямую к БД
 USE_API_CLIENT = os.getenv("USE_API_CLIENT", "false").lower() == "true"
+USE_SUPABASE = os.getenv("USE_SUPABASE", "false").lower() == "true"
 
 if USE_API_CLIENT:
     # Используем API клиент для взаимодействия с Node.js сервером
     from ..api_client import api_client
+elif USE_SUPABASE:
+    # Используем Supabase клиент
+    from supabase import create_client, Client
+    from ..supabase_client import supabase_client
 else:
     # Используем прямое подключение к базе данных
     DB_HOST = os.getenv("DB_HOST", "localhost")
@@ -30,12 +35,17 @@ else:
 class Database:
     def __init__(self):
         self.pool: Optional[asyncpg.Pool] = None
+        self.use_supabase = USE_SUPABASE
+        self.use_api_client = USE_API_CLIENT
 
     async def connect(self):
-        """Создает пул соединений с базой данных или инициализирует API клиент"""
-        if USE_API_CLIENT:
+        """Создает подключение к базе данных или инициализирует API клиент"""
+        if self.use_api_client:
             print("Используется API клиент для взаимодействия с Node.js сервером")
             # При использовании API клиента не нужно подключаться к БД напрямую
+        elif self.use_supabase:
+            print("Используется Supabase для хранения данных")
+            # Подключение к Supabase уже инициализировано в supabase_client
         else:
             if not DATABASE_URL:
                 raise ValueError("Не найдена строка подключения к базе данных. Установите переменную окружения SUPABASE_DATABASE_URL")
@@ -53,17 +63,19 @@ class Database:
 
     async def disconnect(self):
         """Закрывает пул соединений или завершает работу с API клиентом"""
-        if not USE_API_CLIENT and self.pool:
+        if not self.use_api_client and not self.use_supabase and self.pool:
             await self.pool.close()
             print("Подключение к базе данных закрыто")
-        elif USE_API_CLIENT:
+        elif self.use_api_client:
             print("Отключение от API клиента завершено")
+        elif self.use_supabase:
+            print("Отключение от Supabase завершено")
 
     async def check_and_create_tables(self):
         """Проверяет наличие всех таблиц и столбцов в базе данных и создает/обновляет их при необходимости"""
-        if USE_API_CLIENT:
-            # При использовании API клиента, управление схемой базы данных осуществляется Node.js сервером
-            print("Пропускаем проверку и создание таблиц - используется API клиент")
+        if self.use_api_client or self.use_supabase:
+            # При использовании API клиента или Supabase, управление схемой базы данных осуществляется на сервере
+            print(f"Пропускаем проверку и создание таблиц - используется {'API клиент' if self.use_api_client else 'Supabase'}")
             return
 
         if not self.pool:
@@ -735,9 +747,12 @@ class Database:
 
     async def get_user_by_telegram_id(self, telegram_id: int):
         """Получает пользователя по telegram_id"""
-        if USE_API_CLIENT:
+        if self.use_api_client:
             # Используем API клиент для получения пользователя
             return await api_client.get_user(telegram_id)
+        elif self.use_supabase:
+            # Используем Supabase клиент для получения пользователя
+            return await supabase_client.get_user_by_telegram_id(telegram_id)
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
@@ -755,7 +770,7 @@ class Database:
                           username: str = None, avatar_url: str = None, referral_code: str = None,
                           referred_by: str = None):
         """Создает нового пользователя"""
-        if USE_API_CLIENT:
+        if self.use_api_client:
             # Используем API клиент для создания пользователя
             return await api_client.register_user(
                 telegram_id=telegram_id,
@@ -764,6 +779,12 @@ class Database:
                 username=username,
                 avatar_url=avatar_url,
                 referral_code=referral_code
+            )
+        elif self.use_supabase:
+            # Используем Supabase клиент для создания пользователя
+            return await supabase_client.create_user(
+                telegram_id, first_name, last_name, username,
+                avatar_url, referral_code, referred_by
             )
         else:
             if not self.pool:
@@ -785,7 +806,7 @@ class Database:
 
     async def get_referral_stats(self, user_id: str):
         """Получает статистику по рефералам пользователя"""
-        if USE_API_CLIENT:
+        if self.use_api_client:
             # При использовании API клиента, статистика получается через веб-приложение
             # Возвращаем заглушку, так как полная реализация требует дополнительных API эндпоинтов
             return {
@@ -796,6 +817,9 @@ class Database:
                 'level_5_count': 0,
                 'total_referrals': 0
             }
+        elif self.use_supabase:
+            # Используем Supabase клиент для получения статистики рефералов
+            return await supabase_client.get_referral_stats(user_id)
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
@@ -830,10 +854,13 @@ class Database:
 
     async def get_user_referral_code(self, referral_code: str):
         """Получает пользователя по реферальному коду"""
-        if USE_API_CLIENT:
+        if self.use_api_client:
             # При использовании API клиента, поиск по реферальному коду требует дополнительного API эндпоинта
             # Возвращаем заглушку, так как полная реализация требует дополнительных API эндпоинтов
             return None
+        elif self.use_supabase:
+            # Используем Supabase клиент для получения пользователя по реферальному коду
+            return await supabase_client.get_user_by_referral_code(referral_code)
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
@@ -844,10 +871,13 @@ class Database:
 
     async def create_referral_record(self, referrer_id: str, referred_id: str, level: int = 1):
         """Создает запись о реферале"""
-        if USE_API_CLIENT:
+        if self.use_api_client:
             # При использовании API клиента, создание реферальных записей требует дополнительного API эндпоинта
             # Возвращаем заглушку, так как полная реализация требует дополнительных API эндпоинтов
             return
+        elif self.use_supabase:
+            # Используем Supabase клиент для создания реферальной записи
+            await supabase_client.create_referral_record(referrer_id, referred_id, level)
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
