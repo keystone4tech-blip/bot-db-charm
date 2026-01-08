@@ -26,11 +26,11 @@ export const ChannelStatusCard = ({ channel, onNavigate }: ChannelStatusCardProp
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-500/10' : 'bg-gray-500/10'}`}>
+              <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-500/10' : 'bg-red-500/10'}`}>
                 {isActive ? (
                   <MessageSquare className="w-5 h-5 text-blue-500" />
                 ) : (
-                  <XCircle className="w-5 h-5 text-gray-500" />
+                  <MessageSquare className="w-5 h-5 text-red-500" />
                 )}
               </div>
               <div>
@@ -57,11 +57,11 @@ export const ChannelStatusCard = ({ channel, onNavigate }: ChannelStatusCardProp
               </div>
             </div>
             <Button
-              variant="outline"
+              className={isActive ? "bg-green-500 hover:bg-green-600 text-white" : "gold-gradient text-white hover:shadow-lg hover:shadow-primary/30 transition-all duration-300"}
               size="sm"
               onClick={() => onNavigate('promotion')}
             >
-              Управление
+              {isActive ? 'Управление' : 'Подключить'}
             </Button>
           </div>
         </CardContent>

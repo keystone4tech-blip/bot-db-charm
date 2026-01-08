@@ -29,7 +29,7 @@ export const VPNStatusCard = ({ vpnKey, onNavigate }: VPNStatusCardProps) => {
                 {isActive && !isExpired ? (
                   <Shield className="w-5 h-5 text-green-500" />
                 ) : (
-                  <XCircle className="w-5 h-5 text-red-500" />
+                  <Wifi className="w-5 h-5 text-red-500" />
                 )}
               </div>
               <div>
@@ -53,11 +53,11 @@ export const VPNStatusCard = ({ vpnKey, onNavigate }: VPNStatusCardProps) => {
             </div>
             <div className="flex gap-2">
               <Button
-                variant="outline"
+                className={isActive && !isExpired ? "bg-green-500 hover:bg-green-600 text-white" : "gold-gradient text-white hover:shadow-lg hover:shadow-primary/30 transition-all duration-300"}
                 size="sm"
                 onClick={() => onNavigate('vpn')}
               >
-                Управление
+                {isActive && !isExpired ? 'Управление' : 'Подключить'}
               </Button>
             </div>
           </div>
