@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
       )
     }
     
-    const { initData, referralCode } = await req.json()
+    const { initData, referralCode: bodyReferralCode } = await req.json()
     
     if (!initData) {
       return new Response(
@@ -159,6 +159,16 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+    
+    // Get referral code from multiple sources: body, start_param from initData
+    const startParamCode = validatedData.start_param
+    const referralCode = bodyReferralCode || startParamCode || null
+    
+    console.log('Referral info:', { 
+      bodyReferralCode, 
+      startParamCode, 
+      finalReferralCode: referralCode 
+    })
     
     const telegramUser = validatedData.user
     console.log('Telegram user validated:', telegramUser.id, telegramUser.first_name)
