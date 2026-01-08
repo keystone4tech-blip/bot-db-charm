@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 // Используем API клиент для взаимодействия с Node.js сервером
 import { getUserProfile, getUserBalance, getUserReferralStats } from '@/lib/api';
 import { useTelegramContext } from '@/components/TelegramProvider';
