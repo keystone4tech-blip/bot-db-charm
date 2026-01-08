@@ -30,10 +30,11 @@ from telegram_bot.bot_instance import bot
 from telegram_bot.dispatcher import dp
 
 # Импортируем роутеры
-from telegram_bot.handlers import komanda_start_router
+from telegram_bot.handlers import komanda_start_router, callback_router
 
 # Регистрируем роутеры
 dp.include_router(komanda_start_router)
+dp.include_router(callback_router)
 
 # Импортируем базу данных
 from telegram_bot.database import database

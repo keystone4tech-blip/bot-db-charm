@@ -1,13 +1,18 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 import os
 from dotenv import load_dotenv
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Загружаем переменные окружения
 load_dotenv()
 
 # URL для WebApp
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://bot-db-charm.lovable.app/")
-
+logger.info(f"Загружено значение WEBAPP_URL из переменных окружения: {WEBAPP_URL}")
 
 def get_webapp_keyboard(start_param: str | None = None) -> InlineKeyboardMarkup:
     """Создает клавиатуру с кнопкой для открытия WebApp."""
@@ -19,6 +24,9 @@ def get_webapp_keyboard(start_param: str | None = None) -> InlineKeyboardMarkup:
     # Проверяем, что URL начинается с https://
     if not webapp_url.startswith(('http://', 'https://')):
         webapp_url = f"https://{webapp_url.lstrip('https://').lstrip('http://')}"
+
+    # Логируем формируемую ссылку
+    logger.info(f"Формируется WebApp URL: {webapp_url} (start_param: {start_param})")
 
     return InlineKeyboardMarkup(
         inline_keyboard=[

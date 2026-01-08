@@ -1,10 +1,11 @@
 from aiogram import Router
-from aiogram.types import Message
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import CommandStart
 from aiogram.exceptions import TelegramNetworkError
 from dotenv import load_dotenv
 import logging
 
+from ..database import database
 from ..keyboards import get_webapp_keyboard
 
 # Загружаем переменные окружения
@@ -17,35 +18,118 @@ logger = logging.getLogger(__name__)
 # Создаем роутер
 komanda_start_router = Router()
 
+def create_confirmation_keyboard(referrer_code: str = None):
+    """Создает inline-клавиатуру для подтверждения/отказа"""
+    if referrer_code:
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="✅ Подтвердить", callback_data=f"confirm_referral:{referrer_code}"),
+                    InlineKeyboardButton(text="❌ Отказаться", callback_data="reject_referral")
+                ]
+            ]
+        )
+    else:
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="➡️ Продолжить", callback_data="continue_without_referral"),
+                ]
+            ]
+        )
+    return keyboard
 
 @komanda_start_router.message(CommandStart())
 async def komanda_start(message: Message) -> None:
     """Обработчик команды /start (включая реферальный параметр).
 
-    Важно: учет реферала выполняется в Mini App при первой авторизации
-    (через backend-функцию telegram-auth). Задача бота — ответить и открыть Mini App,
-    прокинув параметр в ссылку кнопки.
+    Проверяет, существует ли пользователь в базе данных, и предлагает соответствующие действия.
     """
-
     try:
+        # Логируем получение команды /start
+        logger.info(f"Получена команда /start от пользователя {message.from_user.id} (@{message.from_user.username or 'N/A'})")
+        logger.info(f"Полный текст сообщения: {message.text}")
+
         # /start <param>
         start_param = message.text.split(maxsplit=1)[1] if len(message.text.split()) > 1 else None
+        logger.info(f"Извлечен реферальный параметр: {start_param}")
 
         user_full_name = message.from_user.full_name
+        logger.info(f"Имя пользователя: {user_full_name}")
 
-        if start_param:
+        # Проверяем, существует ли пользователь в базе данных
+        existing_user = await database.get_user_by_telegram_id(message.from_user.id)
+
+        if existing_user:
+            # Пользователь уже существует в базе данных
             welcome_text = (
                 f"Привет, {user_full_name}! 👋\n\n"
-                "Вы перешли по реферальной ссылке. Нажмите кнопку ниже, чтобы открыть приложение:"
+                "Рады снова вас видеть! Нажмите кнопку ниже, чтобы открыть приложение:"
             )
-            await message.answer(welcome_text, reply_markup=get_webapp_keyboard(start_param))
+            await message.answer(welcome_text, reply_markup=get_webapp_keyboard())
             return
+        else:
+            # Создаем пользователя без реферала, если он не существует
+            # Это нужно для пользователей, которые просто нажали /start без реферального кода
+            if not start_param:
+                user_data = await database.create_user(
+                    telegram_id=message.from_user.id,
+                    first_name=user_full_name.split()[0] if user_full_name.split() else user_full_name,
+                    last_name=' '.join(user_full_name.split()[1:]) if len(user_full_name.split()) > 1 else None,
+                    username=message.from_user.username,
+                    referral_code=None
+                )
 
-        welcome_text = (
-            f"Привет, {user_full_name}! 👋\n\n"
-            "Нажмите кнопку ниже, чтобы открыть приложение:"
-        )
-        await message.answer(welcome_text, reply_markup=get_webapp_keyboard())
+                if user_data:
+                    welcome_text = (
+                        f"Привет, {user_full_name}! 👋\n\n"
+                        "Добро пожаловать! Нажмите кнопку ниже, чтобы открыть приложение:"
+                    )
+                    await message.answer(welcome_text, reply_markup=get_webapp_keyboard())
+                    logger.info(f"Пользователь {message.from_user.id} зарегистрирован без реферала")
+                    return
+
+        # Пользователь новый
+        if start_param:
+            # Пользователь пришел по реферальной ссылке
+            # Проверяем, существует ли пользователь с таким реферальным кодом
+            referrer = await database.get_user_by_referral_code(start_param)
+
+            if referrer:
+                referrer_name = f"{referrer.get('first_name', '')} {referrer.get('last_name', '')}".strip()
+                if not referrer_name:
+                    referrer_name = referrer.get('telegram_username', 'неизвестный пользователь')
+
+                welcome_text = (
+                    f"Привет, {user_full_name}! 👋\n\n"
+                    f"Вы перешли по реферальной ссылке пользователя {referrer_name}.\n\n"
+                    "Подтвердите, что хотите быть закреплены за этим рефералом:"
+                )
+
+                keyboard = create_confirmation_keyboard(start_param)  # Передаем реферальный код
+                await message.answer(welcome_text, reply_markup=keyboard)
+            else:
+                # Реферальный код не найден, предлагаем продолжить без реферала
+                welcome_text = (
+                    f"Привет, {user_full_name}! 👋\n\n"
+                    "Вы перешли по ссылке, но реферальный код не найден.\n"
+                    "Хотите продолжить без реферала и быть закрепленным за администратором бота?"
+                )
+
+                keyboard = create_confirmation_keyboard()
+                await message.answer(welcome_text, reply_markup=keyboard)
+        else:
+            # Пользователь пришел без реферального кода
+            welcome_text = (
+                f"Привет, {user_full_name}! 👋\n\n"
+                "Вы перешли в бота не по реферальной ссылке.\n"
+                "Хотите пройти по реферальной ссылке или продолжить и быть закрепленным за администратором бота?"
+            )
+
+            keyboard = create_confirmation_keyboard()
+            await message.answer(welcome_text, reply_markup=keyboard)
+
+        logger.info("Сообщение успешно отправлено")
     except TelegramNetworkError as e:
         logger.error(f"Ошибка сети при отправке сообщения пользователю {message.from_user.id}: {e}")
         try:
