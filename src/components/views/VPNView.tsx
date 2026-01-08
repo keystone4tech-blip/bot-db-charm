@@ -1,219 +1,216 @@
-import { motion } from 'framer-motion';
-import { Shield, Zap, Globe, Lock, Check, Server } from 'lucide-react';
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Shield, Globe, Wifi, Lock, Server, CheckCircle, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { hapticFeedback } from '@/lib/telegram';
-
-const features = [
-  { icon: Shield, title: 'Полная защита', description: 'Шифрование военного уровня AES-256' },
-  { icon: Zap, title: 'Высокая скорость', description: 'Без ограничений скорости и трафика' },
-  { icon: Globe, title: '50+ локаций', description: 'Серверы по всему миру' },
-  { icon: Lock, title: 'No-logs политика', description: 'Мы не храним ваши данные' },
-];
-
-const vpnPlans = [
-  { id: 'month', period: 'Месяц', price: 299, perMonth: 299 },
-  { id: '6months', period: '6 месяцев', price: 199, perMonth: 199, discount: 33, popular: true },
-  { id: 'year', period: 'Год', price: 149, perMonth: 149, discount: 50 },
-];
-
-const servers = [
-  { country: 'Нидерланды', flag: '🇳🇱', ping: 32, load: 45 },
-  { country: 'Германия', flag: '🇩🇪', ping: 28, load: 62 },
-  { country: 'США', flag: '🇺🇸', ping: 120, load: 38 },
-  { country: 'Сингапур', flag: '🇸🇬', ping: 180, load: 25 },
-];
-
-const benefits = [
-  'Доступ ко всем заблокированным сайтам',
-  'Защита в публичных Wi-Fi сетях',
-  'Анонимность в интернете',
-  'Работает на всех устройствах',
-];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
 
 export const VPNView = () => {
-  const [selectedPlan, setSelectedPlan] = useState('6months');
-
-  const handleSelectPlan = (planId: string) => {
-    hapticFeedback('light');
-    setSelectedPlan(planId);
-  };
+  const [isConnected, setIsConnected] = useState(false);
+  const [autoConnect, setAutoConnect] = useState(true);
+  
+  const servers = [
+    { id: 1, name: 'США - Нью-Йорк', flag: '🇺🇸', ping: '12ms', status: 'online' },
+    { id: 2, name: 'Германия - Берлин', flag: '🇩🇪', ping: '45ms', status: 'online' },
+    { id: 3, name: 'Япония - Токио', flag: '🇯🇵', ping: '89ms', status: 'offline' },
+    { id: 4, name: 'Сингапур', flag: '🇸🇬', ping: '102ms', status: 'online' },
+    { id: 5, name: 'Нидерланды - Амстердам', flag: '🇳🇱', ping: '38ms', status: 'online' },
+  ];
 
   const handleConnect = () => {
-    hapticFeedback('heavy');
+    setIsConnected(!isConnected);
   };
 
   return (
-    <motion.div
-      className="px-4 py-6 pb-24 space-y-6"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {/* Hero */}
-      <motion.div variants={itemVariants} className="text-center py-6">
-        <motion.div
-          className="icon-container-lg mx-auto mb-6"
-          animate={{ 
-            boxShadow: [
-              '0 0 20px hsl(45 93% 47% / 0.2)',
-              '0 0 50px hsl(45 93% 47% / 0.4)',
-              '0 0 20px hsl(45 93% 47% / 0.2)',
-            ]
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <Shield className="w-12 h-12 text-primary animate-glow" />
-        </motion.div>
-        <h1 className="text-2xl font-bold mb-2">VPN Защита</h1>
-        <p className="text-muted-foreground">Безопасный и анонимный доступ к интернету</p>
-      </motion.div>
-
-      {/* Features grid */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3">
-        {features.map((feature, index) => {
-          const Icon = feature.icon;
-          return (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 + index * 0.1 }}
-              whileHover={{ scale: 1.03 }}
-              className="bg-card rounded-2xl p-4 border border-border text-center hover:border-primary/30 transition-all"
-            >
-              <div className="icon-container mx-auto mb-3">
-                <Icon className="w-5 h-5 text-primary" />
-              </div>
-              <h3 className="font-semibold text-sm mb-1">{feature.title}</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">{feature.description}</p>
-            </motion.div>
-          );
-        })}
-      </motion.div>
-
-      {/* Servers */}
-      <motion.div variants={itemVariants} className="bg-card rounded-2xl p-5 border border-border">
-        <div className="flex items-center gap-2 mb-4">
-          <Server className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold">Доступные серверы</h3>
+    <div className="px-4 py-6 pb-24 space-y-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center"
+      >
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+          <Shield className="w-8 h-8 text-primary" />
         </div>
-        
-        <div className="space-y-2">
-          {servers.slice(0, 2).map((server, index) => (
-            <motion.div
-              key={server.country}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 + index * 0.1 }}
-              className="flex items-center justify-between p-3 bg-secondary/50 rounded-xl hover:bg-secondary transition-colors cursor-pointer"
-            >
+        <h1 className="text-2xl font-bold mb-2">VPN Сервис</h1>
+        <p className="text-muted-foreground">Безопасное и анонимное соединение</p>
+      </motion.div>
+
+      {/* Connection Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <span className="text-xl">{server.flag}</span>
-                <span className="font-medium">{server.country}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">{server.ping}ms</span>
-                <div className="w-16 h-2 bg-secondary rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${server.load}%` }}
-                    transition={{ delay: 0.6 + index * 0.1, duration: 0.5 }}
-                    className="h-full gold-gradient"
-                  />
+                <div className={`p-3 rounded-full ${isConnected ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                  {isConnected ? (
+                    <Wifi className="w-6 h-6 text-green-500" />
+                  ) : (
+                    <Lock className="w-6 h-6 text-red-500" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-semibold">Статус подключения</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {isConnected ? 'Подключено к VPN' : 'Не подключено'}
+                  </p>
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </div>
+              <Switch
+                checked={isConnected}
+                onCheckedChange={handleConnect}
+              />
+            </div>
+            
+            {isConnected && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Сервер:</span>
+                  <span>США - Нью-Йорк</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Пинг:</span>
+                  <span>12ms</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">IP:</span>
+                  <span>192.168.1.100</span>
+                </div>
+              </div>
+            )}
+            
+            <Button 
+              className={`w-full mt-4 ${isConnected ? 'bg-red-500 hover:bg-red-600' : ''}`}
+              onClick={handleConnect}
+            >
+              {isConnected ? 'Отключить VPN' : 'Подключить VPN'}
+            </Button>
+          </CardContent>
+        </Card>
       </motion.div>
 
-      {/* Pricing */}
-      <motion.div variants={itemVariants} className="bg-card rounded-2xl p-5 border border-border">
-        <h3 className="font-semibold mb-2">Тарифы VPN</h3>
-        <p className="text-sm text-muted-foreground mb-4">Выберите подходящий план</p>
-        
-        <div className="space-y-3">
-          {vpnPlans.map((plan) => (
-            <motion.div
-              key={plan.id}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleSelectPlan(plan.id)}
-              className={cn(
-                "relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300",
-                selectedPlan === plan.id
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/30"
-              )}
-            >
-              {plan.popular && (
-                <span className="absolute -top-2 right-3 px-2 py-0.5 gold-gradient text-xs font-semibold rounded-full text-primary-foreground">
-                  Популярный
-                </span>
-              )}
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold">{plan.period}</p>
-                  <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-2xl font-bold">{plan.price} ₽</span>
-                    <span className="text-sm text-muted-foreground">/мес</span>
+      {/* Auto Connect */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5" />
+              Настройки
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium">Автоподключение</h4>
+                <p className="text-sm text-muted-foreground">Подключаться к VPN при запуске</p>
+              </div>
+              <Switch
+                checked={autoConnect}
+                onCheckedChange={setAutoConnect}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Server List */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Server className="w-5 h-5" />
+              Серверы
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {servers.map((server, index) => (
+              <motion.div
+                key={server.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 + index * 0.05 }}
+                className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${
+                  isConnected && index === 0 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-border hover:bg-accent'
+                }`}
+                onClick={() => {
+                  if (server.status === 'online') {
+                    // Устанавливаем этот сервер как текущий
+                  }
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{server.flag}</span>
+                  <div>
+                    <h4 className="font-medium">{server.name}</h4>
+                    <p className="text-sm text-muted-foreground">{server.ping}</p>
                   </div>
                 </div>
-                {plan.discount && (
-                  <span className="text-primary text-sm font-medium">
-                    Экономия {plan.discount}%
-                  </span>
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleConnect}
-          className="w-full mt-4 py-4 gold-gradient rounded-xl font-semibold text-primary-foreground flex items-center justify-center gap-2"
-        >
-          <Check className="w-5 h-5" />
-          Подключить VPN
-        </motion.button>
+                <div className="flex items-center gap-2">
+                  {server.status === 'online' ? (
+                    <Badge variant="default" className="bg-green-500/10 text-green-500">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Онлайн
+                    </Badge>
+                  ) : (
+                    <Badge variant="destructive" className="bg-red-500/10 text-red-500">
+                      <XCircle className="w-3 h-3 mr-1" />
+                      Оффлайн
+                    </Badge>
+                  )}
+                  {isConnected && index === 0 && (
+                    <Badge variant="secondary" className="bg-primary/10 text-primary">
+                      Подключен
+                    </Badge>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </CardContent>
+        </Card>
       </motion.div>
 
-      {/* Benefits */}
-      <motion.div variants={itemVariants} className="bg-card rounded-2xl p-5 border border-border">
-        <h3 className="font-semibold mb-4">Что вы получаете:</h3>
-        <div className="space-y-3">
-          {benefits.map((benefit, index) => (
-            <motion.div
-              key={benefit}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 + index * 0.1 }}
-              className="flex items-center gap-3"
-            >
-              <Check className="w-5 h-5 text-primary shrink-0" />
-              <span className="text-muted-foreground">{benefit}</span>
-            </motion.div>
-          ))}
-        </div>
+      {/* Features */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="grid grid-cols-2 gap-4"
+      >
+        <Card className="text-center">
+          <CardContent className="p-4 flex flex-col items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-2">
+              <Shield className="w-6 h-6 text-blue-500" />
+            </div>
+            <h4 className="font-medium text-sm">Безопасность</h4>
+            <p className="text-xs text-muted-foreground">AES-256 шифрование</p>
+          </CardContent>
+        </Card>
+        <Card className="text-center">
+          <CardContent className="p-4 flex flex-col items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mb-2">
+              <Globe className="w-6 h-6 text-green-500" />
+            </div>
+            <h4 className="font-medium text-sm">Анонимность</h4>
+            <p className="text-xs text-muted-foreground">Скрытие IP-адреса</p>
+          </CardContent>
+        </Card>
       </motion.div>
-    </motion.div>
+    </div>
   );
 };

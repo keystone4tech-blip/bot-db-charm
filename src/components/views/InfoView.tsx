@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Bot, Rocket, Users, MessageSquare, Zap, Shield, ChevronRight } from 'lucide-react';
+import { Bot, Rocket, Users, MessageSquare, Zap, Shield, ChevronRight, Sparkles, Target, TrendingUp } from 'lucide-react';
 
 const features = [
   {
@@ -27,12 +27,30 @@ const features = [
     title: 'Безопасность',
     description: 'Защита данных и безопасные методы продвижения',
   },
+  {
+    icon: Sparkles,
+    title: 'ИИ-анализ',
+    description: 'Умный анализ аудитории и оптимизация контента с помощью ИИ',
+  },
+  {
+    icon: Target,
+    title: 'Таргетинг',
+    description: 'Точный таргетинг рекламы по интересам и поведению аудитории',
+  },
+  {
+    icon: TrendingUp,
+    title: 'Аналитика',
+    description: 'Подробная аналитика эффективности кампаний и роста аудитории',
+  },
 ];
 
 const stats = [
-  { value: '10K+', label: 'Пользователей' },
-  { value: '500K+', label: 'Постов' },
-  { value: '2M+', label: 'Охват' },
+  { value: '15K+', label: 'Пользователей' },
+  { value: '1M+', label: 'Постов' },
+  { value: '5M+', label: 'Охват' },
+  { value: '98%', label: 'Удовлетворенность' },
+  { value: '24/7', label: 'Поддержка' },
+  { value: '100%', label: 'Безопасность' },
 ];
 
 const containerVariants = {
@@ -59,13 +77,13 @@ export const InfoView = () => {
       animate="visible"
     >
       {/* Hero Section */}
-      <motion.div 
+      <motion.div
         variants={itemVariants}
         className="text-center py-8"
       >
         <motion.div
-          className="icon-container-lg mx-auto mb-6"
-          animate={{ 
+          className="icon-container-lg mx-auto mb-6 relative"
+          animate={{
             boxShadow: [
               '0 0 20px hsl(45 93% 47% / 0.2)',
               '0 0 40px hsl(45 93% 47% / 0.4)',
@@ -75,8 +93,15 @@ export const InfoView = () => {
           transition={{ duration: 2, repeat: Infinity }}
         >
           <Bot className="w-12 h-12 text-primary" />
+          <motion.div
+            className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <Sparkles className="w-3 h-3 text-white" />
+          </motion.div>
         </motion.div>
-        <motion.h1 
+        <motion.h1
           className="text-2xl font-bold mb-2"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -84,18 +109,56 @@ export const InfoView = () => {
         >
           TG Автоматизация
         </motion.h1>
-        <motion.p 
-          className="text-muted-foreground"
+        <motion.p
+          className="text-muted-foreground text-lg mb-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
           Умное продвижение вашего Telegram канала
         </motion.p>
+        <motion.div
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary text-sm"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Новое поколение TG-маркетинга</span>
+        </motion.div>
+      </motion.div>
+
+      {/* Stats Grid */}
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-2 md:grid-cols-3 gap-3"
+      >
+        {stats.map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            className="bg-gradient-to-br from-card to-primary/5 p-4 rounded-2xl border border-border text-center"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5 + index * 0.05 }}
+            whileHover={{ scale: 1.05, y: -2 }}
+          >
+            <motion.div
+              className="text-xl font-bold gold-gradient-text mb-1"
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
+            >
+              {stat.value}
+            </motion.div>
+            <div className="text-xs text-muted-foreground">
+              {stat.label}
+            </div>
+          </motion.div>
+        ))}
       </motion.div>
 
       {/* Features */}
       <motion.div className="space-y-3" variants={containerVariants}>
+        <h2 className="text-xl font-bold px-1 mb-4">Возможности</h2>
         {features.map((feature, index) => {
           const Icon = feature.icon;
           return (
@@ -111,9 +174,16 @@ export const InfoView = () => {
                   <Icon className="w-5 h-5 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
-                    {feature.title}
-                  </h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {feature.title}
+                    </h3>
+                    {index < 3 && (
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                        Популярное
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {feature.description}
                   </p>
@@ -125,34 +195,36 @@ export const InfoView = () => {
         })}
       </motion.div>
 
-      {/* Stats */}
+      {/* CTA Section */}
       <motion.div
         variants={itemVariants}
-        className="bg-card rounded-2xl p-6 border border-border"
+        className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-6 border border-border text-center"
       >
-        <h3 className="text-center font-semibold text-lg mb-6">Наши достижения</h3>
-        <div className="grid grid-cols-3 gap-4">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              className="text-center"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5 + index * 0.1 }}
-            >
-              <motion.div
-                className="text-2xl font-bold gold-gradient-text"
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
-              >
-                {stat.value}
-              </motion.div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {stat.label}
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        <motion.h3
+          className="text-xl font-bold mb-2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+        >
+          Готовы начать?
+        </motion.h3>
+        <motion.p
+          className="text-muted-foreground mb-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+        >
+          Присоединяйтесь к тысячам успешных владельцев Telegram-каналов
+        </motion.p>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+        >
+          <button className="gold-gradient text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg hover:shadow-primary/30 transition-all duration-300">
+            Начать бесплатно
+          </button>
+        </motion.div>
       </motion.div>
     </motion.div>
   );

@@ -198,3 +198,103 @@ export const getUserReferralStats = async (userId: string) => {
     throw error;
   }
 };
+
+/**
+ * Получение VPN ключей пользователя
+ */
+export const getUserVPNKeys = async (userId: string) => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/vpn-keys/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Не удалось получить VPN ключи');
+    }
+
+    const data = await response.json();
+    return data.vpnKeys as any[];
+  } catch (error) {
+    console.error('Ошибка получения VPN ключей:', error);
+    throw error;
+  }
+};
+
+/**
+ * Получение телеграм каналов пользователя
+ */
+export const getUserChannels = async (userId: string) => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/telegram-channels/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Не удалось получить телеграм каналы');
+    }
+
+    const data = await response.json();
+    return data.channels as any[];
+  } catch (error) {
+    console.error('Ошибка получения телеграм каналов:', error);
+    throw error;
+  }
+};
+
+/**
+ * Получение ботов пользователя
+ */
+export const getUserBots = async (userId: string) => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/user-bots/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Не удалось получить ботов пользователя');
+    }
+
+    const data = await response.json();
+    return data.bots as any[];
+  } catch (error) {
+    console.error('Ошибка получения ботов пользователя:', error);
+    throw error;
+  }
+};
+
+/**
+ * Получение подписок пользователя
+ */
+export const getUserSubscriptions = async (userId: string) => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/subscriptions/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Не удалось получить подписки пользователя');
+    }
+
+    const data = await response.json();
+    return data.subscriptions as any[];
+  } catch (error) {
+    console.error('Ошибка получения подписок пользователя:', error);
+    throw error;
+  }
+};

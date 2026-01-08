@@ -7,6 +7,7 @@ import { SubscriptionView } from '@/components/views/SubscriptionView';
 import { PromotionView } from '@/components/views/PromotionView';
 import { VPNView } from '@/components/views/VPNView';
 import { ProfileView } from '@/components/views/ProfileView';
+import { ReferralProgramView } from '@/components/views/ReferralProgramView';
 
 const viewVariants = {
   initial: { opacity: 0, x: 20 },
@@ -33,6 +34,8 @@ const Index = () => {
         return <VPNView key="vpn" />;
       case 'profile':
         return <ProfileView key="profile" onNavigate={handleTabChange} />;
+      case 'referral':
+        return <ReferralProgramView key="referral" />;
       default:
         return <InfoView key="info" />;
     }
@@ -42,15 +45,15 @@ const Index = () => {
     <TelegramProvider>
       <div className="min-h-screen bg-background max-w-md mx-auto overflow-x-hidden">
         {/* Logo header */}
-        <motion.header 
+        <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border"
         >
           <div className="flex items-center justify-center h-14 px-4">
-            <motion.h1 
+            <motion.h1
               className="text-lg font-bold gold-gradient-text"
-              animate={{ 
+              animate={{
                 textShadow: [
                   '0 0 10px hsl(45 93% 47% / 0.3)',
                   '0 0 20px hsl(45 93% 47% / 0.5)',

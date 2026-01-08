@@ -1,162 +1,148 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { X, Save, User, Camera, MapPin, Mail, Phone, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ProfileData } from '@/hooks/useProfile';
+import { cn } from '@/lib/utils';
 
 interface EditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  profile: ProfileData | null;
-  onSave: (updates: { first_name?: string; last_name?: string; avatar_url?: string }) => Promise<boolean>;
+  profile: any; // UserProfile
+  onSave: (updates: Partial<any>) => Promise<void>; // updateProfile function
 }
 
 export const EditProfileModal = ({ isOpen, onClose, profile, onSave }: EditProfileModalProps) => {
-  const [firstName, setFirstName] = useState(profile?.first_name || '');
-  const [lastName, setLastName] = useState(profile?.last_name || '');
-  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
+  const [formData, setFormData] = useState({
+    first_name: profile?.first_name || '',
+    last_name: profile?.last_name || '',
+    telegram_username: profile?.telegram_username || '',
+    avatar_url: profile?.avatar_url || '',
+  });
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = async () => {
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSubmit = async () => {
     setIsSaving(true);
-    const success = await onSave({
-      first_name: firstName || undefined,
-      last_name: lastName || undefined,
-      avatar_url: avatarUrl || undefined,
-    });
-    setIsSaving(false);
-    if (success) {
+    try {
+      await onSave(formData);
       onClose();
+    } catch (error) {
+      console.error('Error saving profile:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const initials = (firstName?.slice(0, 1) || 'G') + (lastName?.slice(0, 1) || '');
-
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
-            onClick={onClose}
-          />
-          
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, y: 100, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 100, scale: 0.95 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 max-h-[90vh] overflow-hidden rounded-t-3xl bg-card border-t border-border shadow-xl"
-          >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-2">
-              <div className="w-12 h-1 rounded-full bg-muted-foreground/30" />
-            </div>
-            
-            <div className="px-6 pb-8 pt-2">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-foreground">Редактировать профиль</h2>
-                <button
-                  onClick={onClose}
-                  className="p-2 rounded-full hover:bg-secondary transition-colors"
-                >
-                  <X className="w-5 h-5 text-muted-foreground" />
-                </button>
-              </div>
-              
-              {/* Avatar Section */}
-              <div className="flex flex-col items-center mb-6">
-                <div className="relative">
-                  <Avatar className="w-24 h-24 ring-4 ring-primary/20">
-                    <AvatarImage src={avatarUrl} alt="Preview" />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-2xl font-bold">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 shadow-lg">
-                    <Camera className="w-4 h-4" />
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-3">Нажмите для изменения</p>
-              </div>
-              
-              {/* Form */}
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="firstName" className="text-sm text-foreground">Имя</Label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Введите имя"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="lastName" className="text-sm text-foreground">Фамилия</Label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Введите фамилию"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="avatarUrl" className="text-sm text-foreground">URL фото профиля</Label>
-                  <Input
-                    id="avatarUrl"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://example.com/photo.jpg"
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Вставьте ссылку на изображение
-                  </p>
-                </div>
-              </div>
-              
-              {/* Actions */}
-              <div className="flex gap-3 mt-6">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={onClose}
-                  disabled={isSaving}
-                >
-                  Отмена
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={handleSave}
-                  disabled={isSaving}
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Сохранение...
-                    </>
-                  ) : (
-                    'Сохранить'
-                  )}
-                </Button>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md sm:max-w-md rounded-2xl p-0 max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="flex items-center justify-between">
+            <span>Редактировать профиль</span>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="w-4 h-4" />
+            </Button>
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="p-6 pt-2">
+          <div className="flex flex-col items-center mb-6">
+            <div className="relative group">
+              <Avatar className="w-24 h-24 border-4 border-primary/20">
+                <AvatarImage src={formData.avatar_url} alt={formData.first_name} />
+                <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                  <User className="w-8 h-8" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                <Camera className="w-6 h-6 text-white" />
               </div>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="first_name">Имя</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="first_name"
+                  value={formData.first_name}
+                  onChange={(e) => handleChange('first_name', e.target.value)}
+                  className="pl-10"
+                  placeholder="Введите ваше имя"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="last_name">Фамилия</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="last_name"
+                  value={formData.last_name}
+                  onChange={(e) => handleChange('last_name', e.target.value)}
+                  className="pl-10"
+                  placeholder="Введите вашу фамилию"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="telegram_username">Telegram ник</Label>
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="telegram_username"
+                  value={formData.telegram_username}
+                  onChange={(e) => handleChange('telegram_username', e.target.value)}
+                  className="pl-10"
+                  placeholder="@username"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-8">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={onClose}
+            >
+              Отмена
+            </Button>
+            <Button
+              className="flex-1 gold-gradient text-white"
+              onClick={handleSubmit}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  Сохранение...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Save className="w-4 h-4" />
+                  Сохранить
+                </div>
+              )}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };

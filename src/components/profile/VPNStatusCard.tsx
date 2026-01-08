@@ -1,71 +1,68 @@
 import { motion } from 'framer-motion';
-import { Shield, ShieldOff, Calendar, ArrowRight } from 'lucide-react';
-import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
-
-interface VPNKey {
-  id: string;
-  status: string | null;
-  expires_at: string | null;
-  server_location: string;
-}
+import { Shield, Wifi, Clock, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface VPNStatusCardProps {
-  vpnKey: VPNKey | null;
+  vpnKey: any; // VPNKey
   onNavigate: (tab: string) => void;
 }
 
 export const VPNStatusCard = ({ vpnKey, onNavigate }: VPNStatusCardProps) => {
   const isActive = vpnKey?.status === 'active';
   const expiresAt = vpnKey?.expires_at ? new Date(vpnKey.expires_at) : null;
+  const isExpired = expiresAt && expiresAt < new Date();
+  const serverLocation = vpnKey?.server_location || 'США - Нью-Йорк';
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className="bg-card rounded-2xl p-4 border border-border"
     >
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`p-2 rounded-xl ${isActive ? 'bg-green-500/20' : 'bg-muted'}`}>
-          {isActive ? (
-            <Shield className="w-5 h-5 text-green-500" />
-          ) : (
-            <ShieldOff className="w-5 h-5 text-muted-foreground" />
-          )}
-        </div>
-        <div>
-          <h3 className="font-semibold">VPN</h3>
-          <p className="text-xs text-muted-foreground">
-            {isActive ? 'Активен' : 'Не подключён'}
-          </p>
-        </div>
-      </div>
-
-      {isActive && expiresAt ? (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Активен до:</span>
-            <span className="font-medium text-primary">
-              {format(expiresAt, 'd MMMM yyyy', { locale: ru })}
-            </span>
+      <Card className="bg-card/50 backdrop-blur-sm border-border hover:bg-card/70 transition-all duration-300">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${isActive && !isExpired ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                {isActive && !isExpired ? (
+                  <Shield className="w-5 h-5 text-green-500" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-red-500" />
+                )}
+              </div>
+              <div>
+                <h3 className="font-semibold">VPN Сервис</h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant={isActive && !isExpired ? 'default' : 'destructive'}>
+                    {isActive && !isExpired ? 'Активен' : 'Не активен'}
+                  </Badge>
+                  {isActive && !isExpired && (
+                    <Badge variant="outline" className="text-blue-500 border-blue-500/30">
+                      {serverLocation}
+                    </Badge>
+                  )}
+                  {expiresAt && (
+                    <span className="text-xs text-muted-foreground">
+                      до {expiresAt.toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onNavigate('vpn')}
+              >
+                Управление
+              </Button>
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground">
-            Сервер: {vpnKey.server_location}
-          </div>
-        </div>
-      ) : (
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onNavigate('vpn')}
-          className="w-full py-2.5 rounded-xl bg-primary/10 text-primary font-medium flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors"
-        >
-          Приобрести VPN
-          <ArrowRight className="w-4 h-4" />
-        </motion.button>
-      )}
+        </CardContent>
+      </Card>
     </motion.div>
   );
 };

@@ -1,88 +1,65 @@
 import { motion } from 'framer-motion';
-import { Bot, Calendar, ArrowRight } from 'lucide-react';
-import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { Bot, Settings, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
-interface UserBot {
-  id: string;
-  bot_name: string;
-  bot_username: string | null;
-  bot_type: string;
-  is_active: boolean | null;
-  created_at: string | null;
-}
-
-// Bot subscription typically expires based on subscription
 interface BotStatusCardProps {
-  bot: UserBot | null;
+  bot: any; // UserBot
   subscriptionExpiresAt: string | null;
   onNavigate: (tab: string) => void;
 }
 
 export const BotStatusCard = ({ bot, subscriptionExpiresAt, onNavigate }: BotStatusCardProps) => {
-  const isCreated = !!bot;
-  const expiresAt = subscriptionExpiresAt ? new Date(subscriptionExpiresAt) : null;
-  const isActive = bot?.is_active;
+  const isActive = bot?.is_active || false;
+  const isSubscribed = subscriptionExpiresAt && new Date(subscriptionExpiresAt) > new Date();
+  const botName = bot?.bot_name || 'Мой бот';
+  const botUsername = bot?.bot_username || 'не указан';
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-      className="bg-card rounded-2xl p-4 border border-border"
     >
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`p-2 rounded-xl ${isCreated && isActive ? 'bg-primary/20' : 'bg-muted'}`}>
-          <Bot className={`w-5 h-5 ${isCreated && isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-        </div>
-        <div className="flex-1">
-          <h3 className="font-semibold">Реферальный бот</h3>
-          <p className="text-xs text-muted-foreground">
-            {isCreated ? bot.bot_name : 'Не создан'}
-          </p>
-        </div>
-        {isCreated && (
-          <div className={`px-2 py-1 rounded-full text-xs ${
-            isActive 
-              ? 'bg-green-500/20 text-green-400' 
-              : 'bg-red-500/20 text-red-400'
-          }`}>
-            {isActive ? 'Активен' : 'Неактивен'}
-          </div>
-        )}
-      </div>
-
-      {isCreated ? (
-        <div className="space-y-2">
-          {bot.bot_username && (
-            <div className="text-sm text-muted-foreground">
-              @{bot.bot_username}
+      <Card className="bg-card/50 backdrop-blur-sm border-border hover:bg-card/70 transition-all duration-300">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${isActive ? 'bg-purple-500/10' : 'bg-gray-500/10'}`}>
+                {isActive ? (
+                  <Bot className="w-5 h-5 text-purple-500" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-gray-500" />
+                )}
+              </div>
+              <div>
+                <h3 className="font-semibold">{botName}</h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant={isActive ? 'default' : 'secondary'}>
+                    {isActive ? 'Активен' : 'Не активен'}
+                  </Badge>
+                  {isSubscribed && (
+                    <Badge variant="outline" className="text-green-500 border-green-500/30">
+                      Подписка активна
+                    </Badge>
+                  )}
+                </div>
+                {isActive && (
+                  <p className="text-xs text-muted-foreground mt-1">@{botUsername}</p>
+                )}
+              </div>
             </div>
-          )}
-          {expiresAt && (
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Работает до:</span>
-              <span className="font-medium text-primary">
-                {format(expiresAt, 'd MMMM yyyy', { locale: ru })}
-              </span>
-            </div>
-          )}
-          <div className="text-xs text-muted-foreground">
-            Тип: {bot.bot_type === 'referral' ? 'Реферальный' : bot.bot_type}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onNavigate('subscription')}
+            >
+              Управление
+            </Button>
           </div>
-        </div>
-      ) : (
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onNavigate('subscription')}
-          className="w-full py-2.5 rounded-xl bg-primary/10 text-primary font-medium flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors"
-        >
-          Создать бота
-          <ArrowRight className="w-4 h-4" />
-        </motion.button>
-      )}
+        </CardContent>
+      </Card>
     </motion.div>
   );
 };

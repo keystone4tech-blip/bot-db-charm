@@ -1,79 +1,83 @@
 import { motion } from 'framer-motion';
-import { Wallet, TrendingUp, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
-import { BalanceData } from '@/hooks/useProfile';
+import { Coins, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface BalanceCardsProps {
-  balance: BalanceData | null;
+  balance: any; // UserBalance
 }
 
 export const BalanceCards = ({ balance }: BalanceCardsProps) => {
-  const balanceItems = [
+  const internalBalance = balance?.internal_balance || 0;
+  const externalBalance = balance?.external_balance || 0;
+  const totalEarned = balance?.total_earned || 0;
+  const totalWithdrawn = balance?.total_withdrawn || 0;
+
+  const stats = [
     {
-      label: 'Внутренний баланс',
-      value: balance?.internal_balance || 0,
+      title: 'Внутренний баланс',
+      value: internalBalance.toFixed(2),
       icon: Wallet,
-      color: 'from-primary to-primary/70',
-      delay: 0,
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500/10'
     },
     {
-      label: 'Внешний баланс',
-      value: balance?.external_balance || 0,
+      title: 'Внешний баланс',
+      value: externalBalance.toFixed(2),
+      icon: Coins,
+      color: 'text-green-500',
+      bgColor: 'bg-green-500/10'
+    },
+    {
+      title: 'Всего заработано',
+      value: totalEarned.toFixed(2),
       icon: TrendingUp,
-      color: 'from-success to-success/70',
-      delay: 0.1,
+      color: 'text-emerald-500',
+      bgColor: 'bg-emerald-500/10'
     },
     {
-      label: 'Всего заработано',
-      value: balance?.total_earned || 0,
-      icon: ArrowDownCircle,
-      color: 'from-gold to-gold-dark',
-      delay: 0.2,
-    },
-    {
-      label: 'Выведено',
-      value: balance?.total_withdrawn || 0,
-      icon: ArrowUpCircle,
-      color: 'from-muted-foreground/50 to-muted-foreground/30',
-      delay: 0.3,
-    },
+      title: 'Всего выведено',
+      value: totalWithdrawn.toFixed(2),
+      icon: TrendingDown,
+      color: 'text-orange-500',
+      bgColor: 'bg-orange-500/10'
+    }
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className="mt-6"
-    >
-      <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-        <Wallet className="w-5 h-5 text-primary" />
-        Балансы
-      </h3>
+    <div className="space-y-3">
+      <h2 className="text-lg font-semibold px-1">Баланс</h2>
       <div className="grid grid-cols-2 gap-3">
-        {balanceItems.map((item, index) => {
-          const Icon = item.icon;
+        {stats.map((stat, index) => {
+          const Icon = stat.icon;
           return (
             <motion.div
-              key={item.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: item.delay }}
-              className="bg-card rounded-xl p-4 border border-border relative overflow-hidden group hover:border-primary/30 transition-colors"
+              key={stat.title}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
             >
-              {/* Gradient glow on hover */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity`} />
-              
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 bg-gradient-to-br ${item.color}`}>
-                <Icon className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">
-                {item.value.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
+              <Card className="bg-card/50 backdrop-blur-sm border-border hover:bg-card/70 transition-all duration-300">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${stat.bgColor}`}>
+                      <Icon className={`w-5 h-5 ${stat.color}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground truncate">
+                        {stat.title}
+                      </p>
+                      <p className="font-semibold truncate">
+                        {stat.value} $
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
           );
         })}
       </div>
-    </motion.div>
+    </div>
   );
 };

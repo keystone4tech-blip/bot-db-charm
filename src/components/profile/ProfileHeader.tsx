@@ -1,73 +1,74 @@
 import { motion } from 'framer-motion';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User, Edit3, Copy, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Camera, Edit2 } from 'lucide-react';
-import { ProfileData } from '@/hooks/useProfile';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+import { TelegramUser } from '@/hooks/useTelegram';
 
 interface ProfileHeaderProps {
-  profile: ProfileData | null;
-  telegramUser: { first_name?: string; last_name?: string; photo_url?: string } | null;
+  profile: any; // UserProfile
+  telegramUser: TelegramUser | null;
   onEditClick: () => void;
 }
 
 export const ProfileHeader = ({ profile, telegramUser, onEditClick }: ProfileHeaderProps) => {
-  const displayName = profile?.first_name 
-    ? `${profile.first_name}${profile.last_name ? ` ${profile.last_name}` : ''}`
-    : telegramUser?.first_name 
-      ? `${telegramUser.first_name}${telegramUser.last_name ? ` ${telegramUser.last_name}` : ''}`
-      : 'Гость';
-  
-  const username = profile?.telegram_username 
-    ? `@${profile.telegram_username}` 
-    : 'Telegram Mini App';
-  
-  const initials = (profile?.first_name?.slice(0, 1) || telegramUser?.first_name?.slice(0, 1) || 'G') + 
-                   (profile?.last_name?.slice(0, 1) || telegramUser?.last_name?.slice(0, 1) || '');
-  
+  const fullName = profile?.first_name ? `${profile.first_name}${profile.last_name ? ` ${profile.last_name}` : ''}` : 'Неизвестный пользователь';
+  const username = profile?.telegram_username || telegramUser?.username || 'Не указан';
   const avatarUrl = profile?.avatar_url || telegramUser?.photo_url;
+
+  const handleCopyReferralLink = () => {
+    if (profile?.referral_code) {
+      const referralLink = `https://t.me/Keystone_Tech_bot?start=${profile.referral_code}`;
+      navigator.clipboard.writeText(referralLink);
+    }
+  };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card rounded-2xl p-6 text-center border border-border relative overflow-hidden"
+      className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-6 border border-border relative overflow-hidden"
     >
-      {/* Gradient background effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 pointer-events-none" />
-      
-      <div className="relative z-10">
-        <div className="relative inline-block">
-          <Avatar className="w-24 h-24 mx-auto mb-4 ring-4 ring-primary/20">
-            <AvatarImage src={avatarUrl} alt={displayName} />
-            <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-2xl font-bold">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onEditClick}
-            className="absolute bottom-3 right-0 bg-primary text-primary-foreground rounded-full p-2 shadow-lg"
-          >
-            <Camera className="w-4 h-4" />
-          </motion.button>
-        </div>
-        
-        <h2 className="text-xl font-bold text-foreground">{displayName}</h2>
-        <p className="text-sm text-muted-foreground mt-1">{username}</p>
-        
-        {profile?.telegram_id && (
-          <p className="text-xs text-muted-foreground mt-2 opacity-60">ID: {profile.telegram_id}</p>
-        )}
+      {/* Decorative elements */}
+      <div className="absolute -top-10 -right-10 w-24 h-24 rounded-full bg-primary/10 blur-xl"></div>
+      <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-primary/5 blur-xl"></div>
 
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="mt-4"
+      <div className="relative z-10 flex items-center gap-4">
+        <Avatar className="w-16 h-16 border-2 border-primary/20">
+          <AvatarImage src={avatarUrl || undefined} alt={fullName} />
+          <AvatarFallback className="bg-primary/10 text-primary">
+            <User className="w-6 h-6" />
+          </AvatarFallback>
+        </Avatar>
+
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl font-bold truncate">{fullName}</h2>
+          <p className="text-muted-foreground text-sm truncate">@{username}</p>
+          
+          {profile?.referral_code && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                Реф. код: {profile.referral_code}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={handleCopyReferralLink}
+              >
+                <Copy className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <Button
+          variant="outline"
+          size="icon"
           onClick={onEditClick}
+          className="shrink-0"
         >
-          <Edit2 className="w-4 h-4 mr-2" />
-          Редактировать профиль
+          <Edit3 className="w-4 h-4" />
         </Button>
       </div>
     </motion.div>

@@ -1,4 +1,4 @@
-import { Info, CreditCard, TrendingUp, Shield, User } from 'lucide-react';
+import { Info, CreditCard, TrendingUp, Shield, User, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { hapticFeedback } from '@/lib/telegram';
@@ -14,6 +14,7 @@ const navItems: NavItem[] = [
   { icon: CreditCard, label: 'Подписка', id: 'subscription' },
   { icon: TrendingUp, label: 'Продвиж.', id: 'promotion' },
   { icon: Shield, label: 'VPN', id: 'vpn' },
+  { icon: Users, label: 'Реф. прогр.', id: 'referral' },
   { icon: User, label: 'Кабинет', id: 'profile' },
 ];
 
@@ -53,7 +54,7 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                 />
               )}
               <motion.div
-                animate={{ 
+                animate={{
                   scale: isActive ? 1.15 : 1,
                   y: isActive ? -2 : 0
                 }}
@@ -68,7 +69,7 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                   <motion.div
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1.5, opacity: 0 }}
-                    transition={{ 
+                    transition={{
                       duration: 0.5,
                       repeat: Infinity,
                       repeatDelay: 1
