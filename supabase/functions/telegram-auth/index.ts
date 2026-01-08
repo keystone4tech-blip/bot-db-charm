@@ -293,33 +293,53 @@ Deno.serve(async (req) => {
       
       // If user was referred, create referral records
       if (referrerId) {
-        // Create direct referral (level 1)
-        await supabase
+        // Create direct referral (level 1) (idempotent)
+        const { error: referralInsertError } = await supabase
           .from('referrals')
-          .insert({
-            referrer_id: referrerId,
-            referred_id: profile.id,
-            level: 1,
-            is_active: true,
-          })
-        
-        // Update referrer's referral stats
-        const { data: currentStats } = await supabase
-          .from('referral_stats')
-          .select('*')
-          .eq('user_id', referrerId)
-          .single()
-        
-        if (currentStats) {
-          await supabase
-            .from('referral_stats')
-            .update({
-              total_referrals: (currentStats.total_referrals || 0) + 1,
-              level_1_count: (currentStats.level_1_count || 0) + 1,
-            })
-            .eq('user_id', referrerId)
+          .upsert(
+            {
+              referrer_id: referrerId,
+              referred_id: profile.id,
+              level: 1,
+              is_active: true,
+            },
+            { onConflict: 'referrer_id,referred_id' }
+          )
+
+        if (referralInsertError) {
+          console.error('Error creating referral row:', referralInsertError)
         }
-        
+
+        // Ensure referrer's referral_stats exists and increment counters
+        const { data: currentStats, error: statsFetchError } = await supabase
+          .from('referral_stats')
+          .select('user_id,total_referrals,level_1_count')
+          .eq('user_id', referrerId)
+          .maybeSingle()
+
+        if (statsFetchError) {
+          console.error('Error fetching referral_stats for referrer:', statsFetchError)
+        }
+
+        const nextTotal = (currentStats?.total_referrals || 0) + 1
+        const nextLevel1 = (currentStats?.level_1_count || 0) + 1
+
+        const { error: statsUpsertError } = await supabase
+          .from('referral_stats')
+          .upsert(
+            {
+              user_id: referrerId,
+              total_referrals: nextTotal,
+              level_1_count: nextLevel1,
+              total_earnings: 0,
+            },
+            { onConflict: 'user_id' }
+          )
+
+        if (statsUpsertError) {
+          console.error('Error upserting referral_stats for referrer:', statsUpsertError)
+        }
+
         console.log('Referral created for:', referrerId)
       }
     } else {
