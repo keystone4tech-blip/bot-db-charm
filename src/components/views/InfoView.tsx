@@ -99,7 +99,7 @@ export const InfoView = () => {
             whileHover={{ scale: 1.05, y: -2 }}
           >
             <motion.div
-              className="text-xl font-bold gold-gradient-text mb-1"
+              className="text-xl font-bold gold-gradient-text has-text-outline mb-1"
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
             >

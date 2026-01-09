@@ -67,7 +67,7 @@ export const BalanceCards = ({ balance }: BalanceCardsProps) => {
                       <p className="text-xs text-muted-foreground truncate">
                         {stat.title}
                       </p>
-                      <p className="font-semibold truncate flex items-center gap-1">
+                      <p className="font-semibold truncate flex items-center gap-1 has-text-outline">
                         {stat.value}
                         <Coins className="w-4 h-4 text-yellow-500" />
                       </p>
