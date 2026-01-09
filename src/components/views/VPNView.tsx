@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Shield, Globe, Wifi, Lock, Server, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, Globe, Wifi, Lock, Server, CheckCircle, XCircle, Download, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,29 +40,27 @@ export const VPNView = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${hasSubscription ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                  {hasSubscription ? (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                  ) : (
-                    <Lock className="w-5 h-5 text-red-500" />
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-semibold">Статус подписки</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {hasSubscription ? 'Активна' : 'Не оформлена'}
-                  </p>
-                </div>
+        <Card className="bg-card rounded-2xl p-5 border border-border">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${hasSubscription ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                {hasSubscription ? (
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                ) : (
+                  <Lock className="w-5 h-5 text-red-500" />
+                )}
               </div>
-              <Badge variant={hasSubscription ? 'default' : 'destructive'}>
-                {hasSubscription ? 'Подписка активна' : 'Нужна подписка'}
-              </Badge>
+              <div>
+                <h3 className="font-semibold">Статус подписки</h3>
+                <p className="text-sm text-muted-foreground">
+                  {hasSubscription ? 'Активна' : 'Не оформлена'}
+                </p>
+              </div>
             </div>
-          </CardContent>
+            <Badge variant={hasSubscription ? 'default' : 'destructive'}>
+              {hasSubscription ? 'Подписка активна' : 'Нужна подписка'}
+            </Badge>
+          </div>
         </Card>
       </motion.div>
 
@@ -74,14 +72,12 @@ export const VPNView = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wifi className="w-5 h-5" />
-                Ваш VPN ключ
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <Card className="bg-card rounded-2xl p-5 border border-border">
+            <div className="flex items-center gap-2 mb-4">
+              <Wifi className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold">Ваш VPN ключ</h3>
+            </div>
+            <div className="space-y-4">
               <div className="p-4 bg-secondary/30 rounded-xl">
                 <p className="text-sm font-mono break-all">{vpnKey?.key}</p>
                 <p className="text-xs text-muted-foreground mt-2">
@@ -100,13 +96,15 @@ export const VPNView = () => {
 
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
-                  Скачать конфиг
+                  <Download className="w-4 h-4 mr-2" />
+                  Конфиг
                 </Button>
                 <Button className="flex-1 gold-gradient text-white">
-                  Копировать ключ
+                  <Copy className="w-4 h-4 mr-2" />
+                  Копировать
                 </Button>
               </div>
-            </CardContent>
+            </div>
           </Card>
         </motion.div>
       ) : (
@@ -116,14 +114,12 @@ export const VPNView = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="w-5 h-5" />
-                Наши преимущества
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <Card className="bg-card rounded-2xl p-5 border border-border">
+            <div className="flex items-center gap-2 mb-4">
+              <Globe className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold">Наши преимущества</h3>
+            </div>
+            <div className="space-y-4">
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="p-1 rounded-full bg-green-500/10 mt-1">
@@ -169,7 +165,7 @@ export const VPNView = () => {
               <Button className="w-full gold-gradient text-white">
                 Оформить подписку
               </Button>
-            </CardContent>
+            </div>
           </Card>
         </motion.div>
       )}
@@ -180,14 +176,12 @@ export const VPNView = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <Server className="w-5 h-5" />
-              Доступные серверы
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <Card className="bg-card rounded-2xl p-5 border border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <Server className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold">Доступные серверы</h3>
+          </div>
+          <div className="space-y-3">
             {[
               { id: 1, name: 'США - Нью-Йорк', flag: '🇺🇸', ping: '12ms', status: 'online' },
               { id: 2, name: 'Германия - Берлин', flag: '🇩🇪', ping: '45ms', status: 'online' },
@@ -226,7 +220,7 @@ export const VPNView = () => {
                 </div>
               </motion.div>
             ))}
-          </CardContent>
+          </div>
         </Card>
       </motion.div>
     </div>
