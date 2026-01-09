@@ -68,7 +68,67 @@
     --sidebar-ring: 45 93% 47%;
   }
 
-  /* Force dark mode always */
+  /* Light theme variables */
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 7%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 7%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 7%;
+
+    --primary: 45 93% 47%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 90%;
+    --secondary-foreground: 0 0% 7%;
+
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 45 93% 47%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 7%;
+
+    --border: 0 0% 80%;
+    --input: 0 0% 85%;
+    --ring: 45 93% 47%;
+
+    /* Custom Keystone tokens for light theme */
+    --gold: 45 93% 47%;
+    --gold-dark: 45 93% 35%;
+    --gold-glow: 45 93% 55%;
+    --surface-elevated: 0 0% 98%;
+    --surface-overlay: 0 0% 95%;
+
+    --gradient-gold: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(38 90% 40%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
+
+    --card-shadow: 0 4px 20px -4px hsl(0 0% 0% / 0.1);
+    --card-shadow-gold: 0 4px 30px -4px hsl(45 93% 47% / 0.2);
+    --glow-gold: 0 0 40px hsl(45 93% 47% / 0.3);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 7%;
+    --sidebar-primary: 45 93% 47%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 90%;
+    --sidebar-accent-foreground: 0 0% 7%;
+    --sidebar-border: 0 0% 80%;
+    --sidebar-ring: 45 93% 47%;
+  }
+
+  /* Dark theme variables */
   .dark {
     --background: 0 0% 7%;
     --foreground: 0 0% 95%;

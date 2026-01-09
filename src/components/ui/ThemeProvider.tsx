@@ -35,11 +35,16 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   }, []);
 
   useEffect(() => {
-    // Применяем тему к body
+    // Применяем тему к html элементу
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);
+    document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.style.colorScheme = theme;
-    
+
+    // Также обновляем класс body для совместимости
+    document.body.classList.remove('light', 'dark');
+    document.body.classList.add(theme);
+
     // Сохраняем тему в localStorage
     localStorage.setItem('theme', theme);
   }, [theme]);
