@@ -9,14 +9,27 @@ load_dotenv()
 class SupabaseClient:
     def __init__(self):
         self.url = os.getenv("SUPABASE_URL")
-        self.key = os.getenv("SUPABASE_KEY")
+        self.anon_key = os.getenv("SUPABASE_KEY")
+        self.service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-        if not self.url or not self.key:
-            raise ValueError("Необходимо указать SUPABASE_URL и SUPABASE_KEY в .env файле")
+        if not self.url:
+            raise ValueError("Необходимо указать SUPABASE_URL в .env файле")
 
-        # Используем анонимный ключ для всех операций
-        self.client: Client = create_client(self.url, self.key)
-        self.service_client = self.client  # Используем один и тот же клиент
+        if not self.anon_key and not self.service_role_key:
+            raise ValueError("Необходимо указать SUPABASE_KEY или SUPABASE_SERVICE_ROLE_KEY в .env файле")
+
+        # Клиент для чтения (может использовать anon key)
+        self.client: Client = create_client(self.url, self.anon_key or self.service_role_key)
+        
+        # Сервисный клиент для записи - обходит RLS политики
+        # ВАЖНО: service_role_key дает полный доступ к БД, используйте только на сервере!
+        if self.service_role_key and self.service_role_key != "ваш_настоящий_service_role_key_из_supabase":
+            self.service_client: Client = create_client(self.url, self.service_role_key)
+            print("✅ Supabase: используется service_role_key для полного доступа к БД")
+        else:
+            # Fallback на anon key, но операции записи могут быть ограничены RLS
+            self.service_client = self.client
+            print("⚠️ Supabase: service_role_key не настроен, используется anon key (RLS ограничения активны)")
 
     async def get_user_by_telegram_id(self, telegram_id: int) -> Optional[Dict[str, Any]]:
         """Получает пользователя по telegram_id"""
