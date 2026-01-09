@@ -1,129 +1,187 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Globe, Wifi, Lock, Server, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { useTelegramContext } from '@/components/TelegramProvider';
 
 export const VPNView = () => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [autoConnect, setAutoConnect] = useState(true);
-  
-  const servers = [
-    { id: 1, name: 'США - Нью-Йорк', flag: '🇺🇸', ping: '12ms', status: 'online' },
-    { id: 2, name: 'Германия - Берлин', flag: '🇩🇪', ping: '45ms', status: 'online' },
-    { id: 3, name: 'Япония - Токио', flag: '🇯🇵', ping: '89ms', status: 'offline' },
-    { id: 4, name: 'Сингапур', flag: '🇸🇬', ping: '102ms', status: 'online' },
-    { id: 5, name: 'Нидерланды - Амстердам', flag: '🇳🇱', ping: '38ms', status: 'online' },
-  ];
+  // Состояние подписки (в реальной реализации будет получаться из профиля пользователя)
+  const { authProfile, authBalance, authReferralStats } = useTelegramContext();
 
-  const handleConnect = () => {
-    setIsConnected(!isConnected);
-  };
+  // В реальной реализации это будет определяться на основе данных подписки пользователя
+  // Например, из поля subscription в профиле или отдельного API-вызова
+  // Здесь мы используем заглушку, но в реальности нужно будет проверять статус подписки
+  const hasSubscription = false; // Заглушка - в реальной реализации будет проверка статуса подписки
+
+  // В реальной реализации данные о VPN ключе будут получаться из профиля пользователя
+  // или отдельного API-вызова
+  const vpnKey = hasSubscription ? {
+    key: 'vpn-key-abc123def456',
+    serverLocation: 'США - Нью-Йорк',
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Через 30 дней
+    status: 'active'
+  } : null;
 
   return (
     <div className="px-4 py-6 pb-24 space-y-6">
-      {/* Header */}
+      {/* Header - объединенный значок и название */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center"
+        className="flex items-center gap-3"
       >
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-          <Shield className="w-8 h-8 text-primary" />
+        <div className="p-3 rounded-xl bg-primary/10">
+          <Shield className="w-6 h-6 text-primary" />
         </div>
-        <h1 className="text-2xl font-bold mb-2">VPN Сервис</h1>
-        <p className="text-muted-foreground">Безопасное и анонимное соединение</p>
+        <div>
+          <h1 className="text-xl font-bold">VPN Сервис</h1>
+          <p className="text-sm text-muted-foreground">Безопасное и анонимное соединение</p>
+        </div>
       </motion.div>
 
-      {/* Connection Card */}
+      {/* Статус подписки */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
         <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-full ${isConnected ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                  {isConnected ? (
-                    <Wifi className="w-6 h-6 text-green-500" />
+                <div className={`p-2 rounded-lg ${hasSubscription ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                  {hasSubscription ? (
+                    <CheckCircle className="w-5 h-5 text-green-500" />
                   ) : (
-                    <Lock className="w-6 h-6 text-red-500" />
+                    <Lock className="w-5 h-5 text-red-500" />
                   )}
                 </div>
                 <div>
-                  <h3 className="font-semibold">Статус подключения</h3>
+                  <h3 className="font-semibold">Статус подписки</h3>
                   <p className="text-sm text-muted-foreground">
-                    {isConnected ? 'Подключено к VPN' : 'Не подключено'}
+                    {hasSubscription ? 'Активна' : 'Не оформлена'}
                   </p>
                 </div>
               </div>
-              <Switch
-                checked={isConnected}
-                onCheckedChange={handleConnect}
-              />
+              <Badge variant={hasSubscription ? 'default' : 'destructive'}>
+                {hasSubscription ? 'Подписка активна' : 'Нужна подписка'}
+              </Badge>
             </div>
-            
-            {isConnected && (
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Информация в зависимости от статуса подписки */}
+      {hasSubscription ? (
+        // Если подписка есть
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wifi className="w-5 h-5" />
+                Ваш VPN ключ
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-secondary/30 rounded-xl">
+                <p className="text-sm font-mono break-all">{vpnKey?.key}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Срок действия: до {vpnKey?.expiresAt.toLocaleDateString('ru-RU')}
+                </p>
+              </div>
+
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Сервер:</span>
-                  <span>США - Нью-Йорк</span>
+                <h4 className="font-medium">Как использовать:</h4>
+                <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                  <li>Скачайте приложение OpenVPN или WireGuard</li>
+                  <li>Импортируйте конфигурационный файл или введите ключ вручную</li>
+                  <li>Подключитесь к серверу {vpnKey?.serverLocation}</li>
+                </ol>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  Скачать конфиг
+                </Button>
+                <Button className="flex-1 gold-gradient text-white">
+                  Копировать ключ
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ) : (
+        // Если подписки нет
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="w-5 h-5" />
+                Наши преимущества
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="p-1 rounded-full bg-green-500/10 mt-1">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">Высокая скорость</h4>
+                    <p className="text-sm text-muted-foreground">Без ограничений скорости, полный доступ к каналам</p>
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Пинг:</span>
-                  <span>12ms</span>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-1 rounded-full bg-green-500/10 mt-1">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">Полная анонимность</h4>
+                    <p className="text-sm text-muted-foreground">Скрытие IP-адреса, защита от слежки</p>
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">IP:</span>
-                  <span>192.168.1.100</span>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-1 rounded-full bg-green-500/10 mt-1">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">Безопасность данных</h4>
+                    <p className="text-sm text-muted-foreground">AES-256 шифрование, защита от утечек</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-1 rounded-full bg-green-500/10 mt-1">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">Доступ к заблокированным ресурсам</h4>
+                    <p className="text-sm text-muted-foreground">Обход блокировок, доступ к любому контенту</p>
+                  </div>
                 </div>
               </div>
-            )}
-            
-            <Button 
-              className={`w-full mt-4 ${isConnected ? 'bg-red-500 hover:bg-red-600' : ''}`}
-              onClick={handleConnect}
-            >
-              {isConnected ? 'Отключить VPN' : 'Подключить VPN'}
-            </Button>
-          </CardContent>
-        </Card>
-      </motion.div>
 
-      {/* Auto Connect */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              Настройки
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium">Автоподключение</h4>
-                <p className="text-sm text-muted-foreground">Подключаться к VPN при запуске</p>
-              </div>
-              <Switch
-                checked={autoConnect}
-                onCheckedChange={setAutoConnect}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+              <Button className="w-full gold-gradient text-white">
+                Оформить подписку
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
-      {/* Server List */}
+      {/* Серверы */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -133,26 +191,25 @@ export const VPNView = () => {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Server className="w-5 h-5" />
-              Серверы
+              Доступные серверы
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {servers.map((server, index) => (
+            {[
+              { id: 1, name: 'США - Нью-Йорк', flag: '🇺🇸', ping: '12ms', status: 'online' },
+              { id: 2, name: 'Германия - Берлин', flag: '🇩🇪', ping: '45ms', status: 'online' },
+              { id: 3, name: 'Япония - Токио', flag: '🇯🇵', ping: '89ms', status: 'online' },
+              { id: 4, name: 'Сингапур', flag: '🇸🇬', ping: '102ms', status: 'online' },
+              { id: 5, name: 'Нидерланды - Амстердам', flag: '🇳🇱', ping: '38ms', status: 'online' },
+            ].map((server, index) => (
               <motion.div
                 key={server.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 + index * 0.05 }}
-                className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${
-                  isConnected && index === 0 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-border hover:bg-accent'
+                className={`flex items-center justify-between p-4 rounded-xl border ${
+                  server.status === 'online' ? 'border-border' : 'border-border opacity-50'
                 }`}
-                onClick={() => {
-                  if (server.status === 'online') {
-                    // Устанавливаем этот сервер как текущий
-                  }
-                }}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{server.flag}</span>
@@ -173,41 +230,9 @@ export const VPNView = () => {
                       Оффлайн
                     </Badge>
                   )}
-                  {isConnected && index === 0 && (
-                    <Badge variant="secondary" className="bg-primary/10 text-primary">
-                      Подключен
-                    </Badge>
-                  )}
                 </div>
               </motion.div>
             ))}
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Features */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="grid grid-cols-2 gap-4"
-      >
-        <Card className="text-center">
-          <CardContent className="p-4 flex flex-col items-center justify-center">
-            <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-2">
-              <Shield className="w-6 h-6 text-blue-500" />
-            </div>
-            <h4 className="font-medium text-sm">Безопасность</h4>
-            <p className="text-xs text-muted-foreground">AES-256 шифрование</p>
-          </CardContent>
-        </Card>
-        <Card className="text-center">
-          <CardContent className="p-4 flex flex-col items-center justify-center">
-            <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mb-2">
-              <Globe className="w-6 h-6 text-green-500" />
-            </div>
-            <h4 className="font-medium text-sm">Анонимность</h4>
-            <p className="text-xs text-muted-foreground">Скрытие IP-адреса</p>
           </CardContent>
         </Card>
       </motion.div>
