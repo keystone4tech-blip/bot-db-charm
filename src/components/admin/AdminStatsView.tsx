@@ -6,12 +6,12 @@ import {
   CreditCard,
   TrendingUp,
   Shield,
-  Activity
+  Activity,
+  Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getAdminStats } from '@/lib/adminApi';
-import { Loader2 } from 'lucide-react';
 
 export const AdminStatsView = () => {
   const [stats, setStats] = useState<any>(null);
