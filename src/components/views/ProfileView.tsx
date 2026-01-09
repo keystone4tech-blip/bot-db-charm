@@ -151,33 +151,6 @@ export const ProfileView = ({ onNavigate }: ProfileViewProps) => {
           />
         </div>
 
-        {/* Services Status Section */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold px-1 flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Мои услуги
-          </h2>
-
-          {/* VPN Status */}
-          <VPNStatusCard
-            vpnKey={vpnKey}
-            onNavigate={handleNavigate}
-          />
-
-          {/* Channel Status */}
-          <ChannelStatusCard
-            channel={channel}
-            onNavigate={handleNavigate}
-          />
-
-          {/* Bot Status */}
-          <BotStatusCard
-            bot={userBot}
-            subscriptionExpiresAt={subscription?.expires_at || null}
-            onNavigate={handleNavigate}
-          />
-        </div>
-
         {/* Support Ticket Button */}
         <div className="pt-4">
           <SupportTicketButton profileId={displayProfile?.id || null} />
