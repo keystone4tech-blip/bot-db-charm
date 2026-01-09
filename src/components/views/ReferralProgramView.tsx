@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Share2, Copy, BarChart3, Trophy, Gift, Star, ArrowLeft } from 'lucide-react';
+import { Users, Share2, Copy, BarChart3, Trophy, Gift, Star, ArrowLeft, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,11 +27,11 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
   const totalReferrals = authReferralStats?.total_referrals || 0;
   const totalEarnings = authReferralStats?.total_earnings || 0;
   const levelCounts = [
-    { level: 1, count: authReferralStats?.level_1_count || 0, color: 'bg-blue-500', reward: '$1.00' },
-    { level: 2, count: authReferralStats?.level_2_count || 0, color: 'bg-green-500', reward: '$0.50' },
-    { level: 3, count: authReferralStats?.level_3_count || 0, color: 'bg-purple-500', reward: '$0.25' },
-    { level: 4, count: authReferralStats?.level_4_count || 0, color: 'bg-yellow-500', reward: '$0.10' },
-    { level: 5, count: authReferralStats?.level_5_count || 0, color: 'bg-red-500', reward: '$0.05' },
+    { level: 1, count: authReferralStats?.level_1_count || 0, color: 'bg-blue-500', reward: '1.00', rewardCoins: 100 },
+    { level: 2, count: authReferralStats?.level_2_count || 0, color: 'bg-green-500', reward: '0.50', rewardCoins: 50 },
+    { level: 3, count: authReferralStats?.level_3_count || 0, color: 'bg-purple-500', reward: '0.25', rewardCoins: 25 },
+    { level: 4, count: authReferralStats?.level_4_count || 0, color: 'bg-yellow-500', reward: '0.10', rewardCoins: 10 },
+    { level: 5, count: authReferralStats?.level_5_count || 0, color: 'bg-red-500', reward: '0.05', rewardCoins: 5 },
   ];
   const referralLink = authProfile?.referral_code ? `https://t.me/Keystone_Tech_bot?start=${authProfile.referral_code}` : '';
 
@@ -62,20 +62,21 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
   };
 
   const rewards = [
-    { level: 1, threshold: 5, reward: '$5.00', achieved: totalReferrals >= 5 },
-    { level: 2, threshold: 25, reward: '$25.00', achieved: totalReferrals >= 25 },
-    { level: 3, threshold: 100, reward: '$100.00', achieved: totalReferrals >= 100 },
+    { level: 1, threshold: 5, reward: '5', rewardCoins: 5, achieved: totalReferrals >= 5 },
+    { level: 2, threshold: 25, reward: '25', rewardCoins: 25, achieved: totalReferrals >= 25 },
+    { level: 3, threshold: 100, reward: '100', rewardCoins: 100, achieved: totalReferrals >= 100 },
   ];
 
 
   return (
-    <div className="px-4 pb-24 space-y-6">
-      {/* Header */}
-      <PageHeader
-        icon="users"
-        title="Реферальная программа"
-        subtitle="Приглашайте друзей и зарабатывайте вместе"
-      />
+    <div className="px-4 pb-24">
+      <div className="mt-6 space-y-6">
+        {/* Header */}
+        <PageHeader
+          icon="users"
+          title="Реферальная программа"
+          subtitle="Приглашайте друзей и зарабатывайте вместе"
+        />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-4">
@@ -98,7 +99,10 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
         >
           <Card className="bg-gradient-to-br from-green-500/5 to-emerald-500/5 border-green-500/20">
             <CardContent className="p-4 text-center">
-              <div className="text-3xl font-bold text-green-500">${totalEarnings.toFixed(2)}</div>
+              <div className="text-3xl font-bold text-green-500 flex items-center gap-1">
+                <span>{totalEarnings.toFixed(2)}</span>
+                <Coins className="w-5 h-5 text-yellow-500" />
+              </div>
               <div className="text-sm text-muted-foreground">Заработано</div>
             </CardContent>
           </Card>
@@ -175,7 +179,10 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
                   </div>
                   <div>
                     <div className="font-medium">Приведите {reward.threshold} человек</div>
-                    <div className="text-sm text-muted-foreground">Награда: {reward.reward}</div>
+                    <div className="text-sm text-muted-foreground flex items-center gap-1">
+                      Награда: {reward.reward}
+                      <Coins className="w-4 h-4 text-yellow-500" />
+                    </div>
                   </div>
                 </div>
                 <Badge variant={reward.achieved ? 'default' : 'secondary'}>
@@ -208,12 +215,15 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
                     {level.count}
                   </div>
                   <div className="text-xs text-muted-foreground">L{level.level}</div>
-                  <div className="text-xs text-primary font-medium">{level.reward}</div>
+                  <div className="text-xs text-primary font-medium flex items-center justify-center gap-0.5">
+                    {level.reward}
+                    <Coins className="w-3 h-3 text-yellow-500" />
+                  </div>
                 </div>
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-3 text-center">
-              За каждого реферала 1-го уровня вы получаете {levelCounts[0].reward}, за 2-го уровня - {levelCounts[1].reward} и т.д.
+              За каждого реферала 1-го уровня вы получаете {levelCounts[0].reward} <Coins className="w-3 h-3 text-yellow-500 inline" />, за 2-го уровня - {levelCounts[1].reward} <Coins className="w-3 h-3 text-yellow-500 inline" /> и т.д.
             </p>
           </CardContent>
         </Card>
@@ -255,5 +265,6 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
         </Card>
       </motion.div>
     </div>
+  </div>
   );
 };
