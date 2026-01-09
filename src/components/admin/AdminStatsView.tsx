@@ -5,14 +5,10 @@ import {
   CreditCard, 
   TrendingUp,
   Shield,
-  Activity,
-  Loader2
+  Activity
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/PageHeader';
-<<<<<<< HEAD
-import { getAdminStats } from '@/lib/adminApi';
-=======
 
 const statsData = [
   { label: 'Всего пользователей', value: '1,234', icon: Users, trend: '+12%', color: 'text-blue-500' },
@@ -22,7 +18,6 @@ const statsData = [
   { label: 'Доход за месяц', value: '₽45,678', icon: TrendingUp, trend: '+23%', color: 'text-emerald-500' },
   { label: 'Активность', value: '98%', icon: Activity, trend: '+2%', color: 'text-orange-500' },
 ];
->>>>>>> 8138b3a2be49d3069810e92ea76d823b941a2876
 
 export const AdminStatsView = () => {
   return (

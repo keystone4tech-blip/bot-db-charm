@@ -19,12 +19,6 @@ elif USE_SUPABASE:
     # Используем Supabase клиент
     from supabase import create_client, Client
     from ..supabase_client import supabase_client
-<<<<<<< HEAD
-elif USE_LOCAL_POSTGRES:
-    # Используем локальную PostgreSQL
-    from ..postgres_db_manager import db_manager
-=======
->>>>>>> 8138b3a2be49d3069810e92ea76d823b941a2876
 else:
     # Используем прямое подключение к базе данных
     DB_HOST = os.getenv("DB_HOST", "localhost")
@@ -66,14 +60,6 @@ class Database:
         elif self.use_supabase:
             print("Используется Supabase для хранения данных")
             # Подключение к Supabase уже инициализировано в supabase_client
-<<<<<<< HEAD
-        elif self.use_local_postgres:
-            print("Используется локальная PostgreSQL для хранения данных")
-            # Подключаемся к локальной PostgreSQL через db_manager
-            from ..postgres_db_manager import db_manager
-            await db_manager.connect()
-=======
->>>>>>> 8138b3a2be49d3069810e92ea76d823b941a2876
         else:
             if not DATABASE_URL:
                 raise ValueError("Не найдена строка подключения к базе данных. Установите переменную окружения SUPABASE_DATABASE_URL")
@@ -92,17 +78,14 @@ class Database:
             # Используем API клиент для получения пользователя
             from ..api_client import api_client
             return await api_client.get_user(telegram_id)
+        elif self.use_db_api:
+            # Используем DB API клиент для получения пользователя
+            from ..db_api_client import db_api_client
+            return db_api_client.get_user_by_telegram_id(telegram_id)
         elif self.use_supabase:
             # Используем Supabase клиент для получения пользователя
             from ..supabase_client import supabase_client
             return await supabase_client.get_user_by_telegram_id(telegram_id)
-<<<<<<< HEAD
-        elif self.use_local_postgres:
-            # Используем локальную PostgreSQL через db_manager
-            from ..postgres_db_manager import db_manager
-            return await db_manager.get_user_by_telegram_id(telegram_id)
-=======
->>>>>>> 8138b3a2be49d3069810e92ea76d823b941a2876
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
@@ -151,26 +134,6 @@ class Database:
                 telegram_id, first_name, last_name, username,
                 avatar_url, referral_code, referred_by
             )
-<<<<<<< HEAD
-        elif self.use_local_postgres:
-            # Используем локальную PostgreSQL через db_manager
-            from ..postgres_db_manager import db_manager
-            return await db_manager.create_user(telegram_id, first_name, last_name, username, avatar_url, referral_code, referred_by)
-        elif self.use_db_api:
-            # Используем DB API клиент для создания пользователя
-            from ..db_api_client import db_api_client
-            user_data = {
-                'telegram_id': telegram_id,
-                'telegram_username': username,
-                'first_name': first_name,
-                'last_name': last_name,
-                'avatar_url': avatar_url,
-                'referral_code': referral_code,
-                'referred_by': referred_by
-            }
-            return db_api_client.create_user(user_data)
-=======
->>>>>>> 8138b3a2be49d3069810e92ea76d823b941a2876
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
@@ -882,17 +845,14 @@ class Database:
             # Используем API клиент для получения пользователя
             from ..api_client import api_client
             return await api_client.get_user(telegram_id)
+        elif self.use_db_api:
+            # Используем DB API клиент для получения пользователя
+            from ..db_api_client import db_api_client
+            return db_api_client.get_user_by_telegram_id(telegram_id)
         elif self.use_supabase:
             # Используем Supabase клиент для получения пользователя
             from ..supabase_client import supabase_client
             return await supabase_client.get_user_by_telegram_id(telegram_id)
-<<<<<<< HEAD
-        elif self.use_local_postgres:
-            # Используем локальную PostgreSQL через db_manager
-            from ..postgres_db_manager import db_manager
-            return await db_manager.get_user_by_telegram_id(telegram_id)
-=======
->>>>>>> 8138b3a2be49d3069810e92ea76d823b941a2876
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
