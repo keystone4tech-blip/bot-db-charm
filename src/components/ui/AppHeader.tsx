@@ -1,0 +1,44 @@
+import { motion } from 'framer-motion';
+import { Shield, Settings } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface AppHeaderProps {
+  isAdminMode?: boolean;
+  className?: string;
+}
+
+export const AppHeader = ({ isAdminMode = false, className }: AppHeaderProps) => {
+  return (
+    <motion.header
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border",
+        className
+      )}
+    >
+      <div className="max-w-md mx-auto flex items-center justify-center h-14 px-4">
+        <div className="flex items-center gap-2">
+          {isAdminMode ? (
+            <Settings className="w-5 h-5 text-primary" />
+          ) : (
+            <Shield className="w-5 h-5 text-primary" />
+          )}
+          <motion.h1
+            className="text-lg font-bold gold-gradient-text"
+            animate={{
+              textShadow: [
+                '0 0 10px hsl(45 93% 47% / 0.3)',
+                '0 0 20px hsl(45 93% 47% / 0.5)',
+                '0 0 10px hsl(45 93% 47% / 0.3)',
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            {isAdminMode ? '⚙️ Админ-панель' : 'Keystone Tech'}
+          </motion.h1>
+        </div>
+      </div>
+    </motion.header>
+  );
+};

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TelegramProvider } from '@/components/TelegramProvider';
+import { AppHeader } from '@/components/ui/AppHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { AdminBottomNav } from '@/components/admin/AdminBottomNav';
 import { InfoView } from '@/components/views/InfoView';
@@ -78,29 +79,9 @@ const Index = () => {
 
   return (
     <TelegramProvider>
-      <div className="min-h-screen bg-background max-w-md mx-auto overflow-x-hidden">
-        {/* Logo header */}
-        <motion.header
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border"
-        >
-          <div className="flex items-center justify-center h-14 px-4">
-            <motion.h1
-              className="text-lg font-bold gold-gradient-text"
-              animate={{
-                textShadow: [
-                  '0 0 10px hsl(45 93% 47% / 0.3)',
-                  '0 0 20px hsl(45 93% 47% / 0.5)',
-                  '0 0 10px hsl(45 93% 47% / 0.3)',
-                ]
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              {isAdminMode ? '⚙️ Админ-панель' : 'Keystone Tech'}
-            </motion.h1>
-          </div>
-        </motion.header>
+      <div className="min-h-screen bg-background max-w-md mx-auto overflow-x-hidden pt-14">
+        {/* App header */}
+        <AppHeader isAdminMode={isAdminMode} />
 
         {/* Main content */}
         <main className="min-h-[calc(100vh-3.5rem-4rem)]">
