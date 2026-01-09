@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Users,
-  Bot,
-  CreditCard,
+import { 
+  Users, 
+  Bot, 
+  CreditCard, 
   TrendingUp,
   Shield,
   Activity,
@@ -11,70 +10,21 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/PageHeader';
+<<<<<<< HEAD
 import { getAdminStats } from '@/lib/adminApi';
+=======
+
+const statsData = [
+  { label: 'Всего пользователей', value: '1,234', icon: Users, trend: '+12%', color: 'text-blue-500' },
+  { label: 'Активные боты', value: '89', icon: Bot, trend: '+5%', color: 'text-green-500' },
+  { label: 'Подписки', value: '456', icon: CreditCard, trend: '+8%', color: 'text-primary' },
+  { label: 'VPN ключи', value: '234', icon: Shield, trend: '+15%', color: 'text-purple-500' },
+  { label: 'Доход за месяц', value: '₽45,678', icon: TrendingUp, trend: '+23%', color: 'text-emerald-500' },
+  { label: 'Активность', value: '98%', icon: Activity, trend: '+2%', color: 'text-orange-500' },
+];
+>>>>>>> 8138b3a2be49d3069810e92ea76d823b941a2876
 
 export const AdminStatsView = () => {
-  const [stats, setStats] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setIsLoading(true);
-        const data = await getAdminStats();
-        setStats(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Ошибка загрузки статистики');
-        console.error('Ошибка загрузки статистики:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
-
-  const statsData = stats ? [
-    { label: 'Всего пользователей', value: stats.totalUsers.toLocaleString(), icon: Users, trend: '+12%', color: 'text-blue-500' },
-    { label: 'Активные боты', value: stats.activeBots.toString(), icon: Bot, trend: '+5%', color: 'text-green-500' },
-    { label: 'Подписки', value: stats.activeSubscriptions.toString(), icon: CreditCard, trend: '+8%', color: 'text-primary' },
-    { label: 'VPN ключи', value: stats.activeVPNKeys.toString(), icon: Shield, trend: '+15%', color: 'text-purple-500' },
-    { label: 'Доход за месяц', value: `₽${stats.monthlyRevenue.toLocaleString()}`, icon: TrendingUp, trend: '+23%', color: 'text-emerald-500' },
-    { label: 'Активность', value: `${stats.activityRate}%`, icon: Activity, trend: '+2%', color: 'text-orange-500' },
-  ] : [];
-
-  if (isLoading) {
-    return (
-      <div className="px-4 pb-24 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="mx-auto mb-4"
-          >
-            <Loader2 className="w-8 h-8 text-primary" />
-          </motion.div>
-          <p className="text-muted-foreground">Загрузка статистики...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="px-4 pb-24 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/20 flex items-center justify-center">
-            <span className="text-3xl">⚠️</span>
-          </div>
-          <p className="text-destructive mb-2">Ошибка загрузки статистики</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="px-4 pb-24">
       <PageHeader

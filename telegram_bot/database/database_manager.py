@@ -10,22 +10,21 @@ load_dotenv()
 USE_API_CLIENT = os.getenv("USE_API_CLIENT", "false").lower() == "true"
 USE_DB_API = os.getenv("USE_DB_API", "false").lower() == "true"
 USE_SUPABASE = os.getenv("USE_SUPABASE", "false").lower() == "true"
-USE_LOCAL_POSTGRES = os.getenv("USE_LOCAL_POSTGRES", "false").lower() == "true"
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 if USE_API_CLIENT:
     # Используем API клиент для взаимодействия с Node.js сервером
     from ..api_client import api_client
-elif USE_DB_API:
-    # Используем DB API клиент
-    from ..db_api_client import db_api_client
 elif USE_SUPABASE:
     # Используем Supabase клиент
     from supabase import create_client, Client
     from ..supabase_client import supabase_client
+<<<<<<< HEAD
 elif USE_LOCAL_POSTGRES:
     # Используем локальную PostgreSQL
     from ..postgres_db_manager import db_manager
+=======
+>>>>>>> 8138b3a2be49d3069810e92ea76d823b941a2876
 else:
     # Используем прямое подключение к базе данных
     DB_HOST = os.getenv("DB_HOST", "localhost")
@@ -47,7 +46,6 @@ class Database:
         self.use_supabase = USE_SUPABASE
         self.use_api_client = USE_API_CLIENT
         self.use_db_api = USE_DB_API
-        self.use_local_postgres = USE_LOCAL_POSTGRES
         self.supabase_service_role_key = SUPABASE_SERVICE_ROLE_KEY
 
     async def connect(self):
@@ -60,14 +58,22 @@ class Database:
             # Импортируем DB API клиент
             from ..db_api_client import db_api_client
             self.db_api_client = db_api_client
+        elif self.use_db_api:
+            print("Используется DB API для безопасного доступа к базе данных")
+            # Импортируем DB API клиент
+            from ..db_api_client import db_api_client
+            self.db_api_client = db_api_client
         elif self.use_supabase:
             print("Используется Supabase для хранения данных")
             # Подключение к Supabase уже инициализировано в supabase_client
+<<<<<<< HEAD
         elif self.use_local_postgres:
             print("Используется локальная PostgreSQL для хранения данных")
             # Подключаемся к локальной PostgreSQL через db_manager
             from ..postgres_db_manager import db_manager
             await db_manager.connect()
+=======
+>>>>>>> 8138b3a2be49d3069810e92ea76d823b941a2876
         else:
             if not DATABASE_URL:
                 raise ValueError("Не найдена строка подключения к базе данных. Установите переменную окружения SUPABASE_DATABASE_URL")
@@ -90,10 +96,13 @@ class Database:
             # Используем Supabase клиент для получения пользователя
             from ..supabase_client import supabase_client
             return await supabase_client.get_user_by_telegram_id(telegram_id)
+<<<<<<< HEAD
         elif self.use_local_postgres:
             # Используем локальную PostgreSQL через db_manager
             from ..postgres_db_manager import db_manager
             return await db_manager.get_user_by_telegram_id(telegram_id)
+=======
+>>>>>>> 8138b3a2be49d3069810e92ea76d823b941a2876
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
@@ -142,6 +151,7 @@ class Database:
                 telegram_id, first_name, last_name, username,
                 avatar_url, referral_code, referred_by
             )
+<<<<<<< HEAD
         elif self.use_local_postgres:
             # Используем локальную PostgreSQL через db_manager
             from ..postgres_db_manager import db_manager
@@ -159,6 +169,8 @@ class Database:
                 'referred_by': referred_by
             }
             return db_api_client.create_user(user_data)
+=======
+>>>>>>> 8138b3a2be49d3069810e92ea76d823b941a2876
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
@@ -176,6 +188,9 @@ class Database:
                     telegram_id, username, first_name, last_name,
                     avatar_url, referral_code, referred_by
                 )
+
+            # Проверяем и создаем таблицы при подключении
+            await self.check_and_create_tables()
 
     async def disconnect(self):
         """Закрывает пул соединений или завершает работу с API клиентом"""
@@ -871,10 +886,13 @@ class Database:
             # Используем Supabase клиент для получения пользователя
             from ..supabase_client import supabase_client
             return await supabase_client.get_user_by_telegram_id(telegram_id)
+<<<<<<< HEAD
         elif self.use_local_postgres:
             # Используем локальную PostgreSQL через db_manager
             from ..postgres_db_manager import db_manager
             return await db_manager.get_user_by_telegram_id(telegram_id)
+=======
+>>>>>>> 8138b3a2be49d3069810e92ea76d823b941a2876
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
