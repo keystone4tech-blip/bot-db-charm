@@ -58,20 +58,26 @@ async def komanda_start(message: Message) -> None:
         logger.info(f"Имя пользователя: {user_full_name}")
 
         # Проверяем, существует ли пользователь в базе данных
+        logger.info("Проверка существования пользователя в базе данных...")
         existing_user = await database.get_user_by_telegram_id(message.from_user.id)
+        logger.info(f"Результат проверки существования пользователя: {existing_user is not None}")
 
         if existing_user:
             # Пользователь уже существует в базе данных
+            logger.info(f"Пользователь {message.from_user.id} уже существует в базе данных")
             welcome_text = (
                 f"Привет, {user_full_name}! 👋\n\n"
                 "Рады снова вас видеть! Нажмите кнопку ниже, чтобы открыть приложение:"
             )
             await message.answer(welcome_text, reply_markup=get_webapp_keyboard())
+            logger.info(f"Отправлено сообщение существующему пользователю {message.from_user.id}")
             return
         else:
+            logger.info(f"Пользователь {message.from_user.id} не найден в базе данных")
             # Создаем пользователя без реферала, если он не существует
             # Это нужно для пользователей, которые просто нажали /start без реферального кода
             if not start_param:
+                logger.info(f"Создание пользователя без реферала для {message.from_user.id}")
                 user_data = await database.create_user(
                     telegram_id=message.from_user.id,
                     first_name=user_full_name.split()[0] if user_full_name.split() else user_full_name,
@@ -79,6 +85,7 @@ async def komanda_start(message: Message) -> None:
                     username=message.from_user.username,
                     referral_code=None
                 )
+                logger.info(f"Результат создания пользователя: {user_data is not None}")
 
                 if user_data:
                     welcome_text = (
@@ -88,18 +95,26 @@ async def komanda_start(message: Message) -> None:
                     await message.answer(welcome_text, reply_markup=get_webapp_keyboard())
                     logger.info(f"Пользователь {message.from_user.id} зарегистрирован без реферала")
                     return
+                else:
+                    logger.error(f"Не удалось создать пользователя {message.from_user.id}")
+                    await message.answer("Произошла ошибка при регистрации. Пожалуйста, попробуйте еще раз.")
+                    return
 
         # Пользователь новый
+        logger.info(f"Обработка нового пользователя с реферальным параметром: {start_param}")
         if start_param:
             # Пользователь пришел по реферальной ссылке
             # Проверяем, существует ли пользователь с таким реферальным кодом
+            logger.info(f"Поиск реферала по коду: {start_param}")
             referrer = await database.get_user_by_referral_code(start_param)
+            logger.info(f"Результат поиска реферала: {referrer is not None}")
 
             if referrer:
                 referrer_name = f"{referrer.get('first_name', '')} {referrer.get('last_name', '')}".strip()
                 if not referrer_name:
                     referrer_name = referrer.get('telegram_username', 'неизвестный пользователь')
 
+                logger.info(f"Найден реферал: {referrer_name}")
                 welcome_text = (
                     f"Привет, {user_full_name}! 👋\n\n"
                     f"Вы перешли по реферальной ссылке пользователя {referrer_name}.\n\n"
@@ -108,8 +123,10 @@ async def komanda_start(message: Message) -> None:
 
                 keyboard = create_confirmation_keyboard(start_param)  # Передаем реферальный код
                 await message.answer(welcome_text, reply_markup=keyboard)
+                logger.info("Отправлено сообщение с подтверждением реферала")
             else:
                 # Реферальный код не найден, предлагаем продолжить без реферала
+                logger.info("Реферальный код не найден, предлагаем продолжить без реферала")
                 welcome_text = (
                     f"Привет, {user_full_name}! 👋\n\n"
                     "Вы перешли по ссылке, но реферальный код не найден.\n"
@@ -118,8 +135,10 @@ async def komanda_start(message: Message) -> None:
 
                 keyboard = create_confirmation_keyboard()
                 await message.answer(welcome_text, reply_markup=keyboard)
+                logger.info("Отправлено сообщение с предложением продолжить без реферала")
         else:
             # Пользователь пришел без реферального кода
+            logger.info("Пользователь пришел без реферального кода")
             welcome_text = (
                 f"Привет, {user_full_name}! 👋\n\n"
                 "Вы перешли в бота не по реферальной ссылке.\n"
@@ -128,8 +147,9 @@ async def komanda_start(message: Message) -> None:
 
             keyboard = create_confirmation_keyboard()
             await message.answer(welcome_text, reply_markup=keyboard)
+            logger.info("Отправлено сообщение с предложением пройти по реферальной ссылке")
 
-        logger.info("Сообщение успешно отправлено")
+        logger.info("Обработка команды /start завершена успешно")
     except TelegramNetworkError as e:
         logger.error(f"Ошибка сети при отправке сообщения пользователю {message.from_user.id}: {e}")
         try:
@@ -138,7 +158,7 @@ async def komanda_start(message: Message) -> None:
         except:
             pass  # Игнорируем ошибки при повторной отправке
     except Exception as e:
-        logger.error(f"Неизвестная ошибка при обработке команды /start от пользователя {message.from_user.id}: {e}")
+        logger.error(f"Неизвестная ошибка при обработке команды /start от пользователя {message.from_user.id}: {e}", exc_info=True)
         try:
             await message.answer("Произошла ошибка. Пожалуйста, попробуйте еще раз.")
         except:

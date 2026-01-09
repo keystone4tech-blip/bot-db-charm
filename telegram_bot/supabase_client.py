@@ -10,7 +10,17 @@ class SupabaseClient:
     def __init__(self):
         self.url = os.getenv("SUPABASE_URL")
         self.anon_key = os.getenv("SUPABASE_KEY")
-        self.service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+        # В Edge Functions Lovable Cloud сервисный ключ доступен через Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+        # В локальной разработке используем os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        # Попробуем получить ключ через Deno (в Edge Functions), если не получится - используем os.getenv (в локальной разработке)
+        try:
+            # Попробуем получить ключ через Deno (работает в Edge Functions)
+            import js
+            self.service_role_key = js.eval("Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')")
+        except:
+            # Если Deno недоступен (локальная разработка), используем os.getenv
+            self.service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
         if not self.url:
             raise ValueError("Необходимо указать SUPABASE_URL в .env файле")
@@ -23,9 +33,13 @@ class SupabaseClient:
         
         # Сервисный клиент для записи - обходит RLS политики
         # ВАЖНО: service_role_key дает полный доступ к БД, используйте только на сервере!
-        if self.service_role_key and self.service_role_key != "ваш_настоящий_service_role_key_из_supabase":
-            self.service_client: Client = create_client(self.url, self.service_role_key)
-            print("✅ Supabase: используется service_role_key для полного доступа к БД")
+        if self.service_role_key and self.service_role_key != "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...":
+            try:
+                self.service_client: Client = create_client(self.url, self.service_role_key)
+                print("✅ Supabase: используется service_role_key для полного доступа к БД")
+            except Exception as e:
+                print(f"⚠️ Supabase: service_role_key недействителен, используется anon key: {e}")
+                self.service_client = self.client
         else:
             # Fallback на anon key, но операции записи могут быть ограничены RLS
             self.service_client = self.client

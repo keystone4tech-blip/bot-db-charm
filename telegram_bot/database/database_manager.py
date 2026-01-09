@@ -6,9 +6,11 @@ from dotenv import load_dotenv
 # Загружаем переменные окружения
 load_dotenv()
 
-# Определяем способ подключения: через API клиент, Supabase или напрямую к БД
+# Определяем способ подключения: через API клиент, DB API, Supabase или напрямую к БД
 USE_API_CLIENT = os.getenv("USE_API_CLIENT", "false").lower() == "true"
+USE_DB_API = os.getenv("USE_DB_API", "false").lower() == "true"
 USE_SUPABASE = os.getenv("USE_SUPABASE", "false").lower() == "true"
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 if USE_API_CLIENT:
     # Используем API клиент для взаимодействия с Node.js сервером
@@ -37,12 +39,24 @@ class Database:
         self.pool: Optional[asyncpg.Pool] = None
         self.use_supabase = USE_SUPABASE
         self.use_api_client = USE_API_CLIENT
+        self.use_db_api = USE_DB_API
+        self.supabase_service_role_key = SUPABASE_SERVICE_ROLE_KEY
 
     async def connect(self):
         """Создает подключение к базе данных или инициализирует API клиент"""
         if self.use_api_client:
             print("Используется API клиент для взаимодействия с Node.js сервером")
             # При использовании API клиента не нужно подключаться к БД напрямую
+        elif self.use_db_api:
+            print("Используется DB API для безопасного доступа к базе данных")
+            # Импортируем DB API клиент
+            from ..db_api_client import db_api_client
+            self.db_api_client = db_api_client
+        elif self.use_db_api:
+            print("Используется DB API для безопасного доступа к базе данных")
+            # Импортируем DB API клиент
+            from ..db_api_client import db_api_client
+            self.db_api_client = db_api_client
         elif self.use_supabase:
             print("Используется Supabase для хранения данных")
             # Подключение к Supabase уже инициализировано в supabase_client
@@ -57,6 +71,86 @@ class Database:
                 command_timeout=60
             )
             print("Подключение к базе данных установлено")
+
+    async def get_user_by_telegram_id(self, telegram_id: int):
+        """Получает пользователя по telegram_id"""
+        if self.use_api_client:
+            # Используем API клиент для получения пользователя
+            from ..api_client import api_client
+            return await api_client.get_user(telegram_id)
+        elif self.use_db_api:
+            # Используем DB API клиент для получения пользователя
+            from ..db_api_client import db_api_client
+            return db_api_client.get_user_by_telegram_id(telegram_id)
+        elif self.use_supabase:
+            # Используем Supabase клиент для получения пользователя
+            from ..supabase_client import supabase_client
+            return await supabase_client.get_user_by_telegram_id(telegram_id)
+        else:
+            if not self.pool:
+                raise Exception("База данных не подключена")
+
+            async with self.pool.acquire() as connection:
+                query = """
+                    SELECT id, telegram_id, telegram_username, first_name, last_name,
+                           avatar_url, referral_code, referred_by, created_at
+                    FROM profiles
+                    WHERE telegram_id = $1
+                """
+                return await connection.fetchrow(query, telegram_id)
+
+    async def create_user(self, telegram_id: int, first_name: str, last_name: str = None,
+                          username: str = None, avatar_url: str = None, referral_code: str = None,
+                          referred_by: str = None):
+        """Создает нового пользователя"""
+        if self.use_api_client:
+            # Используем API клиент для создания пользователя
+            from ..api_client import api_client
+            return await api_client.register_user(
+                telegram_id=telegram_id,
+                first_name=first_name,
+                last_name=last_name,
+                username=username,
+                avatar_url=avatar_url,
+                referral_code=referral_code
+            )
+        elif self.use_db_api:
+            # Используем DB API клиент для создания пользователя
+            from ..db_api_client import db_api_client
+            user_data = {
+                'telegram_id': telegram_id,
+                'telegram_username': username,
+                'first_name': first_name,
+                'last_name': last_name,
+                'avatar_url': avatar_url,
+                'referral_code': referral_code,
+                'referred_by': referred_by
+            }
+            return db_api_client.create_user(user_data)
+        elif self.use_supabase:
+            # Используем Supabase клиент для создания пользователя
+            from ..supabase_client import supabase_client
+            return await supabase_client.create_user(
+                telegram_id, first_name, last_name, username,
+                avatar_url, referral_code, referred_by
+            )
+        else:
+            if not self.pool:
+                raise Exception("База данных не подключена")
+
+            async with self.pool.acquire() as connection:
+                query = """
+                    INSERT INTO profiles (
+                        telegram_id, telegram_username, first_name, last_name,
+                        avatar_url, referral_code, referred_by
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    RETURNING id, telegram_id, created_at
+                """
+                return await connection.fetchrow(
+                    query,
+                    telegram_id, username, first_name, last_name,
+                    avatar_url, referral_code, referred_by
+                )
 
             # Проверяем и создаем таблицы при подключении
             await self.check_and_create_tables()
@@ -749,9 +843,15 @@ class Database:
         """Получает пользователя по telegram_id"""
         if self.use_api_client:
             # Используем API клиент для получения пользователя
+            from ..api_client import api_client
             return await api_client.get_user(telegram_id)
+        elif self.use_db_api:
+            # Используем DB API клиент для получения пользователя
+            from ..db_api_client import db_api_client
+            return db_api_client.get_user_by_telegram_id(telegram_id)
         elif self.use_supabase:
             # Используем Supabase клиент для получения пользователя
+            from ..supabase_client import supabase_client
             return await supabase_client.get_user_by_telegram_id(telegram_id)
         else:
             if not self.pool:
@@ -772,6 +872,7 @@ class Database:
         """Создает нового пользователя"""
         if self.use_api_client:
             # Используем API клиент для создания пользователя
+            from ..api_client import api_client
             return await api_client.register_user(
                 telegram_id=telegram_id,
                 first_name=first_name,
@@ -780,8 +881,22 @@ class Database:
                 avatar_url=avatar_url,
                 referral_code=referral_code
             )
+        elif self.use_db_api:
+            # Используем DB API клиент для создания пользователя
+            from ..db_api_client import db_api_client
+            user_data = {
+                'telegram_id': telegram_id,
+                'telegram_username': username,
+                'first_name': first_name,
+                'last_name': last_name,
+                'avatar_url': avatar_url,
+                'referral_code': referral_code,
+                'referred_by': referred_by
+            }
+            return db_api_client.create_user(user_data)
         elif self.use_supabase:
             # Используем Supabase клиент для создания пользователя
+            from ..supabase_client import supabase_client
             return await supabase_client.create_user(
                 telegram_id, first_name, last_name, username,
                 avatar_url, referral_code, referred_by
@@ -858,6 +973,15 @@ class Database:
             # При использовании API клиента, поиск по реферальному коду требует дополнительного API эндпоинта
             # Возвращаем заглушку, так как полная реализация требует дополнительных API эндпоинтов
             return None
+        elif self.use_db_api:
+            # Используем DB API клиент для получения пользователя по реферальному коду
+            from ..db_api_client import db_api_client
+            try:
+                # Ищем пользователя по реферальному коду через DB API
+                result = db_api_client.select("profiles", where={"referral_code": referral_code.upper()})
+                return result[0] if result and len(result) > 0 else None
+            except:
+                return None
         elif self.use_supabase:
             # Используем Supabase клиент для получения пользователя по реферальному коду
             return await supabase_client.get_user_by_referral_code(referral_code)
@@ -875,6 +999,19 @@ class Database:
             # При использовании API клиента, создание реферальных записей требует дополнительного API эндпоинта
             # Возвращаем заглушку, так как полная реализация требует дополнительных API эндпоинтов
             return
+        elif self.use_db_api:
+            # Используем DB API клиент для создания реферальной записи
+            from ..db_api_client import db_api_client
+            try:
+                referral_data = {
+                    'referrer_id': referrer_id,
+                    'referred_id': referred_id,
+                    'level': level,
+                    'is_active': True
+                }
+                db_api_client.insert("referrals", referral_data)
+            except Exception as e:
+                print(f"Ошибка при создании реферальной записи через DB API: {e}")
         elif self.use_supabase:
             # Используем Supabase клиент для создания реферальной записи
             await supabase_client.create_referral_record(referrer_id, referred_id, level)
