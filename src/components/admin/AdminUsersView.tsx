@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Users,
+import { 
+  Users, 
   Search,
   Filter,
   MoreVertical,
   Shield,
   Ban,
-  Crown,
-  Loader2
+  Crown
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,35 +15,21 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getAdminUsers } from '@/lib/adminApi';
+
+const mockUsers = [
+  { id: '1', name: 'Иван Петров', username: '@ivan_petrov', role: 'user', status: 'active', balance: 1500 },
+  { id: '2', name: 'Мария Сидорова', username: '@maria_s', role: 'admin', status: 'active', balance: 5200 },
+  { id: '3', name: 'Алексей Козлов', username: '@alex_k', role: 'moderator', status: 'active', balance: 800 },
+  { id: '4', name: 'Елена Новикова', username: '@elena_n', role: 'user', status: 'banned', balance: 0 },
+  { id: '5', name: 'Дмитрий Морозов', username: '@dmitry_m', role: 'user', status: 'active', balance: 2100 },
+];
 
 export const AdminUsersView = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [users, setUsers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setIsLoading(true);
-        const response = await getAdminUsers();
-        setUsers(response.users);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Ошибка загрузки пользователей');
-        console.error('Ошибка загрузки пользователей:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, []);
-
-  const filteredUsers = users.filter(user =>
-    user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.telegram_username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.telegram_id?.toString().includes(searchQuery.toLowerCase())
+  const filteredUsers = mockUsers.filter(user => 
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getRoleBadge = (role: string) => {
@@ -58,37 +43,6 @@ export const AdminUsersView = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="px-4 pb-24 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="mx-auto mb-4"
-          >
-            <Loader2 className="w-8 h-8 text-primary" />
-          </motion.div>
-          <p className="text-muted-foreground">Загрузка пользователей...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="px-4 pb-24 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/20 flex items-center justify-center">
-            <span className="text-3xl">⚠️</span>
-          </div>
-          <p className="text-destructive mb-2">Ошибка загрузки пользователей</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="px-4 pb-24">
       <PageHeader
@@ -101,8 +55,8 @@ export const AdminUsersView = () => {
       <div className="flex gap-2 mt-6 mb-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Поиск пользователей..."
+          <Input 
+            placeholder="Поиск пользователей..." 
             className="pl-9"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -128,17 +82,17 @@ export const AdminUsersView = () => {
                   <div className="flex items-center gap-3">
                     <Avatar className="w-10 h-10">
                       <AvatarFallback className="bg-primary/10 text-primary">
-                        {user.first_name?.charAt(0) || user.telegram_username?.charAt(1) || 'U'}
+                        {user.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-medium">{user.first_name} {user.last_name}</p>
+                        <p className="font-medium">{user.name}</p>
                         {user.status === 'banned' && (
                           <Ban className="w-4 h-4 text-destructive" />
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">{user.telegram_username ? `@${user.telegram_username}` : `ID: ${user.telegram_id}`}</p>
+                      <p className="text-xs text-muted-foreground">{user.username}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -150,7 +104,7 @@ export const AdminUsersView = () => {
                 </div>
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
                   <span className="text-xs text-muted-foreground">Баланс</span>
-                  <span className="text-sm font-medium">₽{user.balance?.toLocaleString() || '0'}</span>
+                  <span className="text-sm font-medium">₽{user.balance.toLocaleString()}</span>
                 </div>
               </CardContent>
             </Card>
