@@ -15,7 +15,7 @@ export const ThemeToggle = ({ className }: ThemeToggleProps) => {
       variant="ghost"
       size="sm"
       onClick={toggleTheme}
-      className={cn("p-2 rounded-lg transition-all duration-300 hover:bg-primary/10", className)}
+      className={cn("p-2 rounded-lg transition-all duration-300 hover:bg-transparent focus:ring-0 focus:ring-offset-0", className)}
     >
       {theme === 'dark' ? (
         <Sun className="w-5 h-5 text-yellow-400" />

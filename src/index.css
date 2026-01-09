@@ -195,8 +195,7 @@
       -1px -1px 0 hsl(0 0% 0% / 0.8),
       1px -1px 0 hsl(0 0% 0% / 0.8),
       -1px 1px 0 hsl(0 0% 0% / 0.8),
-      1px 1px 0 hsl(0 0% 0% / 0.8),
-      0 0 5px hsl(0 0% 0% / 0.4);
+      1px 1px 0 hsl(0 0% 0% / 0.8);
   }
 
   .light .gold-gradient-text-outline {
@@ -204,8 +203,25 @@
       -1px -1px 0 hsl(0 0% 0% / 0.8),
       1px -1px 0 hsl(0 0% 0% / 0.8),
       -1px 1px 0 hsl(0 0% 0% / 0.8),
-      1px 1px 0 hsl(0 0% 0% / 0.8),
-      0 0 5px hsl(0 0% 0% / 0.4);
+      1px 1px 0 hsl(0 0% 0% / 0.8);
+  }
+
+  /* Для светлой темы - добавляем черную обводку к оранжевым элементам */
+  .light .has-text-outline {
+    text-shadow:
+      -1px -1px 0 hsl(0 0% 0%),
+      1px -1px 0 hsl(0 0% 0%),
+      -1px 1px 0 hsl(0 0% 0%),
+      1px 1px 0 hsl(0 0% 0%);
+  }
+
+  /* Убираем фокусные стили для кнопок */
+  .focus\:ring-0:focus {
+    --tw-ring-shadow: none !important;
+  }
+
+  .focus\:ring-offset-0:focus {
+    --tw-ring-offset-width: 0px !important;
   }
 
   .glass-card {
