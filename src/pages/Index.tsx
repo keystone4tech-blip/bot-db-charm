@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TelegramProvider } from '@/components/TelegramProvider';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -28,15 +28,27 @@ const Index = () => {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    // Прокручиваем к началу при смене вкладки
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleEnterAdminMode = () => {
     setIsAdminMode(true);
     setAdminTab('admin-stats');
+    // Прокручиваем к началу при смене режима
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleExitAdminMode = () => {
     setIsAdminMode(false);
+    // Прокручиваем к началу при выходе из режима администратора
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAdminTabChange = (tab: string) => {
+    setAdminTab(tab);
+    // Прокручиваем к началу при смене админ-вкладки
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const renderAdminView = () => {
@@ -77,6 +89,11 @@ const Index = () => {
     }
   };
 
+  // Прокручиваем к началу при изменении вкладки
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab, isAdminMode, adminTab]);
+
   return (
     <TelegramProvider>
       <div className="min-h-screen bg-background max-w-md mx-auto overflow-x-hidden pt-14">
@@ -101,10 +118,10 @@ const Index = () => {
 
         {/* Bottom navigation */}
         {isAdminMode ? (
-          <AdminBottomNav 
-            activeTab={adminTab} 
-            onTabChange={setAdminTab} 
-            onExitAdmin={handleExitAdminMode} 
+          <AdminBottomNav
+            activeTab={adminTab}
+            onTabChange={handleAdminTabChange}
+            onExitAdmin={handleExitAdminMode}
           />
         ) : (
           <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
