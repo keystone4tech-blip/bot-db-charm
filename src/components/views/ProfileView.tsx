@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Loader2, User, Coins, Shield, MessageSquare, Bot, Settings } from 'lucide-react';
+import { Loader2, User, Coins, Shield, MessageSquare, Bot, Settings, Crown } from 'lucide-react';
 import { useTelegramContext } from '@/components/TelegramProvider';
 import { useProfile } from '@/hooks/useProfile';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
@@ -12,13 +12,16 @@ import { VPNStatusCard } from '@/components/profile/VPNStatusCard';
 import { ChannelStatusCard } from '@/components/profile/ChannelStatusCard';
 import { BotStatusCard } from '@/components/profile/BotStatusCard';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Button } from '@/components/ui/button';
+import { hapticFeedback } from '@/lib/telegram';
 
 interface ProfileViewProps {
   onNavigate?: (tab: string) => void;
+  onEnterAdminMode?: () => void;
 }
 
-export const ProfileView = ({ onNavigate }: ProfileViewProps) => {
-  const { user: telegramUser, authProfile, authBalance, authReferralStats } = useTelegramContext();
+export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) => {
+  const { user: telegramUser, authProfile, authBalance, authReferralStats, authRole } = useTelegramContext();
   const {
     profile,
     balance,
@@ -37,6 +40,13 @@ export const ProfileView = ({ onNavigate }: ProfileViewProps) => {
   const handleNavigate = (tab: string) => {
     onNavigate?.(tab);
   };
+
+  const handleEnterAdminMode = () => {
+    hapticFeedback('medium');
+    onEnterAdminMode?.();
+  };
+
+  const isAdmin = authRole === 'admin';
 
   if (isLoading) {
     return (
@@ -158,6 +168,22 @@ export const ProfileView = ({ onNavigate }: ProfileViewProps) => {
             onNavigate={handleNavigate}
           />
         </div>
+
+        {/* Admin Panel Button */}
+        {isAdmin && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Button
+              onClick={handleEnterAdminMode}
+              className="w-full gold-gradient text-primary-foreground font-medium py-6"
+            >
+              <Crown className="w-5 h-5 mr-2" />
+              Админ-панель
+            </Button>
+          </motion.div>
+        )}
 
         {/* Support Ticket Button */}
         <div className="pt-4">

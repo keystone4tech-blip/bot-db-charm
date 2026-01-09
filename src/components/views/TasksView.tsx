@@ -91,7 +91,6 @@ export const TasksView = ({ tasks, onToggleTask }: TasksViewProps) => {
             </p>
           </motion.div>
         )}
-      </motion.div>
     </div>
   );
 };

@@ -50,6 +50,72 @@ export interface ReferralStats {
 }
 
 /**
+ * Интерфейс для VPN ключа
+ */
+export interface VPNKey {
+  id: string;
+  user_id: string;
+  key_value: string;
+  server_location: string;
+  status: string;
+  protocol: string | null;
+  expires_at: string | null;
+  activated_at: string | null;
+  bandwidth_limit: number | null;
+  bandwidth_used: number | null;
+  last_connected_at: string | null;
+  created_at: string;
+}
+
+/**
+ * Интерфейс для телеграм канала
+ */
+export interface TelegramChannel {
+  id: string;
+  user_id: string;
+  channel_id: number;
+  channel_title: string;
+  channel_username: string | null;
+  subscribers_count: number | null;
+  is_verified: boolean | null;
+  created_at: string;
+}
+
+/**
+ * Интерфейс для бота пользователя
+ */
+export interface UserBot {
+  id: string;
+  user_id: string;
+  bot_name: string;
+  bot_token: string;
+  bot_username: string | null;
+  bot_type: string;
+  is_active: boolean | null;
+  webhook_url: string | null;
+  settings: any | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Интерфейс для подписки
+ */
+export interface Subscription {
+  id: string;
+  user_id: string;
+  plan_name: string;
+  plan_type: string;
+  price: number;
+  status: string | null;
+  activated_at: string | null;
+  expires_at: string | null;
+  auto_renew: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
  * Интерфейс для ответа аутентификации
  */
 export interface AuthResponse {
