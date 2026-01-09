@@ -126,7 +126,6 @@ export const SettingsView = () => {
             <span className="text-xs">Telegram Mini App v1.0.0</span>
           </div>
         </motion.div>
-      </motion.div>
     </div>
   );
 };

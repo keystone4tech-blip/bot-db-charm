@@ -6,12 +6,11 @@ import {
   VPNKey,
   TelegramChannel,
   UserBot,
-  Subscription
-} from '@/lib/api';
-import { 
-  getUserProfile, 
-  getUserBalance, 
-  getUserReferralStats 
+  Subscription,
+  getUserVPNKeys,
+  getUserChannels,
+  getUserBots,
+  getUserSubscriptions
 } from '@/lib/api';
 import { useTelegramContext } from '@/components/TelegramProvider';
 
@@ -27,49 +26,6 @@ interface ProfileHookReturn {
   isLoading: boolean;
   error: string | null;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
-}
-
-interface VPNKey {
-  id: string;
-  user_id: string;
-  status: string;
-  expires_at: string;
-  server_location: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface TelegramChannel {
-  id: string;
-  user_id: string;
-  channel_title: string;
-  channel_username: string;
-  subscribers_count: number;
-  is_verified: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-interface UserBot {
-  id: string;
-  user_id: string;
-  bot_name: string;
-  bot_username: string;
-  bot_type: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Subscription {
-  id: string;
-  user_id: string;
-  plan_name: string;
-  plan_type: string;
-  status: string;
-  expires_at: string;
-  created_at: string;
-  updated_at: string;
 }
 
 export const useProfile = (): ProfileHookReturn => {
@@ -88,9 +44,36 @@ export const useProfile = (): ProfileHookReturn => {
   // Загружаем данные при изменении аутентификации
   useEffect(() => {
     if (isAuthenticated && authProfile) {
-      setProfile(authProfile);
-      setBalance(authBalance || null);
-      setReferralStats(authReferralStats || null);
+      // Преобразуем AuthProfile в UserProfile с дополнительными полями
+      const fullProfile: UserProfile = {
+        ...authProfile,
+        referred_by: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setProfile(fullProfile);
+      
+      // Преобразуем AuthBalance в UserBalance
+      if (authBalance) {
+        const fullBalance: UserBalance = {
+          id: authProfile.id,
+          user_id: authProfile.id,
+          ...authBalance,
+          updated_at: new Date().toISOString(),
+        };
+        setBalance(fullBalance);
+      }
+      
+      // Преобразуем AuthReferralStats в ReferralStats
+      if (authReferralStats) {
+        const fullReferralStats: ReferralStats = {
+          id: authProfile.id,
+          user_id: authProfile.id,
+          ...authReferralStats,
+          updated_at: new Date().toISOString(),
+        };
+        setReferralStats(fullReferralStats);
+      }
       
       // Генерируем реферальную ссылку
       if (authProfile.referral_code) {
