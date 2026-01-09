@@ -4,5 +4,6 @@ from .database_manager import database, USE_API_CLIENT
 import os
 USE_SUPABASE = os.getenv("USE_SUPABASE", "false").lower() == "true"
 USE_DB_API = os.getenv("USE_DB_API", "false").lower() == "true"
+USE_LOCAL_POSTGRES = os.getenv("USE_LOCAL_POSTGRES", "false").lower() == "true"
 
-__all__ = ["database", "USE_API_CLIENT", "USE_SUPABASE", "USE_DB_API"]
+__all__ = ["database", "USE_API_CLIENT", "USE_SUPABASE", "USE_DB_API", "USE_LOCAL_POSTGRES"]

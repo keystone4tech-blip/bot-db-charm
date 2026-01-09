@@ -1,224 +1,31 @@
-import asyncpg
 import os
-from typing import Optional
+from typing import Optional, Dict, Any
 from dotenv import load_dotenv
+from .db_api_client import db_api_client
 
-# Загружаем переменные окружения
 load_dotenv()
 
-# Определяем способ подключения: через API клиент, DB API, Supabase или напрямую к БД
-USE_API_CLIENT = os.getenv("USE_API_CLIENT", "false").lower() == "true"
-USE_DB_API = os.getenv("USE_DB_API", "false").lower() == "true"
-USE_SUPABASE = os.getenv("USE_SUPABASE", "false").lower() == "true"
-USE_LOCAL_POSTGRES = os.getenv("USE_LOCAL_POSTGRES", "false").lower() == "true"
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-if USE_API_CLIENT:
-    # Используем API клиент для взаимодействия с Node.js сервером
-    from ..api_client import api_client
-elif USE_DB_API:
-    # Используем DB API клиент
-    from ..db_api_client import db_api_client
-elif USE_SUPABASE:
-    # Используем Supabase клиент
-    from supabase import create_client, Client
-    from ..supabase_client import supabase_client
-elif USE_LOCAL_POSTGRES:
-    # Используем локальную PostgreSQL
-    from ..postgres_db_manager import db_manager
-elif USE_DB_API:
-    # Используем DB API
-    from ..db_api_client import db_api_client
-else:
-    # Используем прямое подключение к базе данных
-    DB_HOST = os.getenv("DB_HOST", "localhost")
-    DB_PORT = os.getenv("DB_PORT", "5432")
-    DB_USER = os.getenv("DB_USER", "postgres")
-    DB_PASSWORD = os.getenv("DB_PASSWORD")
-    DB_NAME = os.getenv("DB_NAME")
-
-    # Формируем строку подключения
-    if DB_HOST and DB_USER and DB_PASSWORD and DB_NAME:
-        DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    else:
-        # Резервный вариант - старые переменные
-        DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL", os.getenv("DATABASE_URL"))
-
-class Database:
+class DatabaseManager:
     def __init__(self):
-        self.pool: Optional[asyncpg.Pool] = None
-        self.use_supabase = USE_SUPABASE
-        self.use_api_client = USE_API_CLIENT
-        self.use_db_api = USE_DB_API
-        self.use_local_postgres = USE_LOCAL_POSTGRES
-        self.supabase_service_role_key = SUPABASE_SERVICE_ROLE_KEY
+        self.db_api_client = db_api_client
 
     async def connect(self):
-        """Создает подключение к базе данных или инициализирует API клиент"""
-        if self.use_api_client:
-            print("Используется API клиент для взаимодействия с Node.js сервером")
-            # При использовании API клиента не нужно подключаться к БД напрямую
-        elif self.use_db_api:
-            print("Используется DB API для безопасного доступа к базе данных")
-            # Импортируем DB API клиент
-            from ..db_api_client import db_api_client
-            self.db_api_client = db_api_client
-        elif self.use_supabase:
-            print("Используется Supabase для хранения данных")
-            # Подключение к Supabase уже инициализировано в supabase_client
-        elif self.use_local_postgres:
-            print("Используется локальная PostgreSQL для хранения данных")
-            # Подключаемся к локальной PostgreSQL через db_manager
-            from ..postgres_db_manager import db_manager
-            await db_manager.connect()
-        elif self.use_db_api:
-            print("Используется DB API для безопасного доступа к базе данных")
-            # Подключение к DB API уже инициализировано в db_api_client
-            from ..db_api_client import db_api_client
-            self.db_api_client = db_api_client
-        else:
-            if not DATABASE_URL:
-                raise ValueError("Не найдена строка подключения к базе данных. Установите переменную окружения SUPABASE_DATABASE_URL")
-
-            self.pool = await asyncpg.create_pool(
-                DATABASE_URL,
-                min_size=5,
-                max_size=20,
-                command_timeout=60
-            )
-            print("Подключение к базе данных установлено")
-
-    async def get_user_by_telegram_id(self, telegram_id: int):
-        """Получает пользователя по telegram_id"""
-        if self.use_api_client:
-            # Используем API клиент для получения пользователя
-            from ..api_client import api_client
-            return await api_client.get_user(telegram_id)
-        elif self.use_db_api:
-            # Используем DB API клиент для получения пользователя
-            from ..db_api_client import db_api_client
-            return db_api_client.get_user_by_telegram_id(telegram_id)
-        elif self.use_supabase:
-            # Используем Supabase клиент для получения пользователя
-            from ..supabase_client import supabase_client
-            return await supabase_client.get_user_by_telegram_id(telegram_id)
-        elif self.use_local_postgres:
-            # Используем локальную PostgreSQL через db_manager
-            from ..postgres_db_manager import db_manager
-            return await db_manager.get_user_by_telegram_id(telegram_id)
-        elif self.use_db_api:
-            # Используем DB API клиент для получения пользователя
-            from ..db_api_client import db_api_client
-            return db_api_client.get_user_by_telegram_id(telegram_id)
-        else:
-            if not self.pool:
-                raise Exception("База данных не подключена")
-
-            async with self.pool.acquire() as connection:
-                query = """
-                    SELECT id, telegram_id, telegram_username, first_name, last_name,
-                           avatar_url, referral_code, referred_by, created_at
-                    FROM profiles
-                    WHERE telegram_id = $1
-                """
-                return await connection.fetchrow(query, telegram_id)
-
-    async def create_user(self, telegram_id: int, first_name: str, last_name: str = None,
-                          username: str = None, avatar_url: str = None, referral_code: str = None,
-                          referred_by: str = None):
-        """Создает нового пользователя"""
-        if self.use_api_client:
-            # Используем API клиент для создания пользователя
-            from ..api_client import api_client
-            return await api_client.register_user(
-                telegram_id=telegram_id,
-                first_name=first_name,
-                last_name=last_name,
-                username=username,
-                avatar_url=avatar_url,
-                referral_code=referral_code
-            )
-        elif self.use_db_api:
-            # Используем DB API клиент для создания пользователя
-            from ..db_api_client import db_api_client
-            user_data = {
-                'telegram_id': telegram_id,
-                'telegram_username': username,
-                'first_name': first_name,
-                'last_name': last_name,
-                'avatar_url': avatar_url,
-                'referral_code': referral_code,
-                'referred_by': referred_by
-            }
-            return db_api_client.create_user(user_data)
-        elif self.use_supabase:
-            # Используем Supabase клиент для создания пользователя
-            from ..supabase_client import supabase_client
-            return await supabase_client.create_user(
-                telegram_id, first_name, last_name, username,
-                avatar_url, referral_code, referred_by
-            )
-        elif self.use_local_postgres:
-            # Используем локальную PostgreSQL через db_manager
-            from ..postgres_db_manager import db_manager
-            return await db_manager.create_user(telegram_id, first_name, last_name, username, avatar_url, referral_code, referred_by)
-        else:
-            if not self.pool:
-                raise Exception("База данных не подключена")
-
-            async with self.pool.acquire() as connection:
-                query = """
-                    INSERT INTO profiles (
-                        telegram_id, telegram_username, first_name, last_name,
-                        avatar_url, referral_code, referred_by
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    RETURNING id, telegram_id, created_at
-                """
-                return await connection.fetchrow(
-                    query,
-                    telegram_id, username, first_name, last_name,
-                    avatar_url, referral_code, referred_by
-                )
+        """Инициализирует DB API клиент"""
+        print("Используется DB API для безопасного доступа к базе данных")
+        # Подключение к базе данных происходит через DB API
 
     async def disconnect(self):
-        """Закрывает пул соединений или завершает работу с API клиентом"""
-        if not self.use_api_client and not self.use_supabase and self.pool:
-            await self.pool.close()
-            print("Подключение к базе данных закрыто")
-        elif self.use_api_client:
-            print("Отключение от API клиента завершено")
-        elif self.use_supabase:
-            print("Отключение от Supabase завершено")
+        """Закрывает соединение с DB API"""
+        print("Отключение от DB API завершено")
 
     async def check_and_create_tables(self):
-        """Проверяет наличие всех таблиц и столбцов в базе данных и создает/обновляет их при необходимости"""
-        if self.use_api_client or self.use_supabase:
-            # При использовании API клиента или Supabase, управление схемой базы данных осуществляется на сервере
-            print(f"Пропускаем проверку и создание таблиц - используется {'API клиент' if self.use_api_client else 'Supabase'}")
-            return
-
-        if not self.pool:
-            raise Exception("База данных не подключена")
-
-        async with self.pool.acquire() as connection:
-            # Проверяем и создаем/обновляем таблицы
-            await self.ensure_profiles_table(connection)
-            await self.ensure_referrals_table(connection)
-            await self.ensure_balances_table(connection)
-            await self.ensure_user_stats_table(connection)
-            await self.ensure_referral_stats_table(connection)
-            await self.ensure_subscriptions_table(connection)
-            await self.ensure_vpn_keys_table(connection)
-            await self.ensure_telegram_channels_table(connection)
-            await self.ensure_user_bots_table(connection)
-            await self.ensure_user_roles_table(connection)
-            await self.ensure_support_tickets_table(connection)
-
-            print("Структура базы данных проверена и обновлена при необходимости")
+        """Проверяет наличие всех таблиц и создает их при необходимости"""
+        # При использовании DB API, управление схемой базы данных осуществляется на сервере
+        print("Пропускаем проверку и создание таблиц - используется DB API")
+        return
 
     async def ensure_profiles_table(self, connection):
         """Проверяет и создает/обновляет таблицу profiles"""
-        # Проверяем, существует ли таблица
         table_exists = await connection.fetchval("""
             SELECT EXISTS (
                 SELECT FROM information_schema.tables
@@ -226,7 +33,7 @@ class Database:
                 AND table_name = 'profiles'
             );
         """)
-        
+
         if not table_exists:
             print("Создаем таблицу profiles...")
             await connection.execute("""
@@ -244,14 +51,12 @@ class Database:
                     updated_at TIMESTAMP DEFAULT NOW()
                 );
 
-                -- Индекс для быстрого поиска по Telegram ID
+                -- Индексы для быстрого поиска
                 CREATE INDEX idx_profiles_telegram_id ON profiles(telegram_id);
-
-                -- Индекс для быстрого поиска по реферальному коду
                 CREATE INDEX idx_profiles_referral_code ON profiles(referral_code);
             """)
         else:
-            # Проверяем и добавляем отсутствующие столбцы в таблицу profiles
+            # Проверяем и добавляем отсутствующие столбцы
             columns_to_check = {
                 'id': 'UUID PRIMARY KEY DEFAULT gen_random_uuid()',
                 'telegram_id': 'BIGINT UNIQUE NOT NULL',
@@ -275,12 +80,10 @@ class Database:
                 if not column_exists:
                     print(f"Добавляем столбец {col_name} в таблицу profiles...")
                     if col_name == 'id':
-                        # Для первичного ключа создаем отдельно
                         await connection.execute(f"ALTER TABLE profiles ADD COLUMN {col_name} {col_def.split('PRIMARY')[0]}")
                         await connection.execute("ALTER TABLE profiles ADD CONSTRAINT pk_profiles_id PRIMARY KEY (id)")
                     elif 'REFERENCES' in col_def:
-                        # Для внешних ключей сначала добавляем столбец, потом создаем связь
-                        ref_part = col_def.split('REFERENCES')[1].strip()
+                        ref_part = col_def.split('REFERENCES')[1].split('ON')[0].strip()
                         await connection.execute(f"ALTER TABLE profiles ADD COLUMN {col_name} UUID")
                         await connection.execute(f"ALTER TABLE profiles ADD FOREIGN KEY ({col_name}) REFERENCES {ref_part}")
                     else:
@@ -295,7 +98,7 @@ class Database:
                 AND table_name = 'referrals'
             );
         """)
-        
+
         if not table_exists:
             print("Создаем таблицу referrals...")
             await connection.execute("""
@@ -307,17 +110,16 @@ class Database:
                     level INTEGER DEFAULT 1,
                     is_active BOOLEAN DEFAULT TRUE,
                     created_at TIMESTAMP DEFAULT NOW(),
-                    
+
                     -- Один пользователь не может быть рефералом одного и того же пригласившего несколько раз
                     CONSTRAINT unique_referral_per_referrer UNIQUE (referrer_id, referred_id)
                 );
 
-                -- Индекс для быстрого поиска рефералов по пригласившему
+                -- Индексы для быстрого поиска
                 CREATE INDEX idx_referrals_referrer ON referrals(referrer_id);
                 CREATE INDEX idx_referrals_referred ON referrals(referred_id);
             """)
         else:
-            # Проверяем и добавляем отсутствующие столбцы в таблицу referrals
             columns_to_check = {
                 'id': 'UUID PRIMARY KEY DEFAULT gen_random_uuid()',
                 'referrer_id': 'UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE',
@@ -355,7 +157,7 @@ class Database:
                 AND table_name = 'balances'
             );
         """)
-        
+
         if not table_exists:
             print("Создаем таблицу balances...")
             await connection.execute("""
@@ -412,7 +214,7 @@ class Database:
                 AND table_name = 'user_stats'
             );
         """)
-        
+
         if not table_exists:
             print("Создаем таблицу user_stats...")
             await connection.execute("""
@@ -465,7 +267,7 @@ class Database:
                 AND table_name = 'referral_stats'
             );
         """)
-        
+
         if not table_exists:
             print("Создаем таблицу referral_stats...")
             await connection.execute("""
@@ -528,7 +330,7 @@ class Database:
                 AND table_name = 'subscriptions'
             );
         """)
-        
+
         if not table_exists:
             print("Создаем таблицу subscriptions...")
             await connection.execute("""
@@ -544,7 +346,7 @@ class Database:
                     updated_at TIMESTAMP DEFAULT NOW()
                 );
 
-                -- Индекс для быстрого поиска активных подписок
+                -- Индексы для быстрого поиска
                 CREATE INDEX idx_subscriptions_user_id_status ON subscriptions(user_id, status);
                 CREATE INDEX idx_subscriptions_expires_at ON subscriptions(expires_at);
             """)
@@ -588,7 +390,7 @@ class Database:
                 AND table_name = 'vpn_keys'
             );
         """)
-        
+
         if not table_exists:
             print("Создаем таблицу vpn_keys...")
             await connection.execute("""
@@ -645,7 +447,7 @@ class Database:
                 AND table_name = 'telegram_channels'
             );
         """)
-        
+
         if not table_exists:
             print("Создаем таблицу telegram_channels...")
             await connection.execute("""
@@ -704,7 +506,7 @@ class Database:
                 AND table_name = 'user_bots'
             );
         """)
-        
+
         if not table_exists:
             print("Создаем таблицу user_bots...")
             await connection.execute("""
@@ -763,7 +565,7 @@ class Database:
                 AND table_name = 'user_roles'
             );
         """)
-        
+
         if not table_exists:
             print("Создаем таблицу user_roles...")
             await connection.execute("""
@@ -814,7 +616,7 @@ class Database:
                 AND table_name = 'support_tickets'
             );
         """)
-        
+
         if not table_exists:
             print("Создаем таблицу support_tickets...")
             await connection.execute("""
@@ -864,201 +666,101 @@ class Database:
                     else:
                         await connection.execute(f"ALTER TABLE support_tickets ADD COLUMN {col_name} {col_def.replace('PRIMARY KEY', '')}")
 
-    async def get_user_by_telegram_id(self, telegram_id: int):
+    async def get_user_by_telegram_id(self, telegram_id: int) -> Optional[Dict[str, Any]]:
         """Получает пользователя по telegram_id"""
-        if self.use_api_client:
-            # Используем API клиент для получения пользователя
-            from ..api_client import api_client
-            return await api_client.get_user(telegram_id)
-        elif self.use_db_api:
-            # Используем DB API клиент для получения пользователя
-            from ..db_api_client import db_api_client
-            return db_api_client.get_user_by_telegram_id(telegram_id)
-        elif self.use_supabase:
-            # Используем Supabase клиент для получения пользователя
-            from ..supabase_client import supabase_client
-            return await supabase_client.get_user_by_telegram_id(telegram_id)
-        elif self.use_local_postgres:
-            # Используем локальную PostgreSQL через db_manager
-            from ..postgres_db_manager import db_manager
-            return await db_manager.get_user_by_telegram_id(telegram_id)
-        elif self.use_db_api:
-            # Используем DB API клиент для получения пользователя
-            from ..db_api_client import db_api_client
-            return db_api_client.get_user_by_telegram_id(telegram_id)
-        else:
-            if not self.pool:
-                raise Exception("База данных не подключена")
-
-            async with self.pool.acquire() as connection:
-                query = """
-                    SELECT id, telegram_id, telegram_username, first_name, last_name,
-                           avatar_url, referral_code, referred_by, created_at
-                    FROM profiles
-                    WHERE telegram_id = $1
-                """
-                return await connection.fetchrow(query, telegram_id)
+        try:
+            return self.db_api_client.get_user_by_telegram_id(telegram_id)
+        except Exception as e:
+            print(f"Ошибка при получении пользователя: {e}")
+            return None
 
     async def create_user(self, telegram_id: int, first_name: str, last_name: str = None,
                           username: str = None, avatar_url: str = None, referral_code: str = None,
-                          referred_by: str = None):
+                          referred_by: str = None) -> Optional[Dict[str, Any]]:
         """Создает нового пользователя"""
-        if self.use_api_client:
-            # Используем API клиент для создания пользователя
-            from ..api_client import api_client
-            return await api_client.register_user(
-                telegram_id=telegram_id,
-                first_name=first_name,
-                last_name=last_name,
-                username=username,
-                avatar_url=avatar_url,
-                referral_code=referral_code
-            )
-        elif self.use_db_api:
-            # Используем DB API клиент для создания пользователя
-            from ..db_api_client import db_api_client
+        try:
+            # Генерируем реферальный код
+            def generate_referral_code(telegram_id):
+                chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+                code = ''
+                seed = str(telegram_id)
+                for i in range(8):
+                    char_index = (int(seed[i % len(seed)]) + i * 7) % len(chars)
+                    code += chars[char_index]
+                return code
+
+            new_referral_code = generate_referral_code(telegram_id)
+
             user_data = {
                 'telegram_id': telegram_id,
                 'telegram_username': username,
                 'first_name': first_name,
                 'last_name': last_name,
                 'avatar_url': avatar_url,
-                'referral_code': referral_code,
+                'referral_code': new_referral_code,
                 'referred_by': referred_by
             }
-            return db_api_client.create_user(user_data)
-        elif self.use_supabase:
-            # Используем Supabase клиент для создания пользователя
-            from ..supabase_client import supabase_client
-            return await supabase_client.create_user(
-                telegram_id, first_name, last_name, username,
-                avatar_url, referral_code, referred_by
-            )
-        else:
-            if not self.pool:
-                raise Exception("База данных не подключена")
 
-            async with self.pool.acquire() as connection:
-                query = """
-                    INSERT INTO profiles (
-                        telegram_id, telegram_username, first_name, last_name,
-                        avatar_url, referral_code, referred_by
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    RETURNING id, telegram_id, created_at
-                """
-                return await connection.fetchrow(
-                    query,
-                    telegram_id, username, first_name, last_name,
-                    avatar_url, referral_code, referred_by
-                )
+            result = self.db_api_client.create_user(user_data)
 
-    async def get_referral_stats(self, user_id: str):
-        """Получает статистику по рефералам пользователя"""
-        if self.use_api_client:
-            # При использовании API клиента, статистика получается через веб-приложение
-            # Возвращаем заглушку, так как полная реализация требует дополнительных API эндпоинтов
-            return {
-                'level_1_count': 0,
-                'level_2_count': 0,
-                'level_3_count': 0,
-                'level_4_count': 0,
-                'level_5_count': 0,
-                'total_referrals': 0
-            }
-        elif self.use_supabase:
-            # Используем Supabase клиент для получения статистики рефералов
-            return await supabase_client.get_referral_stats(user_id)
-        else:
-            if not self.pool:
-                raise Exception("База данных не подключена")
+            if result:
+                # Создаем связанные записи
+                await self._create_related_records(result.get('id'))
 
-            async with self.pool.acquire() as connection:
-                # Получаем количество рефералов на каждом уровне
-                query = """
-                    WITH RECURSIVE referral_tree AS (
-                      -- Начальный уровень (непосредственные рефералы)
-                      SELECT id, referred_by, 1 as level
-                      FROM profiles
-                      WHERE referred_by = $1
-
-                      UNION ALL
-
-                      -- Рекурсивно находим рефералов рефералов
-                      SELECT p.id, p.referred_by, rt.level + 1
-                      FROM profiles p
-                      JOIN referral_tree rt ON p.referred_by = rt.id
-                      WHERE rt.level < 5  -- Максимум 5 уровней
-                    )
-                    SELECT
-                      COUNT(*) FILTER (WHERE level = 1) as level_1_count,
-                      COUNT(*) FILTER (WHERE level = 2) as level_2_count,
-                      COUNT(*) FILTER (WHERE level = 3) as level_3_count,
-                      COUNT(*) FILTER (WHERE level = 4) as level_4_count,
-                      COUNT(*) FILTER (WHERE level = 5) as level_5_count,
-                      COUNT(*) as total_referrals
-                    FROM referral_tree;
-                """
-                return await connection.fetchrow(query, user_id)
-
-    async def get_user_referral_code(self, referral_code: str):
-        """Получает пользователя по реферальному коду"""
-        if self.use_api_client:
-            # При использовании API клиента, поиск по реферальному коду требует дополнительного API эндпоинта
-            # Возвращаем заглушку, так как полная реализация требует дополнительных API эндпоинтов
+            return result
+        except Exception as e:
+            print(f"Ошибка при создании пользователя: {e}")
             return None
-        elif self.use_db_api:
-            # Используем DB API клиент для получения пользователя по реферальному коду
-            from ..db_api_client import db_api_client
-            try:
-                # Ищем пользователя по реферальному коду через DB API
-                result = db_api_client.select("profiles", where={"referral_code": referral_code.upper()})
-                return result[0] if result and len(result) > 0 else None
-            except:
-                return None
-        elif self.use_supabase:
-            # Используем Supabase клиент для получения пользователя по реферальному коду
-            return await supabase_client.get_user_by_referral_code(referral_code)
-        else:
-            if not self.pool:
-                raise Exception("База данных не подключена")
 
-            async with self.pool.acquire() as connection:
-                query = "SELECT id, telegram_id FROM profiles WHERE referral_code = $1"
-                return await connection.fetchrow(query, referral_code)
+    async def _create_related_records(self, user_id: str):
+        """Создает связанные записи для нового пользователя"""
+        try:
+            # Создаем запись баланса
+            self.db_api_client.insert("balances", {
+                'user_id': user_id,
+                'internal_balance': 0,
+                'external_balance': 0,
+                'total_earned': 0,
+                'total_withdrawn': 0
+            })
+
+            # Создаем запись статистики пользователя
+            self.db_api_client.insert("user_stats", {
+                'user_id': user_id,
+                'total_logins': 1,
+                'last_login_at': 'now()'
+            })
+
+            # Создаем запись статистики по рефералам
+            self.db_api_client.insert("referral_stats", {
+                'user_id': user_id,
+                'total_referrals': 0,
+                'total_earnings': 0
+            })
+
+            # Создаем запись роли пользователя
+            self.db_api_client.insert("user_roles", {
+                'user_id': user_id,
+                'role': 'user'
+            })
+        except Exception as e:
+            print(f"Ошибка при создании связанных записей: {e}")
+
+    async def get_user_by_referral_code(self, referral_code: str) -> Optional[Dict[str, Any]]:
+        """Получает пользователя по реферальному коду"""
+        try:
+            return self.db_api_client.get_user_by_referral_code(referral_code)
+        except Exception as e:
+            print(f"Ошибка при поиске пользователя по реферальному коду: {e}")
+            return None
 
     async def create_referral_record(self, referrer_id: str, referred_id: str, level: int = 1):
         """Создает запись о реферале"""
-        if self.use_api_client:
-            # При использовании API клиента, создание реферальных записей требует дополнительного API эндпоинта
-            # Возвращаем заглушку, так как полная реализация требует дополнительных API эндпоинтов
-            return
-        elif self.use_db_api:
-            # Используем DB API клиент для создания реферальной записи
-            from ..db_api_client import db_api_client
-            try:
-                referral_data = {
-                    'referrer_id': referrer_id,
-                    'referred_id': referred_id,
-                    'level': level,
-                    'is_active': True
-                }
-                db_api_client.insert("referrals", referral_data)
-            except Exception as e:
-                print(f"Ошибка при создании реферальной записи через DB API: {e}")
-        elif self.use_supabase:
-            # Используем Supabase клиент для создания реферальной записи
-            await supabase_client.create_referral_record(referrer_id, referred_id, level)
-        else:
-            if not self.pool:
-                raise Exception("База данных не подключена")
+        try:
+            self.db_api_client.create_referral_record(referrer_id, referred_id, level)
+        except Exception as e:
+            print(f"Ошибка при создании реферальной записи: {e}")
 
-            async with self.pool.acquire() as connection:
-                query = """
-                    INSERT INTO referrals (referrer_id, referred_id, level, is_active)
-                    VALUES ($1, $2, $3, TRUE)
-                    ON CONFLICT (referrer_id, referred_id)
-                    DO UPDATE SET is_active = TRUE
-                """
-                await connection.execute(query, referrer_id, referred_id, level)
 
-database = Database()
+# Глобальный экземпляр базы данных
+db_manager = DatabaseManager()
