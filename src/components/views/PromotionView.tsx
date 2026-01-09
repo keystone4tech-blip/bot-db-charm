@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { PlusCircle, Send, TrendingUp, Clock, BarChart3 } from 'lucide-react';
 import { hapticFeedback } from '@/lib/telegram';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 const campaigns = [
   {
@@ -72,10 +73,11 @@ export const PromotionView = () => {
       animate="visible"
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="text-center py-4">
-        <h1 className="text-2xl font-bold mb-2">Продвижение</h1>
-        <p className="text-muted-foreground">Управляйте рекламой и постами</p>
-      </motion.div>
+      <PageHeader
+        icon="megaphone"
+        title="Продвижение"
+        subtitle="Управляйте рекламой и постами"
+      />
 
       {/* Action buttons */}
       <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3">

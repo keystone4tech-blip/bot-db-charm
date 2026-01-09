@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useTelegramContext } from '@/components/TelegramProvider';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export const VPNView = () => {
   // Состояние подписки (в реальной реализации будет получаться из профиля пользователя)
@@ -27,19 +28,11 @@ export const VPNView = () => {
   return (
     <div className="px-4 py-6 pb-24 space-y-6">
       {/* Header - объединенный значок и название */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3"
-      >
-        <div className="p-3 rounded-xl bg-primary/10">
-          <Shield className="w-6 h-6 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold">VPN Сервис</h1>
-          <p className="text-sm text-muted-foreground">Безопасное и анонимное соединение</p>
-        </div>
-      </motion.div>
+      <PageHeader
+        icon="shield"
+        title="VPN Сервис"
+        subtitle="Безопасное и анонимное соединение"
+      />
 
       {/* Статус подписки */}
       <motion.div

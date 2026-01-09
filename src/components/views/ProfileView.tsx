@@ -11,6 +11,7 @@ import { SupportTicketButton } from '@/components/profile/SupportTicketButton';
 import { VPNStatusCard } from '@/components/profile/VPNStatusCard';
 import { ChannelStatusCard } from '@/components/profile/ChannelStatusCard';
 import { BotStatusCard } from '@/components/profile/BotStatusCard';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface ProfileViewProps {
   onNavigate?: (tab: string) => void;
@@ -89,6 +90,13 @@ export const ProfileView = ({ onNavigate }: ProfileViewProps) => {
         transition={{ duration: 0.3 }}
         className="mt-6 space-y-6"
       >
+        {/* Header */}
+        <PageHeader
+          icon="user"
+          title="Личный кабинет"
+          subtitle="Управление вашим профилем и настройками"
+        />
+
         {/* Profile Header */}
         <ProfileHeader
           profile={displayProfile}

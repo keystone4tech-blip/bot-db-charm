@@ -3,6 +3,7 @@ import { Zap, Star, Crown, Check, Shield, Bot, Megaphone, Users } from 'lucide-r
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { hapticFeedback } from '@/lib/telegram';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface Plan {
   id: string;
@@ -122,10 +123,11 @@ export const SubscriptionView = () => {
       animate="visible"
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="text-center py-4">
-        <h1 className="text-2xl font-bold mb-2">Подписка</h1>
-        <p className="text-muted-foreground">Выберите план для вашего бизнеса</p>
-      </motion.div>
+      <PageHeader
+        icon="zap"
+        title="Подписка"
+        subtitle="Выберите план для вашего бизнеса"
+      />
 
       {/* Plan Includes Summary */}
       {selectedPlanData && (
