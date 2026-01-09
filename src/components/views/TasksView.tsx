@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { CheckCircle } from 'lucide-react';
 import { TaskCard } from '@/components/TaskCard';
 import { cn } from '@/lib/utils';
 import { hapticFeedback } from '@/lib/telegram';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface Task {
   id: string;
@@ -37,12 +39,11 @@ export const TasksView = ({ tasks, onToggleTask }: TasksViewProps) => {
 
   return (
     <div className="px-4 pb-24">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mt-6"
-      >
-        <h2 className="text-xl font-bold text-foreground mb-4">Мои задачи</h2>
+      <PageHeader
+        icon="check-circle"
+        title="Мои задачи"
+        subtitle="Управление вашими задачами и приоритетами"
+      />
         
         <div className="flex gap-2 mb-6 bg-secondary p-1 rounded-xl">
           {filters.map((f) => (

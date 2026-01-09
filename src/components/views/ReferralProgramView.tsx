@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useTelegramContext } from '@/components/TelegramProvider';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface ReferralProgramViewProps {
   referralLink?: string;
@@ -66,30 +67,15 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
     { level: 3, threshold: 100, reward: '$100.00', achieved: totalReferrals >= 100 },
   ];
 
-  const handleGoBack = () => {
-    onNavigate?.('profile');
-  };
 
   return (
     <div className="px-4 pb-24 space-y-6">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between py-6"
-      >
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleGoBack}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Назад
-        </Button>
-        <h1 className="text-xl font-bold text-center flex-1 px-8">Реферальная программа</h1>
-        <div className="w-10"></div> {/* Spacer for alignment */}
-      </motion.div>
+      <PageHeader
+        icon="users"
+        title="Реферальная программа"
+        subtitle="Приглашайте друзей и зарабатывайте вместе"
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-4">

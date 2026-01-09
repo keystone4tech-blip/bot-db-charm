@@ -1,17 +1,19 @@
 import { motion } from 'framer-motion';
-import { 
-  Bell, 
-  Moon, 
-  Globe, 
-  Shield, 
-  HelpCircle, 
+import {
+  Bell,
+  Moon,
+  Globe,
+  Shield,
+  HelpCircle,
   LogOut,
   ChevronRight,
-  Smartphone
+  Smartphone,
+  Settings
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useTelegramContext } from '@/components/TelegramProvider';
 import { hapticFeedback, closeTelegramApp } from '@/lib/telegram';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export const SettingsView = () => {
   const { isTelegram } = useTelegramContext();
@@ -46,12 +48,11 @@ export const SettingsView = () => {
 
   return (
     <div className="px-4 pb-24">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mt-6"
-      >
-        <h2 className="text-xl font-bold text-foreground mb-6">Настройки</h2>
+      <PageHeader
+        icon="settings"
+        title="Настройки"
+        subtitle="Управление параметрами приложения"
+      />
 
         {settingsGroups.map((group, groupIndex) => (
           <motion.div

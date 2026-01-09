@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import { CheckCircle2, Clock, TrendingUp, Zap } from 'lucide-react';
+import { CheckCircle2, Clock, TrendingUp, Zap, BarChart3 } from 'lucide-react';
 import { StatsCard } from '@/components/StatsCard';
 import { TaskCard } from '@/components/TaskCard';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface Task {
   id: string;
@@ -31,12 +32,17 @@ export const HomeView = ({ tasks, onToggleTask }: HomeViewProps) => {
 
   return (
     <div className="px-4 pb-24">
+      <PageHeader
+        icon="chart"
+        title="Главная"
+        subtitle="Ваша персональная статистика и задачи"
+      />
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-6"
+        className="mt-4"
       >
-        <h2 className="text-lg font-bold text-foreground mb-4">Статистика</h2>
         <div className="grid grid-cols-2 gap-3">
           {stats.map((stat, index) => (
             <StatsCard key={stat.label} {...stat} index={index} />
