@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Shield, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 interface AppHeaderProps {
   isAdminMode?: boolean;
@@ -17,7 +18,7 @@ export const AppHeader = ({ isAdminMode = false, className }: AppHeaderProps) =>
         className
       )}
     >
-      <div className="max-w-md mx-auto flex items-center justify-center h-14 px-4">
+      <div className="max-w-md mx-auto flex items-center justify-between h-14 px-4">
         <div className="flex items-center gap-2">
           {isAdminMode ? (
             <Settings className="w-5 h-5 text-primary" />
@@ -28,6 +29,7 @@ export const AppHeader = ({ isAdminMode = false, className }: AppHeaderProps) =>
             {isAdminMode ? 'Админ-панель' : 'Keystone Tech'}
           </h1>
         </div>
+        <ThemeToggle />
       </div>
     </motion.header>
   );
