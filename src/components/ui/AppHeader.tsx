@@ -25,7 +25,7 @@ export const AppHeader = ({ isAdminMode = false, className }: AppHeaderProps) =>
           ) : (
             <Shield className="w-5 h-5 text-primary" />
           )}
-          <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 animate-strong-gold-shimmer">
+          <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 animate-strong-gold-shimmer gold-gradient-text-outline">
             {isAdminMode ? 'Админ-панель' : 'Keystone Tech'}
           </h1>
         </div>
