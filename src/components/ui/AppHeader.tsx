@@ -24,19 +24,9 @@ export const AppHeader = ({ isAdminMode = false, className }: AppHeaderProps) =>
           ) : (
             <Shield className="w-5 h-5 text-primary" />
           )}
-          <motion.h1
-            className="text-lg font-bold gold-gradient-text"
-            animate={{
-              textShadow: [
-                '0 0 10px hsl(45 93% 47% / 0.3)',
-                '0 0 20px hsl(45 93% 47% / 0.5)',
-                '0 0 10px hsl(45 93% 47% / 0.3)',
-              ]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            {isAdminMode ? '⚙️ Админ-панель' : 'Keystone Tech'}
-          </motion.h1>
+          <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 animate-gold-shimmer">
+            {isAdminMode ? 'Админ-панель' : 'Keystone Tech'}
+          </h1>
         </div>
       </div>
     </motion.header>
