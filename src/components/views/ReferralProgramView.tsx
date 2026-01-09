@@ -79,16 +79,16 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
         />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
-            <CardContent className="p-4 text-center">
-              <div className="text-3xl font-bold text-primary">{totalReferrals}</div>
-              <div className="text-sm text-muted-foreground">Рефералов</div>
+          <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20 rounded-2xl p-4">
+            <CardContent className="p-3 text-center">
+              <div className="text-2xl font-bold text-primary">{totalReferrals}</div>
+              <div className="text-xs text-muted-foreground">Рефералов</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -97,13 +97,13 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="bg-gradient-to-br from-green-500/5 to-emerald-500/5 border-green-500/20">
-            <CardContent className="p-4 text-center">
-              <div className="text-3xl font-bold text-green-500 flex items-center gap-1">
+          <Card className="bg-gradient-to-br from-green-500/5 to-emerald-500/5 border-green-500/20 rounded-2xl p-4">
+            <CardContent className="p-3 text-center">
+              <div className="text-2xl font-bold text-green-500 flex items-center justify-center gap-1">
                 <span>{totalEarnings.toFixed(2)}</span>
-                <Coins className="w-5 h-5 text-yellow-500" />
+                <Coins className="w-4 h-4 text-yellow-500" />
               </div>
-              <div className="text-sm text-muted-foreground">Заработано</div>
+              <div className="text-xs text-muted-foreground">Заработано</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -115,16 +115,14 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Share2 className="w-5 h-5" />
-              Ваша реферальная ссылка
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <Card className="bg-card rounded-2xl p-5 border border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <Share2 className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold">Ваша реферальная ссылка</h3>
+          </div>
+          <div className="space-y-3">
             <div className="flex gap-2">
-              <div className="flex-1 bg-secondary rounded-lg px-3 py-2 text-sm font-mono truncate">
+              <div className="flex-1 bg-secondary/30 rounded-xl px-3 py-2 text-sm font-mono truncate">
                 {referralLink || 'Загрузка...'}
               </div>
               <Button
@@ -146,10 +144,10 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
                 </Button>
               )}
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-muted-foreground">
               Поделитесь этой ссылкой с друзьями и получайте награды за каждого, кто зарегистрируется
             </p>
-          </CardContent>
+          </div>
         </Card>
       </motion.div>
 
@@ -159,38 +157,46 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Gift className="w-5 h-5" />
-              Награды
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <Card className="bg-card rounded-2xl p-5 border border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <Gift className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold">Награды</h3>
+          </div>
+          <div className="space-y-3">
             {rewards.map((reward, index) => (
-              <div key={reward.level} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
+              <motion.div
+                key={reward.level}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + index * 0.05 }}
+                className={`flex items-center justify-between p-4 rounded-xl border ${
+                  reward.achieved ? 'border-primary/30 bg-primary/5' : 'border-border'
+                }`}
+              >
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${reward.achieved ? 'bg-green-500' : 'bg-gray-500'}`}>
+                  <div className={`p-2 rounded-full ${reward.achieved ? 'bg-green-500/10 text-green-500' : 'bg-secondary/30 text-muted-foreground'}`}>
                     {reward.achieved ? (
-                      <Star className="w-4 h-4 text-white" />
+                      <Star className="w-4 h-4 text-green-500" />
                     ) : (
-                      <span className="text-white text-xs font-bold">{reward.level}</span>
+                      <span className="text-xs font-bold">{reward.level}</span>
                     )}
                   </div>
                   <div>
-                    <div className="font-medium">Приведите {reward.threshold} человек</div>
-                    <div className="text-sm text-muted-foreground flex items-center gap-1">
+                    <h4 className="font-medium">Приведите {reward.threshold} человек</h4>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
                       Награда: {reward.reward}
                       <Coins className="w-4 h-4 text-yellow-500" />
-                    </div>
+                    </p>
                   </div>
                 </div>
-                <Badge variant={reward.achieved ? 'default' : 'secondary'}>
-                  {reward.achieved ? 'Получено' : 'В процессе'}
-                </Badge>
-              </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={reward.achieved ? 'default' : 'secondary'}>
+                    {reward.achieved ? 'Получено' : 'В процессе'}
+                  </Badge>
+                </div>
+              </motion.div>
             ))}
-          </CardContent>
+          </div>
         </Card>
       </motion.div>
 
@@ -200,14 +206,12 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
       >
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="w-5 h-5" />
-              Уровневые награды
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <Card className="bg-card rounded-2xl p-5 border border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <Trophy className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold">Уровневые награды</h3>
+          </div>
+          <div className="space-y-4">
             <div className="grid grid-cols-5 gap-2">
               {levelCounts.map((level) => (
                 <div key={level.level} className="text-center">
@@ -222,10 +226,10 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground mt-3 text-center">
+            <p className="text-xs text-muted-foreground text-center">
               За каждого реферала 1-го уровня вы получаете {levelCounts[0].reward} <Coins className="w-3 h-3 text-yellow-500 inline" />, за 2-го уровня - {levelCounts[1].reward} <Coins className="w-3 h-3 text-yellow-500 inline" /> и т.д.
             </p>
-          </CardContent>
+          </div>
         </Card>
       </motion.div>
 
@@ -235,33 +239,38 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
       >
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Топ рефералов
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {[1, 2, 3].map((rank) => (
-                <div key={rank} className="flex items-center gap-3 p-2 hover:bg-secondary/50 rounded-lg">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    rank === 1 ? 'bg-yellow-500 text-white' :
-                    rank === 2 ? 'bg-gray-400 text-white' :
-                    'bg-amber-700 text-white'
-                  }`}>
-                    {rank}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">Пользователь {rank}</div>
-                    <div className="text-xs text-muted-foreground">{rank * 15} рефералов</div>
-                  </div>
-                  <div className="text-sm font-medium">+${(rank * 15).toFixed(2)}</div>
+        <Card className="bg-card rounded-2xl p-5 border border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold">Топ рефералов</h3>
+          </div>
+          <div className="space-y-3">
+            {[1, 2, 3].map((rank) => (
+              <motion.div
+                key={rank}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7 + rank * 0.05 }}
+                className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-accent/30 transition-colors"
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                  rank === 1 ? 'bg-yellow-500 text-white' :
+                  rank === 2 ? 'bg-gray-400 text-white' :
+                  'bg-amber-700 text-white'
+                }`}>
+                  {rank}
                 </div>
-              ))}
-            </div>
-          </CardContent>
+                <div className="flex-1">
+                  <div className="font-medium">Пользователь {rank}</div>
+                  <div className="text-sm text-muted-foreground">{rank * 15} рефералов</div>
+                </div>
+                <div className="text-sm font-medium flex items-center gap-1">
+                  +{(rank * 15).toFixed(2)}
+                  <Coins className="w-4 h-4 text-yellow-500" />
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </Card>
       </motion.div>
     </div>
