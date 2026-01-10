@@ -162,6 +162,7 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overflow: hidden; /* Скрываем прокрутку, так как фон будет занимать всё пространство */
   }
 }
 

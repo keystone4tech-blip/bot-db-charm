@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import NeuralNetworkAnimation from "./components/NeuralNetworkAnimation";
 
 const queryClient = new QueryClient();
 
@@ -16,11 +17,14 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <div className="relative w-full h-screen overflow-hidden">
+            <NeuralNetworkAnimation />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
