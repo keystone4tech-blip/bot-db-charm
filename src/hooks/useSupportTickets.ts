@@ -40,16 +40,16 @@ export const useSupportTickets = () => {
       body,
       hasUrl: !!supabaseUrl,
       hasAnonKey: !!anonKey,
-      supabaseUrl: supabaseUrl ? 'PROVIDED' : 'MISSING',
+      supabaseUrl: supabaseUrl ? supabaseUrl : 'MISSING',
       anonKey: anonKey ? 'PROVIDED' : 'MISSING'
     });
 
     if (!supabaseUrl) {
-      throw new Error('VITE_SUPABASE_URL не определен в переменных окружения');
+      throw new Error('VITE_SUPABASE_URL не определен в переменных окружения. Пожалуйста, проверьте файл .env');
     }
 
     if (!anonKey) {
-      throw new Error('VITE_SUPABASE_ANON_KEY не определен в переменных окружения');
+      throw new Error('VITE_SUPABASE_ANON_KEY не определен в переменных окружения. Пожалуйста, проверьте файл .env');
     }
 
     try {
@@ -176,10 +176,13 @@ export const useSupportTickets = () => {
 
       // Проверяем, что все необходимые данные присутствуют
       if (!userId || !category || !subject || !message) {
-        throw new Error(`Отсутствуют обязательные поля: userId=${!!userId}, category=${!!category}, subject=${!!subject}, message=${!!message}`);
+        const errorDetails = `Отсутствуют обязательные поля: userId=${!!userId}, category=${!!category}, subject=${!!subject}, message=${!!message}`;
+        console.error('Validation failed:', errorDetails);
+        throw new Error(errorDetails);
       }
 
       console.log('Calling Supabase function for ticket creation...');
+
       const result = await callSupabaseFunction('support-tickets', 'POST', {
         user_id: userId,
         category,
@@ -190,7 +193,9 @@ export const useSupportTickets = () => {
       console.log('Supabase function response received:', result);
 
       if (!result.success || !result.ticket) {
-        throw new Error(result.error || 'Некорректный ответ от сервера');
+        const errorDetails = result.error || 'Некорректный ответ от сервера';
+        console.error('Ticket creation failed:', errorDetails);
+        throw new Error(errorDetails);
       }
 
       console.log('Ticket created successfully in database:', result.ticket);
@@ -327,10 +332,10 @@ export const useSupportTickets = () => {
     loading,
     error,
     fetchTickets,
-    fetchAllTickets,
+    fetchAllTickets: fetchAllTickets,
     fetchMessages,
     createTicket,
     sendMessage,
-    updateTicketStatus
+    updateTicketStatus: updateTicketStatus
   };
 };

@@ -45,7 +45,7 @@ export const usePlatformStats = (autoRefresh: boolean = false, refreshInterval: 
 
       // Call edge function that uses service role to bypass RLS
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
       const response = await fetch(`${supabaseUrl}/functions/v1/platform-stats`, {
         method: 'POST',

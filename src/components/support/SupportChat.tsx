@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import ErrorDisplay from '@/components/ui/ErrorDisplay';
 import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 import { useSupportTickets, ChatMessage } from '@/hooks/useSupportTickets';
 import { Send, X } from 'lucide-react';
@@ -17,7 +17,7 @@ const SupportChat = ({ ticketId, onClose }: SupportChatProps) => {
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const { user } = useTelegramAuth();
-  const { messages, sendMessage, fetchMessages, updateTicketStatus, error } = useSupportTickets();
+  const { messages, sendMessage, fetchMessages, updateTicketStatus, error: chatError } = useSupportTickets();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Загружаем сообщения при открытии чата
@@ -46,6 +46,8 @@ const SupportChat = ({ ticketId, onClose }: SupportChatProps) => {
     try {
       setIsSending(true);
 
+      console.log('Sending message to ticket:', { ticketId, userId: user.id, message });
+
       await sendMessage(
         ticketId,
         user.id,
@@ -54,9 +56,12 @@ const SupportChat = ({ ticketId, onClose }: SupportChatProps) => {
       );
 
       setMessage('');
+      console.log('Message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
       // Ошибки обрабатываются в хуке, но мы можем дополнительно логировать их здесь
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка при отправке сообщения';
+      setError(`Ошибка отправки сообщения: ${errorMessage}`);
     } finally {
       setIsSending(false);
     }
@@ -92,11 +97,9 @@ const SupportChat = ({ ticketId, onClose }: SupportChatProps) => {
         </Button>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-0">
-        {error && (
+        {chatError && (
           <div className="p-4 border-b">
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <ErrorDisplay error={chatError} title="Ошибка чата поддержки" />
           </div>
         )}
         <ScrollArea className="flex-1 p-4">

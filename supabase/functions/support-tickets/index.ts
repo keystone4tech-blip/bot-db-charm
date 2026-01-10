@@ -2,12 +2,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
-
-// Настройка CORS заголовков
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -15,25 +9,29 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Обработка CORS preflight запросов
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Определение метода запроса
+    // Create Supabase client with service role key to bypass RLS
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey)
+
     const url = new URL(req.url)
-    const pathParts = url.pathname.split('/')
-    const ticketId = pathParts[pathParts.length - 1] // Последняя часть URL - ID тикета
-    const isTicketSpecific = pathParts.length > 3 && ticketId && ticketId !== 'support-tickets'
+    const pathParts = url.pathname.split('/').filter(part => part !== '')
+    const ticketId = pathParts[1] // /support-tickets/:ticketId
 
     if (req.method === 'POST') {
-      // Создание нового тикета
+      // Create new support ticket
       const { user_id, category, subject, message } = await req.json()
 
       if (!user_id || !category || !subject || !message) {
         return new Response(
-          JSON.stringify({ error: 'Отсутствуют обязательные поля: user_id, category, subject, message' }),
+          JSON.stringify({ error: 'Missing required fields: user_id, category, subject, message' }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
             status: 400 
@@ -41,7 +39,7 @@ serve(async (req) => {
         )
       }
 
-      // Проверяем, существует ли пользователь
+      // Check if user exists
       const { data: user, error: userError } = await supabase
         .from('profiles')
         .select('id')
@@ -49,8 +47,9 @@ serve(async (req) => {
         .single()
 
       if (userError || !user) {
+        console.error('User not found:', { user_id, userError });
         return new Response(
-          JSON.stringify({ error: 'Пользователь не найден' }),
+          JSON.stringify({ error: 'User not found' }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
             status: 404 
@@ -58,7 +57,9 @@ serve(async (req) => {
         )
       }
 
-      // Создаем тикет
+      console.log('Creating ticket for user:', user_id);
+
+      // Create the ticket
       const { data, error } = await supabase
         .from('support_tickets')
         .insert([{
@@ -66,8 +67,7 @@ serve(async (req) => {
           category,
           subject,
           message,
-          status: 'open',
-          priority: 'medium'
+          status: 'open'
         }])
         .select()
         .single()
@@ -83,6 +83,8 @@ serve(async (req) => {
         )
       }
 
+      console.log('Ticket created successfully:', data.id);
+
       return new Response(
         JSON.stringify({ success: true, ticket: data }),
         { 
@@ -90,8 +92,10 @@ serve(async (req) => {
           status: 200 
         }
       )
-    } else if (req.method === 'GET' && isTicketSpecific) {
-      // Получение конкретного тикета
+    } else if (req.method === 'GET' && ticketId) {
+      // Get specific ticket
+      console.log('Fetching ticket:', ticketId);
+      
       const { data, error } = await supabase
         .from('support_tickets')
         .select('*')
@@ -116,13 +120,13 @@ serve(async (req) => {
           status: 200 
         }
       )
-    } else if (req.method === 'GET' && !isTicketSpecific) {
-      // Получение всех тикетов пользователя
+    } else if (req.method === 'GET' && !ticketId) {
+      // Get all tickets for user (or all tickets for admin)
       const userId = url.searchParams.get('user_id')
       
       if (!userId) {
         return new Response(
-          JSON.stringify({ error: 'Необходим параметр user_id' }),
+          JSON.stringify({ error: 'user_id parameter is required' }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
             status: 400 
@@ -130,6 +134,8 @@ serve(async (req) => {
         )
       }
 
+      console.log('Fetching tickets for user:', userId);
+      
       const { data, error } = await supabase
         .from('support_tickets')
         .select('*')
@@ -154,13 +160,13 @@ serve(async (req) => {
           status: 200 
         }
       )
-    } else if (req.method === 'PUT' && isTicketSpecific) {
-      // Обновление статуса тикета
+    } else if (req.method === 'PUT' && ticketId) {
+      // Update ticket status
       const { status } = await req.json()
 
       if (!status) {
         return new Response(
-          JSON.stringify({ error: 'Необходим параметр status' }),
+          JSON.stringify({ error: 'status parameter is required' }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
             status: 400 
@@ -168,6 +174,8 @@ serve(async (req) => {
         )
       }
 
+      console.log('Updating ticket status:', { ticketId, status });
+      
       const { data, error } = await supabase
         .from('support_tickets')
         .update({ status, updated_at: new Date().toISOString() })
@@ -195,7 +203,7 @@ serve(async (req) => {
       )
     } else {
       return new Response(
-        JSON.stringify({ error: 'Метод не поддерживается' }),
+        JSON.stringify({ error: 'Method not allowed' }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
           status: 405 

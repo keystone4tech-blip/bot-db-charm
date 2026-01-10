@@ -86,8 +86,16 @@ export const useTelegramAuth = () => {
     });
 
     try {
+      console.log('Starting authentication process...', {
+        hasInitData: !!initData,
+        referralCode,
+        userId: tg.initDataUnsafe?.user?.id
+      });
+
       // Используем наш новый API клиент для аутентификации
       const result = await authenticateUser(initData, referralCode);
+
+      console.log('Authentication API response received:', result);
 
       if (!result.success) {
         console.error('Auth failed:', result.error);
