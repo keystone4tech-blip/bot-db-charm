@@ -17,9 +17,9 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="relative w-full h-full overflow-hidden flex flex-col">
+          <div className="relative w-full h-screen">
             <NeuralNetworkAnimation />
-            <div className="relative z-10 flex-grow flex flex-col">
+            <div className="relative z-10 w-full h-full">
               <Routes>
                 <Route path="/" element={<Index />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
