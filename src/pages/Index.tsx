@@ -96,7 +96,7 @@ const Index = () => {
 
   return (
     <TelegramProvider>
-      <div className="min-h-screen bg-background/90 backdrop-blur-sm max-w-md mx-auto overflow-x-hidden pt-14 relative z-10">
+      <div className="min-h-screen bg-background max-w-md mx-auto overflow-x-hidden pt-14">
         {/* App header */}
         <AppHeader isAdminMode={isAdminMode} />
 

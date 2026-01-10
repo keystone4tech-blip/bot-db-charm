@@ -7,7 +7,6 @@ import logging
 
 from ..database import database
 from ..keyboards import get_webapp_keyboard
-from ..utils.message_helpers import send_welcome_message, send_error_message
 
 # Загружаем переменные окружения
 load_dotenv()
@@ -89,21 +88,16 @@ async def komanda_start(message: Message) -> None:
                 logger.info(f"Результат создания пользователя: {user_data is not None}")
 
                 if user_data:
-                    await send_welcome_message(
-                        user_id=message.from_user.id,
-                        full_name=user_full_name,
-                        message=message,
-                        keyboard=get_webapp_keyboard()
+                    welcome_text = (
+                        f"Привет, {user_full_name}! 👋\n\n"
+                        "Добро пожаловать! Нажмите кнопку ниже, чтобы открыть приложение:"
                     )
+                    await message.answer(welcome_text, reply_markup=get_webapp_keyboard())
                     logger.info(f"Пользователь {message.from_user.id} зарегистрирован без реферала")
                     return
                 else:
                     logger.error(f"Не удалось создать пользователя {message.from_user.id}")
-                    await send_error_message(
-                        user_id=message.from_user.id,
-                        message=message,
-                        error_text="Произошла ошибка при регистрации. Пожалуйста, попробуйте еще раз."
-                    )
+                    await message.answer("Произошла ошибка при регистрации. Пожалуйста, попробуйте еще раз.")
                     return
 
         # Пользователь новый
@@ -166,10 +160,6 @@ async def komanda_start(message: Message) -> None:
     except Exception as e:
         logger.error(f"Неизвестная ошибка при обработке команды /start от пользователя {message.from_user.id}: {e}", exc_info=True)
         try:
-            await send_error_message(
-                user_id=message.from_user.id,
-                message=message,
-                error_text="Произошла ошибка. Пожалуйста, попробуйте еще раз."
-            )
+            await message.answer("Произошла ошибка. Пожалуйста, попробуйте еще раз.")
         except:
             pass  # Игнорируем ошибки при отправке сообщения об ошибке
