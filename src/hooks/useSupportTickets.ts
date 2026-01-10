@@ -1,10 +1,4 @@
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-// Инициализация Supabase клиента
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
 
 export interface Ticket {
   id: string;
@@ -41,15 +35,12 @@ export const useSupportTickets = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
-        .from('support_tickets')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+      const response = await fetch(`/api/support-tickets/${userId}`);
+      const result = await response.json();
 
-      if (error) throw error;
+      if (!response.ok) throw new Error(result.error || 'Failed to fetch tickets');
 
-      setTickets(data || []);
+      setTickets(result.tickets || []);
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError('Ошибка загрузки тикетов');
@@ -64,14 +55,12 @@ export const useSupportTickets = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
-        .from('support_tickets')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const response = await fetch('/api/support-tickets');
+      const result = await response.json();
 
-      if (error) throw error;
+      if (!response.ok) throw new Error(result.error || 'Failed to fetch tickets');
 
-      setTickets(data || []);
+      setTickets(result.tickets || []);
     } catch (err) {
       console.error('Error fetching all tickets:', err);
       setError('Ошибка загрузки тикетов');
@@ -83,17 +72,14 @@ export const useSupportTickets = () => {
   // Загрузка сообщений для тикета
   const fetchMessages = async (ticketId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('ticket_messages')
-        .select('*')
-        .eq('ticket_id', ticketId)
-        .order('created_at', { ascending: true });
+      const response = await fetch(`/api/support-chat/${ticketId}`);
+      const result = await response.json();
 
-      if (error) throw error;
+      if (!response.ok) throw new Error(result.error || 'Failed to fetch messages');
 
       setMessages(prev => ({
         ...prev,
-        [ticketId]: data || []
+        [ticketId]: result.messages || []
       }));
     } catch (err) {
       console.error('Error fetching messages:', err);
@@ -107,27 +93,26 @@ export const useSupportTickets = () => {
       setLoading(true);
       setError(null);
 
-      console.log('Creating ticket with data:', { userId, category, subject, message });
+      console.log('Sending ticket creation request:', { user_id: userId, category, subject, message });
+      
+      const response = await fetch('/api/support-tickets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: userId, category, subject, message }),
+      });
 
-      const { data, error } = await supabase
-        .from('support_tickets')
-        .insert([{
-          user_id: userId,
-          category,
-          subject,
-          message,
-          status: 'open'
-        }])
-        .select()
-        .single();
+      console.log('Response status:', response.status);
+      const result = await response.json();
+      console.log('Response result:', result);
 
-      if (error) throw error;
+      if (!response.ok) throw new Error(result.error || 'Failed to create ticket');
 
       // Добавляем тикет в список
-      setTickets(prev => [data, ...prev]);
+      setTickets(prev => [result.ticket, ...prev]);
 
-      console.log('Ticket created successfully:', data);
-      return data;
+      return result.ticket;
     } catch (err) {
       console.error('Error creating ticket:', err);
       setError('Ошибка создания тикета');
@@ -140,32 +125,59 @@ export const useSupportTickets = () => {
   // Отправка сообщения в чат
   const sendMessage = async (ticketId: string, senderId: string, senderType: 'user' | 'admin', message: string, file?: File) => {
     try {
-      // В текущей реализации Supabase мы отправляем только текстовое сообщение
-      // Поддержка файлов может быть добавлена позже
+      // Если есть файл, загружаем его сначала
+      let fileUrl = '';
+      let fileType = '';
+      let fileName = '';
+      
+      if (file) {
+        // В реальной реализации нужно загрузить файл на сервер
+        // или в облачное хранилище, и получить URL
+        // Пока используем заглушку для демонстрации
+        
+        // В реальной реализации:
+        // 1. Загрузить файл на сервер или в облачное хранилище
+        // 2. Получить URL файла
+        // 3. Сохранить URL в базе данных
+        
+        // Для демонстрации используем Data URL
+        const reader = new FileReader();
+        fileUrl = await new Promise((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        
+        fileType = file.type;
+        fileName = file.name;
+      }
 
-      const { data, error } = await supabase
-        .from('ticket_messages')
-        .insert([{
+      const response = await fetch('/api/support-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           ticket_id: ticketId,
           sender_id: senderId,
+          sender_type,
           message,
-          is_admin_reply: senderType === 'admin',
-        }])
-        .select()
-        .single();
+          file_url: fileUrl,
+          file_type: fileType,
+          file_name: fileName
+        }),
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || 'Failed to send message');
 
       // Добавляем сообщение в список
       setMessages(prev => ({
         ...prev,
-        [ticketId]: [...(prev[ticketId] || []), data]
+        [ticketId]: [...(prev[ticketId] || []), result.message]
       }));
 
-      // Обновляем статус тикета на "в процессе"
-      await updateTicketStatus(ticketId, 'in_progress');
-
-      return data;
+      return result.message;
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Ошибка отправки сообщения');
@@ -176,23 +188,24 @@ export const useSupportTickets = () => {
   // Обновление статуса тикета
   const updateTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'closed') => {
     try {
-      const { data, error } = await supabase
-        .from('support_tickets')
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', ticketId)
-        .select()
-        .single();
+      const response = await fetch(`/api/support-tickets/${ticketId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || 'Failed to update ticket status');
 
       // Обновляем статус в локальном состоянии
-      setTickets(prev =>
-        prev.map(ticket =>
-          ticket.id === ticketId ? { ...ticket, status: data.status } : ticket
+      setTickets(prev => 
+        prev.map(ticket => 
+          ticket.id === ticketId ? { ...ticket, status: result.ticket.status } : ticket
         )
       );
-
-      return data;
     } catch (err) {
       console.error('Error updating ticket status:', err);
       setError('Ошибка обновления статуса тикета');
@@ -202,30 +215,36 @@ export const useSupportTickets = () => {
 
   // Подписка на обновления чата
   useEffect(() => {
-    // Подписка на изменения в чате
-    const channel = supabase
-      .channel('ticket-messages-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'ticket_messages',
-        },
-        (payload) => {
-          const newMessage = payload.new as ChatMessage;
-          setMessages(prev => ({
-            ...prev,
-            [newMessage.ticket_id]: [...(prev[newMessage.ticket_id] || []), newMessage]
-          }));
-        }
-      )
-      .subscribe();
+    // В реальной реализации здесь будет WebSocket или Server-Sent Events
+    // для получения обновлений в реальном времени
+
+    // Пример с WebSocket:
+    // const ws = new WebSocket('ws://your-websocket-url');
+    //
+    // ws.onmessage = (event) => {
+    //   const newMessage = JSON.parse(event.data);
+    //   setMessages(prev => ({
+    //     ...prev,
+    //     [newMessage.ticket_id]: [...(prev[newMessage.ticket_id] || []), newMessage]
+    //   }));
+    // };
+    //
+    // return () => {
+    //   ws.close();
+    // };
+
+    // Пока используем опрос (polling) для получения новых сообщений
+    const interval = setInterval(() => {
+      // Обновляем только те тикеты, для которых уже загружены сообщения
+      Object.keys(messages).forEach(ticketId => {
+        fetchMessages(ticketId);
+      });
+    }, 5000); // Обновляем каждые 5 секунд
 
     return () => {
-      supabase.removeChannel(channel);
+      clearInterval(interval);
     };
-  }, []);
+  }, [messages, fetchMessages]);
 
   return {
     tickets,
