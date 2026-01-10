@@ -2,3 +2,9 @@ project_id = "jzpnqgxrjtpeywwtiuha"
 
 [functions.telegram-auth]
 verify_jwt = false
+
+[functions.support-tickets]
+verify_jwt = false
+
+[functions.support-chat-messages]
+verify_jwt = false
