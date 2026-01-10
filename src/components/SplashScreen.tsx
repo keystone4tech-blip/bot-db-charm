@@ -27,6 +27,17 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   // Объединяем проверку пользователя и анимацию
   useEffect(() => {
     let progressInterval: NodeJS.Timeout;
+    let minDisplayTimer: NodeJS.Timeout;
+    let isMinDisplayTimeCompleted = false;
+
+    // Устанавливаем минимальное время отображения 10 секунд
+    minDisplayTimer = setTimeout(() => {
+      isMinDisplayTimeCompleted = true;
+      // Если аутентификация уже завершена, можно завершать сплеш
+      if (!isAuthLoading && (authError || (isAuthenticated && authProfile))) {
+        finalizeSplash();
+      }
+    }, 10000); // 10 секунд минимального времени отображения
 
     // Имитируем прогресс загрузки
     progressInterval = setInterval(() => {
@@ -35,9 +46,23 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
           clearInterval(progressInterval);
           return 100;
         }
-        return prev + 0.5; // Замедлим немного прогресс, чтобы анимация не заканчивалась слишком быстро
+        // Увеличиваем прогресс медленнее, чтобы анимация длилась дольше
+        return prev + 0.2; // 0.2 * 100 = 20 секунд для полного прогресса, но ограничимся 10 секундами
       });
-    }, 100); // Обновляем каждые 100мс
+    }, 200); // Обновляем каждые 200мс
+
+    // Функция для завершения сплеш-экрана
+    const finalizeSplash = () => {
+      if (isMinDisplayTimeCompleted) {
+        setTimeout(() => {
+          setIsLoading(false);
+          setAnimationComplete(true);
+          onFinish();
+        }, 500); // Небольшая задержка для плавности
+        clearInterval(progressInterval);
+        clearTimeout(minDisplayTimer);
+      }
+    };
 
     // Проверяем состояние аутентификации
     if (isReady) {
@@ -47,6 +72,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
           // Если произошла ошибка аутентификации
           console.error('Auth error:', authError);
           clearInterval(progressInterval);
+          clearTimeout(minDisplayTimer);
           setIsLoading(false);
         } else if (isAuthenticated && authProfile) {
           // Если пользователь аутентифицирован и профиль получен
@@ -57,30 +83,33 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
             setShowUsernameDialog(true);
             setIsLoading(false);
             clearInterval(progressInterval);
+            clearTimeout(minDisplayTimer);
           } else {
-            // Если username есть, завершаем сплеш
-            setTimeout(() => {
-              setIsLoading(false);
-              setAnimationComplete(true);
-              onFinish();
-            }, 500); // Небольшая задержка для плавности
-            clearInterval(progressInterval);
+            // Если минимальное время отображения прошло, завершаем сплеш
+            if (isMinDisplayTimeCompleted) {
+              finalizeSplash();
+            }
+            // Иначе ждем завершения таймера
           }
         }
       }
     } else if (!isReady && !isAuthLoading) {
       // Если SDK не готов и не загружается, возможно, пользователь не в Telegram WebApp
-      // В этом случае просто завершаем сплеш
-      setTimeout(() => {
-        setIsLoading(false);
-        setAnimationComplete(true);
-        onFinish();
-      }, 1000); // Небольшая задержка для плавности
-      clearInterval(progressInterval);
+      // В этом случае просто завершаем сплеш после минимального времени
+      if (isMinDisplayTimeCompleted) {
+        setTimeout(() => {
+          setIsLoading(false);
+          setAnimationComplete(true);
+          onFinish();
+        }, 1000); // Небольшая задержка для плавности
+        clearInterval(progressInterval);
+        clearTimeout(minDisplayTimer);
+      }
     }
 
     return () => {
       if (progressInterval) clearInterval(progressInterval);
+      if (minDisplayTimer) clearTimeout(minDisplayTimer);
     };
   }, [isReady, isAuthLoading, isAuthenticated, authError, authProfile, user, onFinish]);
 
