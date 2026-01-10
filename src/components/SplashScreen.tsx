@@ -556,13 +556,13 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       {/* Мотивационное сообщение */}
       {!showUsernameDialog && (
         <motion.div
-          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[10001] text-center px-4"
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[10001] flex items-center justify-center w-full"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <motion.p
-            className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 animate-strong-gold-shimmer gold-gradient-text-outline has-text-outline max-w-lg text-center"
+            className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 animate-strong-gold-shimmer gold-gradient-text-outline has-text-outline text-center max-w-[90vw] px-4"
             key={currentMessage}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
