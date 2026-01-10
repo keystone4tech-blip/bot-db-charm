@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { Bot, Rocket, Users, MessageSquare, Zap, Shield, ChevronRight, Sparkles, Target, TrendingUp } from 'lucide-react';
+import { Bot, Rocket, Users, MessageSquare, Zap, Shield, ChevronRight, Sparkles, Target, TrendingUp, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { usePlatformStats, formatNumber } from '@/hooks/usePlatformStats';
 
 const features = [
   {
@@ -45,15 +46,6 @@ const features = [
   },
 ];
 
-const stats = [
-  { value: '15K+', label: 'Пользователей' },
-  { value: '1M+', label: 'Постов' },
-  { value: '5M+', label: 'Охват' },
-  { value: '98%', label: 'Удовлетворенность' },
-  { value: '24/7', label: 'Поддержка' },
-  { value: '100%', label: 'Безопасность' },
-];
-
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -70,6 +62,17 @@ const itemVariants = {
 };
 
 export const InfoView = () => {
+  const { stats: platformStats, isLoading } = usePlatformStats();
+
+  const stats = [
+    { value: formatNumber(platformStats.totalUsers), label: 'Пользователей' },
+    { value: formatNumber(platformStats.activeBots), label: 'Ботов' },
+    { value: formatNumber(platformStats.activeSubscriptions), label: 'Подписок' },
+    { value: formatNumber(platformStats.activeVpnKeys), label: 'VPN ключей' },
+    { value: '24/7', label: 'Поддержка' },
+    { value: '100%', label: 'Безопасность' },
+  ];
+
   return (
     <motion.div
       className="px-4 py-6 pb-24 space-y-6"
@@ -89,27 +92,33 @@ export const InfoView = () => {
         variants={itemVariants}
         className="grid grid-cols-2 md:grid-cols-3 gap-3"
       >
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.label}
-            className="stat-card-light bg-gradient-to-br from-card via-card to-primary/10 p-4 rounded-2xl border border-border text-center shadow-sm dark:shadow-none"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5 + index * 0.05 }}
-            whileHover={{ scale: 1.05, y: -2 }}
-          >
+        {isLoading ? (
+          <div className="col-span-full flex justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          stats.map((stat, index) => (
             <motion.div
-              className="text-xl font-bold stat-number gold-gradient-text mb-1"
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
+              key={stat.label}
+              className="stat-card-light bg-gradient-to-br from-card via-card to-primary/10 p-4 rounded-2xl border border-border text-center shadow-sm dark:shadow-none"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 + index * 0.05 }}
+              whileHover={{ scale: 1.05, y: -2 }}
             >
-              {stat.value}
+              <motion.div
+                className="text-xl font-bold stat-number gold-gradient-text mb-1"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
+              >
+                {stat.value}
+              </motion.div>
+              <div className="text-xs text-muted-foreground font-medium">
+                {stat.label}
+              </div>
             </motion.div>
-            <div className="text-xs text-muted-foreground font-medium">
-              {stat.label}
-            </div>
-          </motion.div>
-        ))}
+          ))
+        )}
       </motion.div>
 
       {/* Features */}
