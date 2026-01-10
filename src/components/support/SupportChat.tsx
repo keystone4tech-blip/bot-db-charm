@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 import { useSupportTickets, ChatMessage } from '@/hooks/useSupportTickets';
 import { Send, X } from 'lucide-react';
@@ -16,7 +17,7 @@ const SupportChat = ({ ticketId, onClose }: SupportChatProps) => {
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const { user } = useTelegramAuth();
-  const { messages, sendMessage, fetchMessages, updateTicketStatus } = useSupportTickets();
+  const { messages, sendMessage, fetchMessages, updateTicketStatus, error } = useSupportTickets();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Загружаем сообщения при открытии чата
@@ -55,6 +56,7 @@ const SupportChat = ({ ticketId, onClose }: SupportChatProps) => {
       setMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
+      // Ошибки обрабатываются в хуке, но мы можем дополнительно логировать их здесь
     } finally {
       setIsSending(false);
     }
@@ -90,6 +92,13 @@ const SupportChat = ({ ticketId, onClose }: SupportChatProps) => {
         </Button>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-0">
+        {error && (
+          <div className="p-4 border-b">
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </div>
+        )}
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             {ticketMessages.length === 0 ? (

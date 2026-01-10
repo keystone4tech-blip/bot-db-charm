@@ -26,22 +26,37 @@ export interface ChatMessage {
 export const useSupportTickets = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Вспомогательная функция для выполнения запросов к Supabase функции
   const callSupabaseFunction = async (endpoint: string, method: string, body?: any) => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    console.log('Supabase function call:', { endpoint, method, body, hasUrl: !!supabaseUrl, hasAnonKey: !!anonKey });
+    console.log('Supabase function call attempt:', {
+      endpoint,
+      method,
+      body,
+      hasUrl: !!supabaseUrl,
+      hasAnonKey: !!anonKey,
+      supabaseUrl: supabaseUrl ? 'PROVIDED' : 'MISSING',
+      anonKey: anonKey ? 'PROVIDED' : 'MISSING'
+    });
 
-    if (!supabaseUrl || !anonKey) {
-      throw new Error('Supabase URL или ANON ключ не определены в переменных окружения');
+    if (!supabaseUrl) {
+      throw new Error('VITE_SUPABASE_URL не определен в переменных окружения');
+    }
+
+    if (!anonKey) {
+      throw new Error('VITE_SUPABASE_ANON_KEY не определен в переменных окружения');
     }
 
     try {
-      const response = await fetch(`${supabaseUrl}/functions/v1/${endpoint}`, {
+      const fullUrl = `${supabaseUrl}/functions/v1/${endpoint}`;
+      console.log('Making request to:', fullUrl);
+
+      const response = await fetch(fullUrl, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -51,19 +66,25 @@ export const useSupportTickets = () => {
         ...(body && { body: JSON.stringify(body) }),
       });
 
-      console.log('Response status:', response.status, 'URL:', `${supabaseUrl}/functions/v1/${endpoint}`);
+      console.log('Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: fullUrl
+      });
 
       const result = await response.json();
-
-      console.log('Response result:', result);
+      console.log('Response parsed:', result);
 
       if (!response.ok) {
-        throw new Error(result.error || `HTTP error! status: ${response.status}`);
+        throw new Error(result.error || `HTTP error! status: ${response.status}, message: ${response.statusText}`);
       }
 
       return result;
     } catch (error) {
-      console.error('Network error in callSupabaseFunction:', error);
+      console.error('Network or parsing error in callSupabaseFunction:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Ошибка соединения с сервером. Проверьте подключение к интернету и настройки Supabase.');
+      }
       throw error;
     }
   };
@@ -109,7 +130,7 @@ export const useSupportTickets = () => {
   const fetchMessages = async (ticketId: string) => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
       if (!supabaseUrl || !anonKey) {
         throw new Error('Supabase URL или ANON ключ не определены в переменных окружения');
@@ -146,12 +167,19 @@ export const useSupportTickets = () => {
       setLoading(true);
       setError(null);
 
-      console.log('Sending ticket creation request:', { user_id: userId, category, subject, message });
-      console.log('Environment variables:', {
-        supabaseUrl: import.meta.env.VITE_SUPABASE_URL ? 'DEFINED' : 'MISSING',
-        anonKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ? 'DEFINED' : 'MISSING'
+      console.log('Starting ticket creation process...', {
+        userId,
+        category,
+        subject,
+        messageLength: message.length
       });
 
+      // Проверяем, что все необходимые данные присутствуют
+      if (!userId || !category || !subject || !message) {
+        throw new Error(`Отсутствуют обязательные поля: userId=${!!userId}, category=${!!category}, subject=${!!subject}, message=${!!message}`);
+      }
+
+      console.log('Calling Supabase function for ticket creation...');
       const result = await callSupabaseFunction('support-tickets', 'POST', {
         user_id: userId,
         category,
@@ -159,7 +187,13 @@ export const useSupportTickets = () => {
         message
       });
 
-      console.log('Ticket created successfully:', result.ticket);
+      console.log('Supabase function response received:', result);
+
+      if (!result.success || !result.ticket) {
+        throw new Error(result.error || 'Некорректный ответ от сервера');
+      }
+
+      console.log('Ticket created successfully in database:', result.ticket);
 
       // Добавляем тикет в список
       setTickets(prev => [result.ticket, ...prev]);
@@ -167,7 +201,7 @@ export const useSupportTickets = () => {
       return result.ticket;
     } catch (err) {
       console.error('Error creating ticket:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
+      const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка при создании тикета';
       setError(`Ошибка создания тикета: ${errorMessage}`);
       throw err;
     } finally {
@@ -179,10 +213,38 @@ export const useSupportTickets = () => {
   const sendMessage = async (ticketId: string, senderId: string, senderType: 'user' | 'admin', message: string, file?: File) => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
       if (!supabaseUrl || !anonKey) {
         throw new Error('Supabase URL или ANON ключ не определены в переменных окружения');
+      }
+
+      // Если есть файл, загружаем его сначала
+      let fileUrl = '';
+      let fileType = '';
+      let fileName = '';
+
+      if (file) {
+        // Загрузка файла в Supabase storage
+        const fileExt = file.name.split('.').pop();
+        const fileNameWithExt = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `support/${ticketId}/${fileNameWithExt}`;
+
+        const { error: uploadError } = await supabase
+          .storage
+          .from('support-files')
+          .upload(filePath, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase
+          .storage
+          .from('support-files')
+          .getPublicUrl(filePath);
+
+        fileUrl = publicUrlData?.publicUrl || '';
+        fileType = file.type;
+        fileName = file.name;
       }
 
       const response = await fetch(`${supabaseUrl}/functions/v1/support-chat-messages`, {
@@ -196,7 +258,10 @@ export const useSupportTickets = () => {
           ticket_id: ticketId,
           sender_id: senderId,
           sender_type: senderType,
-          message
+          message,
+          file_url: fileUrl,
+          file_type: fileType,
+          file_name: fileName
         }),
       });
 

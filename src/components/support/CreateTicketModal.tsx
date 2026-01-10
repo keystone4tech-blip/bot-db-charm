@@ -24,21 +24,34 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
 
   const { user, refetch } = useTelegramAuth();
-  const { createTicket, error: ticketError, loading: ticketLoading } = useSupportTickets();
+  const { createTicket, error, loading: ticketLoading } = useSupportTickets();
 
-  console.log('CreateTicketModal render - user:', user, 'isOpen:', isOpen, 'ticketError:', ticketError);
+  console.log('CreateTicketModal render - user:', user, 'isOpen:', isOpen, 'error:', error);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user || !category || !subject || !message || isSubmitting) {
-      console.log('Validation failed:', { user, category, subject, message, isSubmitting });
+      console.log('Validation failed:', {
+        hasUser: !!user,
+        hasCategory: !!category,
+        hasSubject: !!subject,
+        hasMessage: !!message,
+        isSubmitting
+      });
       return;
     }
 
     try {
       setIsSubmitting(true);
-      console.log('Creating ticket with data:', { userId: user.id, category, subject, message });
+      // Ошибки теперь обрабатываются в хуке, поэтому не нужно устанавливать setError здесь
+
+      console.log('Starting ticket creation process...', {
+        userId: user.id,
+        category,
+        subject,
+        messageLength: message.length
+      });
 
       const newTicket = await createTicket(
         user.id,
@@ -48,10 +61,13 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
       );
 
       console.log('Ticket created successfully:', newTicket);
-      // После создания тикета открываем чат
+
+      // После успешного создания тикета открываем чат
       setActiveTicketId(newTicket.id);
     } catch (error) {
       console.error('Error creating ticket:', error);
+      // Ошибки обрабатываются в хуке, но мы можем дополнительно логировать их здесь
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -97,9 +113,9 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {ticketError && (
+          {error && (
             <Alert variant="destructive">
-              <AlertDescription>{ticketError}</AlertDescription>
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
