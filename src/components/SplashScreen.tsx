@@ -276,7 +276,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
     <>
       {/* Фоновое изображение сплеша (опционально) */}
       <div
-        className="fixed inset-0 z-9997 bg-cover bg-center bg-no-repeat"
+        className="fixed inset-0 z-[9997] bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: "url('/splash-bg.jpg')", // Путь к пользовательскому изображению
           backgroundSize: 'cover',
@@ -302,7 +302,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       <AnimatePresence>
         {showUsernameDialog && (
           <motion.div
-            className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -367,7 +367,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
 
       {/* Индикатор прогресса загрузки */}
       {!showUsernameDialog && minimumLoadTimeReached && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-10000">
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[10001]">
           <div className="w-48 h-1.5 bg-gray-700 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-yellow-500"
