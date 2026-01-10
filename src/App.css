@@ -48,4 +48,7 @@
   position: relative;
   z-index: 10;
   background: transparent;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }

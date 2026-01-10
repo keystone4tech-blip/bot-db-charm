@@ -14,7 +14,7 @@ export const AppHeader = ({ isAdminMode = false, className }: AppHeaderProps) =>
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border",
+        "fixed top-0 left-0 right-0 z-[90] bg-background/80 backdrop-blur-xl border-b border-border",
         className
       )}
     >

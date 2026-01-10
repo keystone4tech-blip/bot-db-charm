@@ -188,7 +188,8 @@ const NeuralNetworkAnimation = () => {
         width: '100%',
         height: '100%',
         zIndex: -1,
-        opacity: 0.35
+        opacity: 0.35,
+        pointerEvents: 'none' // Не перехватывать события мыши
       }}
     />
   );
