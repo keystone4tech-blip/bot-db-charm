@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { authenticateUser } from '@/lib/api';
 import { tg, isTelegramWebApp, getReferralCode } from '@/lib/telegram';
 import { toast } from 'sonner';
@@ -141,11 +141,8 @@ export const useTelegramAuth = () => {
     }
   }, [authenticate]);
 
-  // Memoize the return value to prevent unnecessary re-renders
-  const returnValue = useMemo(() => ({
+  return {
     ...authState,
     refetch: authenticate,
-  }), [authState, authenticate]);
-
-  return returnValue;
+  };
 };

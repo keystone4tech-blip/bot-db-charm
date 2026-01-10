@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   UserProfile,
   UserBalance,
@@ -13,7 +13,6 @@ import {
   getUserSubscriptions
 } from '@/lib/api';
 import { useTelegramContext } from '@/components/TelegramProvider';
-import { useQueryClient } from '@tanstack/react-query';
 
 interface ProfileHookReturn {
   profile: UserProfile | null;
@@ -31,8 +30,6 @@ interface ProfileHookReturn {
 
 export const useProfile = (): ProfileHookReturn => {
   const { authProfile, authBalance, authReferralStats, isAuthenticated } = useTelegramContext();
-  const queryClient = useQueryClient();
-
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [balance, setBalance] = useState<UserBalance | null>(null);
   const [referralStats, setReferralStats] = useState<ReferralStats | null>(null);
@@ -124,24 +121,15 @@ export const useProfile = (): ProfileHookReturn => {
     }
   };
 
-  const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
+  const updateProfile = async (updates: Partial<UserProfile>) => {
     try {
-      // Оптимистично обновляем профиль в UI
-      const previousProfile = profile;
-      setProfile(prev => prev ? { ...prev, ...updates } : null);
-
       // В реальной реализации здесь будет вызов API для обновления профиля
-      // await updateProfileApi(updates);
-
-      // После успешного обновления инвалидируем кэш
-      await queryClient.invalidateQueries({ queryKey: ['user', 'profile'] });
+      setProfile(prev => prev ? { ...prev, ...updates } : null);
     } catch (err) {
-      // При ошибке откатываем изменения
-      setProfile(previousProfile);
       setError(err instanceof Error ? err.message : 'Ошибка обновления профиля');
       throw err;
     }
-  }, [profile, queryClient]);
+  };
 
   return {
     profile,

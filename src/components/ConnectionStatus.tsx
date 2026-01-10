@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 
 const ConnectionStatus = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -20,14 +19,9 @@ const ConnectionStatus = () => {
   if (isOnline) return null;
 
   return (
-    <motion.div
-      className="fixed top-0 left-0 right-0 bg-destructive text-destructive-foreground text-center py-2 z-50"
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: -20, opacity: 0 }}
-    >
+    <div className="fixed top-0 left-0 right-0 bg-destructive text-destructive-foreground text-center py-2 z-50">
       Подключение к интернету потеряно
-    </motion.div>
+    </div>
   );
 };
 

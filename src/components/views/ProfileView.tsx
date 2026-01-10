@@ -1,4 +1,4 @@
-import { useState, memo } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, User, Coins, Shield, MessageSquare, Bot, Settings, Crown } from 'lucide-react';
 import { useTelegramContext } from '@/components/TelegramProvider';
@@ -21,7 +21,7 @@ interface ProfileViewProps {
   onEnterAdminMode?: () => void;
 }
 
-export const ProfileView = memo(({ onNavigate, onEnterAdminMode }: ProfileViewProps) => {
+export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) => {
   const { user: telegramUser, authProfile, authBalance, authReferralStats, authRole } = useTelegramContext();
   const {
     profile,
@@ -52,12 +52,7 @@ export const ProfileView = memo(({ onNavigate, onEnterAdminMode }: ProfileViewPr
   if (isLoading) {
     return (
       <div className="px-4 pb-24">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mt-6 space-y-6"
-        >
+        <div className="mt-6 space-y-6">
           {/* Header Skeleton */}
           <div className="space-y-2">
             <Skeleton className="h-8 w-48" />
@@ -101,7 +96,7 @@ export const ProfileView = memo(({ onNavigate, onEnterAdminMode }: ProfileViewPr
 
           {/* Support Ticket Button Skeleton */}
           <Skeleton className="h-12 rounded-2xl mt-4" />
-        </motion.div>
+        </div>
       </div>
     );
   }
@@ -239,4 +234,3 @@ export const ProfileView = memo(({ onNavigate, onEnterAdminMode }: ProfileViewPr
   );
 };
 
-export default ProfileView;
