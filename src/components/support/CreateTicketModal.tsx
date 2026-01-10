@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import ErrorDisplay from '@/components/ui/ErrorDisplay';
 import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 import { useSupportTickets } from '@/hooks/useSupportTickets';
 import SupportChat from './SupportChat';
@@ -23,35 +22,22 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
 
-  const { user, refetch } = useTelegramAuth();
-  const { createTicket, error: ticketError, loading: ticketLoading } = useSupportTickets();
+  const { user } = useTelegramAuth();
+  const { createTicket } = useSupportTickets();
 
-  console.log('CreateTicketModal render - user:', user, 'isOpen:', isOpen, 'ticketError:', ticketError);
+  console.log('CreateTicketModal render - user:', user, 'isOpen:', isOpen);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user || !category || !subject || !message || isSubmitting) {
-      console.log('Validation failed:', {
-        hasUser: !!user,
-        hasCategory: !!category,
-        hasSubject: !!subject,
-        hasMessage: !!message,
-        isSubmitting
-      });
+      console.log('Validation failed:', { user, category, subject, message, isSubmitting });
       return;
     }
 
     try {
       setIsSubmitting(true);
-      setError(null); // Сбрасываем предыдущую ошибку
-
-      console.log('Starting ticket creation process...', {
-        userId: user.id,
-        category,
-        subject,
-        messageLength: message.length
-      });
+      console.log('Creating ticket with data:', { userId: user.id, category, subject, message });
 
       const newTicket = await createTicket(
         user.id,
@@ -61,16 +47,10 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
       );
 
       console.log('Ticket created successfully:', newTicket);
-
-      // После успешного создания тикета открываем чат
+      // После создания тикета открываем чат
       setActiveTicketId(newTicket.id);
     } catch (error) {
       console.error('Error creating ticket:', error);
-      // Ошибки обрабатываются в хуке, но мы можем дополнительно логировать их здесь
-      // и показать пользователю сообщение об ошибке
-      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка при создании тикета';
-      setError(`Ошибка создания тикета: ${errorMessage}`);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -116,10 +96,6 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {ticketError && (
-            <ErrorDisplay error={ticketError} title="Ошибка создания тикета" />
-          )}
-
           <div className="space-y-2">
             <label htmlFor="category" className="text-sm font-medium">
               Категория

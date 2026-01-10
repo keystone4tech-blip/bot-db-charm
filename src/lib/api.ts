@@ -132,79 +132,58 @@ export interface AuthResponse {
  */
 export const authenticateUser = async (initData: string, referralCode?: string): Promise<AuthResponse> => {
   try {
-    // Проверяем, какую систему использовать на основе переменных окружения
-    const useSupabase = import.meta.env.USE_SUPABASE === 'true';
+    // В проде у нас нет локального Node.js сервера — вызываем backend-функцию Lovable Cloud
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-    if (useSupabase) {
-      // Используем Supabase функции
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !anonKey) {
-        throw new Error('Не настроены переменные окружения для Supabase');
-      }
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/telegram-auth`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': anonKey,
-          'Authorization': `Bearer ${anonKey}`,
-        },
-        body: JSON.stringify({
-          initData,
-          referralCode: referralCode || getReferralCode() || null,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.error || 'Ошибка аутентификации'
-        };
-      }
-
-      if (!data.success) {
-        return {
-          success: false,
-          error: data.error || 'Ошибка аутентификации'
-        };
-      }
-
-      return {
-        success: true,
-        profile: data.profile as UserProfile,
-        balance: data.balance as UserBalance,
-        referralStats: data.referralStats as ReferralStats,
-        role: data.role || 'user',
-      };
-    } else {
-      // Используем локальный сервер
-      const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-      const response = await fetch(`${serverBaseUrl}/api/telegram-auth`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          initData,
-          referralCode: referralCode || getReferralCode() || null,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.error || 'Ошибка аутентификации'
-        };
-      }
-
-      return data;
+    if (!baseUrl || !anonKey) {
+      throw new Error('Не настроен backend (отсутствуют переменные окружения)');
     }
+
+    const response = await fetch(`${baseUrl}/functions/v1/telegram-auth`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+      },
+      body: JSON.stringify({
+        initData,
+        referralCode: referralCode || getReferralCode() || null,
+      }),
+    });
+
+    // Проверяем, является ли ответ валидным JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const responseText = await response.text();
+      console.error('Non-JSON response received:', responseText);
+      throw new Error('Сервер вернул некорректный ответ. Пожалуйста, проверьте конфигурацию сервера.');
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.error || 'Ошибка аутентификации'
+      };
+    }
+
+    if (!data.success) {
+      return {
+        success: false,
+        error: data.error || 'Ошибка аутентификации'
+      };
+    }
+
+    return {
+      success: true,
+      profile: data.profile as UserProfile,
+      balance: data.balance as UserBalance,
+      referralStats: data.referralStats as ReferralStats,
+      role: data.role || 'user',
+    };
   } catch (error) {
     console.error('Ошибка аутентификации:', error);
     return {
@@ -219,49 +198,19 @@ export const authenticateUser = async (initData: string, referralCode?: string):
  */
 export const getUserProfile = async (telegramId: number) => {
   try {
-    const useSupabase = import.meta.env.USE_SUPABASE === 'true';
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/profiles/${telegramId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    if (useSupabase) {
-      // Используем Supabase функцию
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !anonKey) {
-        throw new Error('Не настроены переменные окружения для Supabase');
-      }
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/user-profile/${telegramId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': anonKey,
-          'Authorization': `Bearer ${anonKey}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Не удалось получить профиль пользователя');
-      }
-
-      return data.profile as UserProfile;
-    } else {
-      // Используем локальный сервер
-      const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-      const response = await fetch(`${serverBaseUrl}/api/profiles/${telegramId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Не удалось получить профиль пользователя');
-      }
-
-      return await response.json() as UserProfile;
+    if (!response.ok) {
+      throw new Error('Не удалось получить профиль пользователя');
     }
+
+    return await response.json() as UserProfile;
   } catch (error) {
     console.error('Ошибка получения профиля:', error);
     throw error;
@@ -273,49 +222,19 @@ export const getUserProfile = async (telegramId: number) => {
  */
 export const getUserBalance = async (userId: string) => {
   try {
-    const useSupabase = import.meta.env.USE_SUPABASE === 'true';
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/balances/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    if (useSupabase) {
-      // Используем Supabase функцию
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !anonKey) {
-        throw new Error('Не настроены переменные окружения для Supabase');
-      }
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/user-balance/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': anonKey,
-          'Authorization': `Bearer ${anonKey}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Не удалось получить баланс пользователя');
-      }
-
-      return data.balance as UserBalance;
-    } else {
-      // Используем локальный сервер
-      const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-      const response = await fetch(`${serverBaseUrl}/api/balances/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Не удалось получить баланс пользователя');
-      }
-
-      return await response.json() as UserBalance;
+    if (!response.ok) {
+      throw new Error('Не удалось получить баланс пользователя');
     }
+
+    return await response.json() as UserBalance;
   } catch (error) {
     console.error('Ошибка получения баланса:', error);
     throw error;
@@ -327,49 +246,19 @@ export const getUserBalance = async (userId: string) => {
  */
 export const getUserReferralStats = async (userId: string) => {
   try {
-    const useSupabase = import.meta.env.USE_SUPABASE === 'true';
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/referral-stats/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    if (useSupabase) {
-      // Используем Supabase функцию
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !anonKey) {
-        throw new Error('Не настроены переменные окружения для Supabase');
-      }
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/referral-stats/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': anonKey,
-          'Authorization': `Bearer ${anonKey}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Не удалось получить статистику рефералов');
-      }
-
-      return data.stats as ReferralStats;
-    } else {
-      // Используем локальный сервер
-      const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-      const response = await fetch(`${serverBaseUrl}/api/referral-stats/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Не удалось получить статистику рефералов');
-      }
-
-      return await response.json() as ReferralStats;
+    if (!response.ok) {
+      throw new Error('Не удалось получить статистику рефералов');
     }
+
+    return await response.json() as ReferralStats;
   } catch (error) {
     console.error('Ошибка получения статистики рефералов:', error);
     throw error;
@@ -381,50 +270,20 @@ export const getUserReferralStats = async (userId: string) => {
  */
 export const getUserVPNKeys = async (userId: string) => {
   try {
-    const useSupabase = import.meta.env.USE_SUPABASE === 'true';
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/vpn-keys/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    if (useSupabase) {
-      // Используем Supabase функцию
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !anonKey) {
-        throw new Error('Не настроены переменные окружения для Supabase');
-      }
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/vpn-keys/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': anonKey,
-          'Authorization': `Bearer ${anonKey}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Не удалось получить VPN ключи');
-      }
-
-      return data.vpnKeys as any[];
-    } else {
-      // Используем локальный сервер
-      const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-      const response = await fetch(`${serverBaseUrl}/api/vpn-keys/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Не удалось получить VPN ключи');
-      }
-
-      const data = await response.json();
-      return data.vpnKeys as any[];
+    if (!response.ok) {
+      throw new Error('Не удалось получить VPN ключи');
     }
+
+    const data = await response.json();
+    return data.vpnKeys as any[];
   } catch (error) {
     console.error('Ошибка получения VPN ключей:', error);
     throw error;
@@ -436,50 +295,20 @@ export const getUserVPNKeys = async (userId: string) => {
  */
 export const getUserChannels = async (userId: string) => {
   try {
-    const useSupabase = import.meta.env.USE_SUPABASE === 'true';
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/telegram-channels/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    if (useSupabase) {
-      // Используем Supabase функцию
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !anonKey) {
-        throw new Error('Не настроены переменные окружения для Supabase');
-      }
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/telegram-channels/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': anonKey,
-          'Authorization': `Bearer ${anonKey}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Не удалось получить телеграм каналы');
-      }
-
-      return data.channels as any[];
-    } else {
-      // Используем локальный сервер
-      const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-      const response = await fetch(`${serverBaseUrl}/api/telegram-channels/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Не удалось получить телеграм каналы');
-      }
-
-      const data = await response.json();
-      return data.channels as any[];
+    if (!response.ok) {
+      throw new Error('Не удалось получить телеграм каналы');
     }
+
+    const data = await response.json();
+    return data.channels as any[];
   } catch (error) {
     console.error('Ошибка получения телеграм каналов:', error);
     throw error;
@@ -491,50 +320,20 @@ export const getUserChannels = async (userId: string) => {
  */
 export const getUserBots = async (userId: string) => {
   try {
-    const useSupabase = import.meta.env.USE_SUPABASE === 'true';
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/user-bots/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    if (useSupabase) {
-      // Используем Supabase функцию
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !anonKey) {
-        throw new Error('Не настроены переменные окружения для Supabase');
-      }
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/user-bots/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': anonKey,
-          'Authorization': `Bearer ${anonKey}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Не удалось получить ботов пользователя');
-      }
-
-      return data.bots as any[];
-    } else {
-      // Используем локальный сервер
-      const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-      const response = await fetch(`${serverBaseUrl}/api/user-bots/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Не удалось получить ботов пользователя');
-      }
-
-      const data = await response.json();
-      return data.bots as any[];
+    if (!response.ok) {
+      throw new Error('Не удалось получить ботов пользователя');
     }
+
+    const data = await response.json();
+    return data.bots as any[];
   } catch (error) {
     console.error('Ошибка получения ботов пользователя:', error);
     throw error;
@@ -546,50 +345,20 @@ export const getUserBots = async (userId: string) => {
  */
 export const getUserSubscriptions = async (userId: string) => {
   try {
-    const useSupabase = import.meta.env.USE_SUPABASE === 'true';
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/subscriptions/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    if (useSupabase) {
-      // Используем Supabase функцию
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !anonKey) {
-        throw new Error('Не настроены переменные окружения для Supabase');
-      }
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/subscriptions/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': anonKey,
-          'Authorization': `Bearer ${anonKey}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Не удалось получить подписки пользователя');
-      }
-
-      return data.subscriptions as any[];
-    } else {
-      // Используем локальный сервер
-      const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-      const response = await fetch(`${serverBaseUrl}/api/subscriptions/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Не удалось получить подписки пользователя');
-      }
-
-      const data = await response.json();
-      return data.subscriptions as any[];
+    if (!response.ok) {
+      throw new Error('Не удалось получить подписки пользователя');
     }
+
+    const data = await response.json();
+    return data.subscriptions as any[];
   } catch (error) {
     console.error('Ошибка получения подписок пользователя:', error);
     throw error;

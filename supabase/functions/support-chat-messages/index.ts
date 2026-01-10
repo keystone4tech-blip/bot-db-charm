@@ -1,11 +1,9 @@
-// Supabase Edge Function для работы с сообщениями чата поддержки
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 }
 
 serve(async (req) => {
@@ -21,55 +19,25 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey)
 
-    const url = new URL(req.url)
-    const pathParts = url.pathname.split('/').filter(part => part !== '')
-    const ticketId = pathParts[2] // /support/chat-messages/:ticketId
-
     if (req.method === 'POST') {
-      // Create new chat message
-      const { ticket_id, sender_id, sender_type, message, file_url, file_type, file_name } = await req.json()
+      // Create support chat message
+      const { ticket_id, sender_id, sender_type, message } = await req.json()
 
       if (!ticket_id || !sender_id || !sender_type || !message) {
         return new Response(
-          JSON.stringify({ error: 'Missing required fields: ticket_id, sender_id, sender_type, message' }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-            status: 400 
-          }
+          JSON.stringify({ error: 'Missing required fields' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
         )
       }
 
-      // Check if ticket exists and belongs to user
-      const { data: ticket, error: ticketError } = await supabase
-        .from('support_tickets')
-        .select('id')
-        .eq('id', ticket_id)
-        .single()
-
-      if (ticketError || !ticket) {
-        console.error('Ticket not found:', { ticket_id, ticketError });
-        return new Response(
-          JSON.stringify({ error: 'Ticket not found' }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-            status: 404 
-          }
-        )
-      }
-
-      console.log('Creating message for ticket:', ticket_id);
-
-      // Create the message
+      // Insert the message
       const { data, error } = await supabase
         .from('ticket_messages')
-        .insert([{
-          ticket_id,
-          sender_id,
-          sender_type,
-          message,
-          file_url,
-          file_type,
-          file_name
+        .insert([{ 
+          ticket_id, 
+          sender_id, 
+          message, 
+          is_admin_reply: sender_type === 'admin'
         }])
         .select()
         .single()
@@ -78,10 +46,7 @@ serve(async (req) => {
         console.error('Error creating support chat message:', error)
         return new Response(
           JSON.stringify({ error: error.message }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-            status: 500 
-          }
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
         )
       }
 
@@ -91,19 +56,15 @@ serve(async (req) => {
         .update({ status: 'in_progress', updated_at: new Date().toISOString() })
         .eq('id', ticket_id)
 
-      console.log('Message created successfully:', data.id);
-
       return new Response(
         JSON.stringify({ success: true, message: data }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-          status: 200 
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       )
-    } else if (req.method === 'GET' && ticketId) {
-      // Get chat messages for specific ticket
-      console.log('Fetching messages for ticket:', ticketId);
-      
+    } else if (req.method === 'GET') {
+      // Get support chat messages for ticket
+      const url = new URL(req.url)
+      const ticketId = url.pathname.split('/')[3] // /chat-messages/:ticketId
+
       const { data, error } = await supabase
         .from('ticket_messages')
         .select('*')
@@ -114,37 +75,21 @@ serve(async (req) => {
         console.error('Error fetching support chat messages:', error)
         return new Response(
           JSON.stringify({ error: error.message }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-            status: 500 
-          }
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
         )
       }
 
       return new Response(
         JSON.stringify({ success: true, messages: data }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-          status: 200 
-        }
-      )
-    } else {
-      return new Response(
-        JSON.stringify({ error: 'Method not allowed' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-          status: 405 
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       )
     }
+
   } catch (error) {
-    console.error('Unexpected error in support-chat-messages function:', error)
+    console.error('Error in support-chat-messages function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-        status: 500 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
 })
