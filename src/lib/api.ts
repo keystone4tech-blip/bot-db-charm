@@ -26,6 +26,7 @@ export interface UserProfile {
 export interface ExtendedUserProfile extends UserProfile {
   city?: string;
   phone?: string;
+  email?: string;
   bio?: string;
   link?: string;
 }

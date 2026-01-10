@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Save, User, MapPin, Phone, FileText, Link } from 'lucide-react';
+import { X, Save, User, MapPin, Phone, Mail, FileText, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ export const EditProfileModal = ({ isOpen, onClose, profile, onSave }: EditProfi
   const [formData, setFormData] = useState({
     city: profile?.city || '',
     phone: profile?.phone || '',
+    email: profile?.email || '',
     bio: profile?.bio || '',
     link: profile?.link || '',
   });
@@ -79,6 +80,21 @@ export const EditProfileModal = ({ isOpen, onClose, profile, onSave }: EditProfi
                   onChange={(e) => handleChange('phone', e.target.value)}
                   className="pl-10"
                   placeholder="+7 (XXX) XXX-XX-XX"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  value={formData.email}
+                  onChange={(e) => handleChange('email', e.target.value)}
+                  className="pl-10"
+                  type="email"
+                  placeholder="your@email.com"
                 />
               </div>
             </div>

@@ -11,6 +11,7 @@ import { SupportTicketButton } from '@/components/profile/SupportTicketButton';
 import { VPNStatusCard } from '@/components/profile/VPNStatusCard';
 import { ChannelStatusCard } from '@/components/profile/ChannelStatusCard';
 import { BotStatusCard } from '@/components/profile/BotStatusCard';
+import { UserInfoCard } from '@/components/profile/UserInfoCard';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { hapticFeedback } from '@/lib/telegram';
@@ -113,6 +114,9 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
           telegramUser={telegramUser}
           onEditClick={null} // Отключаем редактирование через ProfileHeader
         />
+
+        {/* User Info Card */}
+        <UserInfoCard profile={displayProfile as ExtendedUserProfile} />
 
         {/* Balance Cards */}
         <BalanceCards balance={displayBalance} />

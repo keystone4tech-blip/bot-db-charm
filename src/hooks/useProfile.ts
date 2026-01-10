@@ -18,6 +18,7 @@ import { useTelegramContext } from '@/components/TelegramProvider';
 export interface ExtendedUserProfile extends UserProfile {
   city?: string;
   phone?: string;
+  email?: string;
   bio?: string;
   link?: string;
 }
@@ -64,6 +65,7 @@ export const useProfile = (): ProfileHookReturn => {
       const extendedData = {
         city: '', // В реальной реализации загружать из базы данных
         phone: '', // В реальной реализации загружать из базы данных
+        email: '', // В реальной реализации загружать из базы данных
         bio: '', // В реальной реализации загружать из базы данных
         link: '', // В реальной реализации загружать из базы данных
       };
