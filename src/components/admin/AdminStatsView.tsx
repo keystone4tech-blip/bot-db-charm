@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
-import { 
-  Users, 
-  Bot, 
-  CreditCard, 
+import {
+  Users,
+  Bot,
+  CreditCard,
   TrendingUp,
   Shield,
   Activity,
@@ -13,7 +13,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { usePlatformStats, formatNumber, formatCurrency } from '@/hooks/usePlatformStats';
 
 export const AdminStatsView = () => {
-  const { stats, recentActivity, isLoading, error } = usePlatformStats();
+  const { stats, recentActivity, isLoading, error, isUserActive } = usePlatformStats(false, 30000, true); // Disable auto-refresh, enable smart refresh
 
   const statsData = [
     { label: 'Всего пользователей', value: formatNumber(stats.totalUsers), icon: Users, color: 'text-blue-500' },
@@ -47,11 +47,16 @@ export const AdminStatsView = () => {
 
   return (
     <div className="px-4 pb-24">
-      <PageHeader
-        icon="bar-chart-3"
-        title="Статистика"
-        subtitle="Общая аналитика платформы"
-      />
+      <div className="flex justify-between items-center">
+        <PageHeader
+          icon="bar-chart-3"
+          title="Статистика"
+          subtitle="Общая аналитика платформы"
+        />
+        <div className="text-xs text-muted-foreground">
+          {isUserActive ? 'Активен' : 'Неактивен'}
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-3 mt-6">
         {statsData.map((stat, index) => {

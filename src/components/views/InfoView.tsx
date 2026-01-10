@@ -62,7 +62,7 @@ const itemVariants = {
 };
 
 export const InfoView = () => {
-  const { stats: platformStats, isLoading } = usePlatformStats();
+  const { stats: platformStats, isLoading, error, isUserActive } = usePlatformStats(false, 30000, true); // Disable auto-refresh, enable smart refresh
 
   const stats = [
     { value: formatNumber(platformStats.totalUsers), label: 'Пользователей' },
@@ -73,6 +73,22 @@ export const InfoView = () => {
     { value: '100%', label: 'Безопасность' },
   ];
 
+  if (error) {
+    return (
+      <div className="px-4 py-6 pb-24 space-y-6">
+        <PageHeader
+          icon="rocket"
+          title="TG Автоматизация"
+          subtitle="Умное продвижение вашего Telegram канала"
+        />
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="text-destructive text-lg mb-4">Ошибка загрузки статистики</div>
+          <p className="text-muted-foreground mb-6">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       className="px-4 py-6 pb-24 space-y-6"
@@ -81,11 +97,16 @@ export const InfoView = () => {
       animate="visible"
     >
       {/* Header */}
-      <PageHeader
-        icon="rocket"
-        title="TG Автоматизация"
-        subtitle="Умное продвижение вашего Telegram канала"
-      />
+      <div className="flex justify-between items-center">
+        <PageHeader
+          icon="rocket"
+          title="TG Автоматизация"
+          subtitle="Умное продвижение вашего Telegram канала"
+        />
+        <div className="text-xs text-muted-foreground">
+          {isUserActive ? 'Активен' : 'Неактивен'}
+        </div>
+      </div>
 
       {/* Stats Grid */}
       <motion.div
