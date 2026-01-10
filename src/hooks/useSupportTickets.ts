@@ -34,27 +34,38 @@ export const useSupportTickets = () => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+    console.log('Supabase function call:', { endpoint, method, body, hasUrl: !!supabaseUrl, hasAnonKey: !!anonKey });
+
     if (!supabaseUrl || !anonKey) {
       throw new Error('Supabase URL или ANON ключ не определены в переменных окружения');
     }
 
-    const response = await fetch(`${supabaseUrl}/functions/v1/${endpoint}`, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': anonKey,
-        'Authorization': `Bearer ${anonKey}`,
-      },
-      ...(body && { body: JSON.stringify(body) }),
-    });
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/${endpoint}`, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': anonKey,
+          'Authorization': `Bearer ${anonKey}`,
+        },
+        ...(body && { body: JSON.stringify(body) }),
+      });
 
-    const result = await response.json();
+      console.log('Response status:', response.status, 'URL:', `${supabaseUrl}/functions/v1/${endpoint}`);
 
-    if (!response.ok) {
-      throw new Error(result.error || `HTTP error! status: ${response.status}`);
+      const result = await response.json();
+
+      console.log('Response result:', result);
+
+      if (!response.ok) {
+        throw new Error(result.error || `HTTP error! status: ${response.status}`);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Network error in callSupabaseFunction:', error);
+      throw error;
     }
-
-    return result;
   };
 
   // Загрузка тикетов пользователя
@@ -136,6 +147,10 @@ export const useSupportTickets = () => {
       setError(null);
 
       console.log('Sending ticket creation request:', { user_id: userId, category, subject, message });
+      console.log('Environment variables:', {
+        supabaseUrl: import.meta.env.VITE_SUPABASE_URL ? 'DEFINED' : 'MISSING',
+        anonKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ? 'DEFINED' : 'MISSING'
+      });
 
       const result = await callSupabaseFunction('support-tickets', 'POST', {
         user_id: userId,
@@ -152,7 +167,8 @@ export const useSupportTickets = () => {
       return result.ticket;
     } catch (err) {
       console.error('Error creating ticket:', err);
-      setError('Ошибка создания тикета');
+      const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
+      setError(`Ошибка создания тикета: ${errorMessage}`);
       throw err;
     } finally {
       setLoading(false);

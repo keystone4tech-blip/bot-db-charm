@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 import { useSupportTickets } from '@/hooks/useSupportTickets';
 import SupportChat from './SupportChat';
@@ -22,10 +23,10 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
 
-  const { user } = useTelegramAuth();
-  const { createTicket } = useSupportTickets();
+  const { user, refetch } = useTelegramAuth();
+  const { createTicket, error: ticketError, loading: ticketLoading } = useSupportTickets();
 
-  console.log('CreateTicketModal render - user:', user, 'isOpen:', isOpen);
+  console.log('CreateTicketModal render - user:', user, 'isOpen:', isOpen, 'ticketError:', ticketError);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +97,12 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {ticketError && (
+            <Alert variant="destructive">
+              <AlertDescription>{ticketError}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-2">
             <label htmlFor="category" className="text-sm font-medium">
               Категория

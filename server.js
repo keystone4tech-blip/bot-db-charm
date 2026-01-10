@@ -599,13 +599,22 @@ app.put('/api/profiles/:userId', async (req, res) => {
 // Маршрут для создания тикета в поддержку
 app.post('/api/support-tickets', async (req, res) => {
   try {
-    console.log('Received support ticket request:', req.body);
+    console.log('=== Received support ticket request ===');
+    console.log('Request body:', req.body);
+    console.log('Environment variables check:');
+    console.log('- DB_HOST:', process.env.DB_HOST ? 'SET' : 'NOT SET');
+    console.log('- DB_NAME:', process.env.DB_NAME ? 'SET' : 'NOT SET');
+    console.log('- DB_USER:', process.env.DB_USER ? 'SET' : 'NOT SET');
+    console.log('- DB_PASSWORD:', process.env.DB_PASSWORD ? 'SET' : 'NOT SET');
+
     const { user_id, category, subject, message } = req.body;
 
     if (!user_id || !category || !subject || !message) {
       console.log('Missing required fields:', { user_id, category, subject, message });
       return res.status(400).json({ error: 'Missing required fields' });
     }
+
+    console.log('Attempting to create ticket for user_id:', user_id);
 
     // Проверяем, существует ли таблица
     const tableExistsQuery = `
@@ -616,18 +625,33 @@ app.post('/api/support-tickets', async (req, res) => {
       ) AS table_exists;
     `;
 
+    console.log('Checking if table exists...');
     const tableCheckResult = await pool.query(tableExistsQuery);
+    console.log('Table exists result:', tableCheckResult.rows[0]);
 
     if (!tableCheckResult.rows[0].table_exists) {
       console.error('Table support_tickets does not exist');
       return res.status(500).json({ error: 'Table support_tickets does not exist' });
     }
 
+    // Проверяем, существует ли пользователь
+    const userExistsQuery = 'SELECT id FROM profiles WHERE id = $1';
+    const userCheckResult = await pool.query(userExistsQuery, [user_id]);
+
+    if (userCheckResult.rows.length === 0) {
+      console.error('User does not exist in profiles table:', user_id);
+      return res.status(400).json({ error: 'User does not exist' });
+    }
+
+    console.log('User exists, proceeding with ticket creation...');
+
     const query = `
       INSERT INTO support_tickets (user_id, category, subject, message, status)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `;
+
+    console.log('Executing query with params:', [user_id, category, subject, message, 'open']);
     const result = await pool.query(query, [user_id, category, subject, message, 'open']);
 
     console.log('Ticket created successfully:', result.rows[0]);
@@ -637,7 +661,9 @@ app.post('/api/support-tickets', async (req, res) => {
       ticket: result.rows[0],
     });
   } catch (error) {
-    console.error('Error creating support ticket:', error);
+    console.error('=== ERROR creating support ticket ===');
+    console.error('Error details:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
