@@ -88,6 +88,8 @@ const SupportChat = ({ ticketId, onClose }: SupportChatProps) => {
       onClose();
     } catch (error) {
       console.error('Error closing ticket:', error);
+      // Даже если произошла ошибка при обновлении статуса, все равно закрываем чат
+      onClose();
     }
   };
 

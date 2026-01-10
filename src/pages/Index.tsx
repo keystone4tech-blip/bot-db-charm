@@ -14,6 +14,7 @@ import { AdminStatsView } from '@/components/admin/AdminStatsView';
 import { AdminUsersView } from '@/components/admin/AdminUsersView';
 import { AdminBotsView } from '@/components/admin/AdminBotsView';
 import { AdminSettingsView } from '@/components/admin/AdminSettingsView';
+import AdminTicketsView from '@/components/admin/AdminTicketsView';
 
 const viewVariants = {
   initial: { opacity: 0, x: 20 },
@@ -59,6 +60,8 @@ const Index = () => {
         return <AdminUsersView key="admin-users" />;
       case 'admin-bots':
         return <AdminBotsView key="admin-bots" />;
+      case 'admin-tickets':
+        return <AdminTicketsView key="admin-tickets" />;
       case 'admin-settings':
         return <AdminSettingsView key="admin-settings" />;
       default:

@@ -4,6 +4,7 @@ import {
   Users,
   Settings,
   Bot,
+  MessageCircle,
   ArrowLeft,
   LucideIcon
 } from 'lucide-react';
@@ -20,6 +21,7 @@ const adminNavItems: NavItem[] = [
   { icon: BarChart3, label: 'Статистика', id: 'admin-stats' },
   { icon: Users, label: 'Польз.', id: 'admin-users' },
   { icon: Bot, label: 'Боты', id: 'admin-bots' },
+  { icon: MessageCircle, label: 'Обращения', id: 'admin-tickets' },
   { icon: Settings, label: 'Настройки', id: 'admin-settings' },
   { icon: ArrowLeft, label: 'Назад', id: 'exit-admin' },
 ];

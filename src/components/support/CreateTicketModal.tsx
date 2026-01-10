@@ -44,14 +44,14 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
       setActiveTicketId(newTicket.id);
     } catch (error) {
       console.error('Error creating ticket:', error);
-    } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleChatClose = () => {
     setActiveTicketId(null);
-    onClose(); // Закрываем модальное окно при закрытии чата
+    // Не закрываем модальное окно при закрытии чата, а возвращаемся к форме
+    // onClose(); // Закрываем модальное окно при закрытии чата
   };
 
   const categories = [
@@ -64,7 +64,12 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
 
   if (activeTicketId) {
     return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={true} onOpenChange={(open) => {
+        // При закрытии диалога (например, через клавишу Escape), возвращаемся к форме
+        if (!open) {
+          handleChatClose();
+        }
+      }}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden p-0">
           <SupportChat ticketId={activeTicketId} onClose={handleChatClose} />
         </DialogContent>

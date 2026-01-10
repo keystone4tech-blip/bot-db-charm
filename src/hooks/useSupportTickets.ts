@@ -209,6 +209,39 @@ export const useSupportTickets = () => {
     }
   };
 
+  // Подписка на обновления чата
+  useEffect(() => {
+    // В реальной реализации здесь будет WebSocket или Server-Sent Events
+    // для получения обновлений в реальном времени
+
+    // Пример с WebSocket:
+    // const ws = new WebSocket('ws://your-websocket-url');
+    //
+    // ws.onmessage = (event) => {
+    //   const newMessage = JSON.parse(event.data);
+    //   setMessages(prev => ({
+    //     ...prev,
+    //     [newMessage.ticket_id]: [...(prev[newMessage.ticket_id] || []), newMessage]
+    //   }));
+    // };
+    //
+    // return () => {
+    //   ws.close();
+    // };
+
+    // Пока используем опрос (polling) для получения новых сообщений
+    const interval = setInterval(() => {
+      // Обновляем только те тикеты, для которых уже загружены сообщения
+      Object.keys(messages).forEach(ticketId => {
+        fetchMessages(ticketId);
+      });
+    }, 5000); // Обновляем каждые 5 секунд
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [messages, fetchMessages]);
+
   return {
     tickets,
     messages,
