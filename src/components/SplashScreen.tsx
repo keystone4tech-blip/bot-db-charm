@@ -556,7 +556,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       {/* Мотивационное сообщение */}
       {!showUsernameDialog && (
         <motion.div
-          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[10001] flex items-center justify-center w-full"
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[10001]"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
