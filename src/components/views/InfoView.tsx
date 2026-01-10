@@ -92,20 +92,20 @@ export const InfoView = () => {
         {stats.map((stat, index) => (
           <motion.div
             key={stat.label}
-            className="bg-gradient-to-br from-card to-primary/5 p-4 rounded-2xl border border-border text-center"
+            className="stat-card-light bg-gradient-to-br from-card via-card to-primary/10 p-4 rounded-2xl border border-border text-center shadow-sm dark:shadow-none"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 + index * 0.05 }}
             whileHover={{ scale: 1.05, y: -2 }}
           >
             <motion.div
-              className="text-xl font-bold gold-gradient-text has-text-outline mb-1"
+              className="text-xl font-bold stat-number gold-gradient-text mb-1"
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
             >
               {stat.value}
             </motion.div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground font-medium">
               {stat.label}
             </div>
           </motion.div>

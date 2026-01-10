@@ -70,62 +70,66 @@
 
   /* Light theme variables */
   .light {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 7%;
+    --background: 45 20% 97%;
+    --foreground: 0 0% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 7%;
+    --card: 45 30% 98%;
+    --card-foreground: 0 0% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
+    --popover-foreground: 0 0% 15%;
 
-    --primary: 45 93% 47%;
+    --primary: 38 85% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 90%;
-    --secondary-foreground: 0 0% 7%;
+    --secondary: 45 15% 92%;
+    --secondary-foreground: 0 0% 15%;
 
-    --muted: 0 0% 90%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 45 10% 90%;
+    --muted-foreground: 0 0% 35%;
 
-    --accent: 45 93% 47%;
+    --accent: 38 85% 42%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 71% 45%;
+    --success: 142 71% 40%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 7%;
+    --warning: 38 92% 45%;
+    --warning-foreground: 0 0% 100%;
 
-    --border: 0 0% 80%;
-    --input: 0 0% 85%;
-    --ring: 45 93% 47%;
+    --border: 45 20% 85%;
+    --input: 45 15% 88%;
+    --ring: 38 85% 42%;
 
-    /* Custom Keystone tokens for light theme */
-    --gold: 45 93% 47%;
-    --gold-dark: 45 93% 35%;
-    --gold-glow: 45 93% 55%;
-    --surface-elevated: 0 0% 98%;
-    --surface-overlay: 0 0% 95%;
+    /* Custom Keystone tokens for light theme - darker gold for readability */
+    --gold: 38 85% 42%;
+    --gold-dark: 35 90% 32%;
+    --gold-glow: 42 90% 48%;
+    --surface-elevated: 45 25% 96%;
+    --surface-overlay: 45 20% 93%;
 
-    --gradient-gold: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(38 90% 40%) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(38 85% 42%) 0%, hsl(32 90% 35%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(45 30% 98%) 0%, hsl(45 25% 94%) 100%);
 
-    --card-shadow: 0 4px 20px -4px hsl(0 0% 0% / 0.1);
-    --card-shadow-gold: 0 4px 30px -4px hsl(45 93% 47% / 0.2);
-    --glow-gold: 0 0 40px hsl(45 93% 47% / 0.3);
+    /* Gradient for cards in light theme */
+    --card-gradient: linear-gradient(145deg, hsl(45 30% 99%) 0%, hsl(45 25% 94%) 100%);
+    --card-gradient-accent: linear-gradient(145deg, hsl(45 40% 97%) 0%, hsl(40 35% 92%) 100%);
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 7%;
-    --sidebar-primary: 45 93% 47%;
+    --card-shadow: 0 4px 20px -4px hsl(35 30% 50% / 0.15);
+    --card-shadow-gold: 0 4px 30px -4px hsl(38 85% 42% / 0.25);
+    --glow-gold: 0 0 40px hsl(38 85% 42% / 0.2);
+
+    --sidebar-background: 45 25% 96%;
+    --sidebar-foreground: 0 0% 15%;
+    --sidebar-primary: 38 85% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 90%;
-    --sidebar-accent-foreground: 0 0% 7%;
-    --sidebar-border: 0 0% 80%;
-    --sidebar-ring: 45 93% 47%;
+    --sidebar-accent: 45 20% 90%;
+    --sidebar-accent-foreground: 0 0% 15%;
+    --sidebar-border: 45 20% 85%;
+    --sidebar-ring: 38 85% 42%;
   }
 
   /* Dark theme variables */
@@ -190,38 +194,43 @@
       0 0 5px hsl(0 0% 0% / 0.4);
   }
 
+  /* Light theme: darker gold gradient for better readability */
   .light .gold-gradient-text {
-    text-shadow:
-      -1px -1px 0 hsl(0 0% 0% / 0.8),
-      1px -1px 0 hsl(0 0% 0% / 0.8),
-      -1px 1px 0 hsl(0 0% 0% / 0.8),
-      1px 1px 0 hsl(0 0% 0% / 0.8);
+    background: linear-gradient(135deg, hsl(35 90% 35%) 0%, hsl(30 95% 28%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
   }
 
   .light .gold-gradient-text-outline {
-    text-shadow:
-      -1px -1px 0 hsl(0 0% 0% / 0.8),
-      1px -1px 0 hsl(0 0% 0% / 0.8),
-      -1px 1px 0 hsl(0 0% 0% / 0.8),
-      1px 1px 0 hsl(0 0% 0% / 0.8);
+    background: linear-gradient(135deg, hsl(35 90% 35%) 0%, hsl(30 95% 28%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
   }
 
-  /* Для светлой темы - добавляем черную обводку к оранжевым элементам */
-  .light .has-text-outline {
-    text-shadow:
-      -1px -1px 0 hsl(0 0% 0%),
-      1px -1px 0 hsl(0 0% 0%),
-      -1px 1px 0 hsl(0 0% 0%),
-      1px 1px 0 hsl(0 0% 0%);
+  /* Light theme stat numbers with darker orange */
+  .light .stat-number {
+    background: linear-gradient(135deg, hsl(30 95% 35%) 0%, hsl(25 100% 28%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  /* Для градиентного текста на светлой теме */
-  .light .gold-gradient-text-outline {
-    text-shadow:
-      -1px -1px 0 hsl(0 0% 0%),
-      1px -1px 0 hsl(0 0% 0%),
-      -1px 1px 0 hsl(0 0% 0%),
-      1px 1px 0 hsl(0 0% 0%);
+  /* Card gradients for light theme */
+  .light .stat-card-light {
+    background: linear-gradient(145deg, hsl(45 40% 99%) 0%, hsl(40 35% 93%) 100%);
+    border-color: hsl(40 30% 85%);
+    box-shadow: 0 4px 15px -3px hsl(35 30% 50% / 0.12), 
+                inset 0 1px 0 hsl(0 0% 100% / 0.8);
+  }
+
+  .light .glass-card {
+    background: linear-gradient(145deg, hsl(45 35% 98% / 0.95) 0%, hsl(40 30% 94% / 0.9) 100%);
+    border-color: hsl(40 25% 85%);
+    box-shadow: 0 4px 20px -4px hsl(35 30% 50% / 0.1);
   }
 
   /* Убираем фокусные стили для кнопок */
