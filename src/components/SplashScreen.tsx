@@ -170,13 +170,13 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       });
     }, 100); // Обновляем каждые 100мс для плавного увеличения на 1% за шаг
 
-    // Устанавливаем интервал для смены мотивационных сообщений (каждые 3 секунды)
+    // Устанавливаем интервал для смены мотивационных сообщений (каждые 5 секунд)
     messageInterval = setInterval(() => {
       if (MOTIVATIONAL_MESSAGES.length > 0) {
         const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length);
         setCurrentMessage(MOTIVATIONAL_MESSAGES[randomIndex]);
       }
-    }, 3000); // Меняем сообщение каждые 3 секунды
+    }, 5000); // Меняем сообщение каждые 5 секунд
 
     // Показываем первое случайное сообщение сразу
     if (MOTIVATIONAL_MESSAGES.length > 0) {
@@ -562,7 +562,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
           transition={{ duration: 0.5 }}
         >
           <motion.p
-            className="text-xl md:text-2xl font-medium text-white max-w-md text-center"
+            className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 animate-strong-gold-shimmer gold-gradient-text-outline has-text-outline max-w-lg text-center"
             key={currentMessage}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
