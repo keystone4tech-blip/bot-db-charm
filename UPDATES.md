@@ -1,0 +1,126 @@
+# Обновления в проекте bot-db-charm
+
+## Внесенные изменения
+
+### 1. Исправление дублирующегося кода
+- Удалено дублирование кода в `database_manager.py` (строки 109-112)
+- Созданы вспомогательные функции в `utils/db_helpers.py` для проверки и создания таблиц
+- Созданы вспомогательные функции в `utils/message_helpers.py` для обработки сообщений
+
+### 2. Улучшение безопасности
+- Удалены жестко закодированные токены из `docker-compose.yml`
+- Улучшена валидация данных в `server.js`
+- Добавлена проверка на корректность initData в Telegram WebApp
+
+### 3. Оптимизация производительности
+- Рефакторинг методов проверки и создания таблиц в `database_manager.py`
+- Использование вспомогательных функций для уменьшения дублирования кода
+- Улучшена структура проекта с разделением на модули
+
+### 4. Улучшение архитектуры
+- Созданы модули `utils/message_helpers.py` и `utils/db_helpers.py`
+- Обновлены обработчики бота для использования вспомогательных функций
+- Улучшена читаемость и поддерживаемость кода
+
+## Установка и запуск
+
+### Требования
+- Node.js 18+
+- Python 3.8+
+- PostgreSQL 12+
+- Docker и Docker Compose (опционально)
+
+### Установка
+
+1. Клонируйте репозиторий:
+```bash
+git clone https://github.com/keystone4tech-blip/bot-db-charm.git
+cd bot-db-charm
+```
+
+2. Установите зависимости для Node.js:
+```bash
+npm install
+```
+
+3. Установите зависимости для Python:
+```bash
+pip install -r telegram_bot/requirements.txt
+```
+
+4. Создайте файл `.env` на основе `.env.example` и укажите свои значения:
+```env
+BOT_TOKEN=ваш_токен_бота
+TELEGRAM_BOT_TOKEN=ваш_токен_бота
+DB_PASSWORD=ваш_пароль_бд
+WEBAPP_URL=https://ваш_домен.com
+```
+
+### Запуск
+
+#### Локальный запуск:
+1. Запустите PostgreSQL
+2. Запустите Node.js сервер:
+```bash
+npm run dev
+```
+3. В другом терминале запустите бота:
+```bash
+cd telegram_bot
+python run_bot.py
+```
+
+#### Запуск через Docker:
+```bash
+docker-compose up --build
+```
+
+## Структура проекта
+
+```
+telegram_bot/
+├── utils/
+│   ├── message_helpers.py      # Вспомогательные функции для сообщений
+│   └── db_helpers.py           # Вспомогательные функции для БД
+├── database/
+│   └── database_manager.py     # Управление подключением к БД
+├── handlers/
+│   ├── komanda_start.py        # Обработчик команды /start
+│   └── callback_handlers.py    # Обработчики колбэков
+├── keyboards/
+│   └── webapp_knopka.py        # Клавиатуры для WebApp
+├── api_client.py               # Клиент для взаимодействия с API
+├── supabase_client.py          # Клиент для взаимодействия с Supabase
+└── run_bot.py                  # Точка входа для бота
+```
+
+## API эндпоинты
+
+### Node.js сервер (порт 3000)
+- `POST /api/telegram-auth` - Аутентификация через Telegram
+- `GET /api/profiles/:telegramId` - Получение профиля пользователя
+- `GET /api/balances/:userId` - Получение баланса пользователя
+- `GET /api/referral-stats/:userId` - Получение статистики рефералов
+- `POST /api/users/register` - Регистрация пользователя
+- `GET /api/users/:telegramId` - Получение пользователя по telegram_id
+- `GET /api/vpn-keys/:userId` - Получение VPN ключей пользователя
+- `GET /api/telegram-channels/:userId` - Получение телеграм каналов пользователя
+- `GET /api/user-bots/:userId` - Получение ботов пользователя
+- `GET /api/subscriptions/:userId` - Получение подписок пользователя
+- `PUT /api/profiles/:userId` - Обновление профиля пользователя
+- `POST /api/support-tickets` - Создание тикета в поддержку
+
+## База данных
+
+Проект использует PostgreSQL с следующими основными таблицами:
+- `profiles` - Профили пользователей
+- `referrals` - Система рефералов
+- `balances` - Балансы пользователей
+- `user_stats` - Статистика пользователей
+- `referral_stats` - Статистика по рефералам
+- `subscriptions` - Подписки
+- `vpn_keys` - VPN-ключи
+- `telegram_channels` - Телеграм-каналы
+- `user_bots` - Боты пользователя
+- `user_roles` - Роли пользователей
+- `support_tickets` - Заявки в поддержку

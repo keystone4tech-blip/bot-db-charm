@@ -27,59 +27,109 @@ const pool = new Pool({
 // Функция для валидации данных Telegram
 function validateTelegramInitData(initData, botToken) {
   try {
+    // Проверяем, что initData не пустой
+    if (!initData || typeof initData !== 'string') {
+      console.error('Invalid initData format');
+      return null;
+    }
+
     const params = new URLSearchParams(initData);
     const hash = params.get('hash');
-    
+
     if (!hash) {
       console.error('No hash in initData');
       return null;
     }
-    
+
+    // Проверяем, что hash содержит допустимые символы
+    if (!/^[a-f0-9]+$/.test(hash)) {
+      console.error('Invalid hash format');
+      return null;
+    }
+
     // Remove hash from params for validation
     params.delete('hash');
-    
+
+    // Проверяем, что в initData есть хотя бы один параметр
+    if (params.size === 0) {
+      console.error('No parameters in initData after removing hash');
+      return null;
+    }
+
     // Sort parameters and create data check string
     const dataCheckArr = [];
     params.sort();
     params.forEach((value, key) => {
+      // Проверяем, что ключ и значение содержат только допустимые символы
+      if (!/^[a-zA-Z_][a-zA-Z0-9_-]*$/.test(key)) {
+        console.error('Invalid parameter key:', key);
+        return null;
+      }
+      if (!/^[a-zA-Z0-9._~\- ]+$/.test(value)) {
+        console.error('Invalid parameter value:', value);
+        return null;
+      }
       dataCheckArr.push(`${key}=${value}`);
     });
+
+    if (dataCheckArr.length === 0) {
+      console.error('No valid parameters found in initData');
+      return null;
+    }
+
     const dataCheckString = dataCheckArr.join('\n');
-    
+
     // Create secret key using HMAC-SHA256
     const secretKey = crypto
       .createHmac('sha256', crypto.createHash('sha256').update('WebAppData').digest())
       .update(botToken)
       .digest();
-    
+
     // Calculate hash
     const calculatedHash = crypto
       .createHmac('sha256', secretKey)
       .update(dataCheckString)
       .digest('hex');
-    
+
     if (calculatedHash !== hash.toLowerCase()) {
       console.error('Hash mismatch:', { calculated: calculatedHash, received: hash.toLowerCase() });
       return null;
     }
-    
+
     // Check auth_date (allow 24 hours)
     const authDate = parseInt(params.get('auth_date') || '0');
+    if (isNaN(authDate) || authDate <= 0) {
+      console.error('Invalid auth_date');
+      return null;
+    }
+
     const now = Math.floor(Date.now() / 1000);
     if (now - authDate > 86400) {
       console.error('Auth data expired');
       return null;
     }
-    
+
     // Parse user data
     const userStr = params.get('user');
     if (!userStr) {
       console.error('No user in initData');
       return null;
     }
-    
-    const user = JSON.parse(userStr);
-    
+
+    let user;
+    try {
+      user = JSON.parse(userStr);
+    } catch (parseError) {
+      console.error('Error parsing user data:', parseError);
+      return null;
+    }
+
+    // Проверяем обязательные поля пользователя
+    if (!user || typeof user !== 'object' || !user.id) {
+      console.error('Invalid user object in initData');
+      return null;
+    }
+
     return {
       user,
       auth_date: authDate || 0,

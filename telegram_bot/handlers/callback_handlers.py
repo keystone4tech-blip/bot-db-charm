@@ -6,7 +6,7 @@ import re
 
 from ..database import database
 from ..keyboards import get_webapp_keyboard
-from ..bot_instance import bot as telegram_bot
+from ..utils.message_helpers import send_welcome_message, send_error_message, send_notification_to_referrer
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -50,15 +50,8 @@ async def confirm_referral_handler(callback_query: CallbackQuery):
                     await callback_query.message.answer("Добро пожаловать!", reply_markup=get_webapp_keyboard())
 
                     # Отправляем уведомление пригласителю
-                    try:
-                        referrer_name = user_full_name.split()[0] if user_full_name.split() else user_full_name
-                        notification_text = (
-                            f"🎉 У вас новый реферал!\n\n"
-                            f"Пользователь {referrer_name} присоединился по вашей ссылке и подтвердил участие в реферальной программе."
-                        )
-                        await telegram_bot.send_message(referrer['telegram_id'], notification_text)
-                    except Exception as e:
-                        logger.error(f"Ошибка при отправке уведомления пригласителю {referrer['telegram_id']}: {e}")
+                    referrer_name = user_full_name.split()[0] if user_full_name.split() else user_full_name
+                    await send_notification_to_referrer(referrer['telegram_id'], referrer_name, user_full_name)
 
                     # Отвечаем на callback
                     await callback_query.answer("Вы успешно подтвердили реферала!")
@@ -79,25 +72,17 @@ async def confirm_referral_handler(callback_query: CallbackQuery):
                         await database.create_referral_record(referrer['id'], user_data['id'], 1)
 
                         # Отправляем уведомление пригласителю
-                        try:
-                            referrer_name = user_full_name.split()[0] if user_full_name.split() else user_full_name
-                            notification_text = (
-                                f"🎉 У вас новый реферал!\n\n"
-                                f"Пользователь {referrer_name} присоединился по вашей ссылке и подтвердил участие в реферальной программе."
-                            )
-                            await telegram_bot.send_message(referrer['telegram_id'], notification_text)
-                        except Exception as e:
-                            logger.error(f"Ошибка при отправке уведомления пригласителю {referrer['telegram_id']}: {e}")
+                        referrer_name = user_full_name.split()[0] if user_full_name.split() else user_full_name
+                        await send_notification_to_referrer(referrer['telegram_id'], referrer_name, user_full_name)
 
                         # Отправляем сообщение пользователю
-                        welcome_text = (
-                            f"Отлично, {user_full_name}! 👍\n\n"
-                            f"Вы успешно подтвердили участие в реферальной программе и закреплены за пользователем {referrer['first_name']}.\n"
-                            "Нажмите кнопку ниже, чтобы открыть приложение:"
+                        await send_welcome_message(
+                            user_id=user_id,
+                            full_name=user_full_name,
+                            callback_query=callback_query,
+                            keyboard=get_webapp_keyboard(),
+                            referral_name=referrer['first_name']
                         )
-
-                        await callback_query.message.edit_text(welcome_text)
-                        await callback_query.message.answer("Добро пожаловать!", reply_markup=get_webapp_keyboard())
 
                         # Отвечаем на callback
                         await callback_query.answer("Вы успешно подтвердили реферала!")
@@ -121,20 +106,21 @@ async def confirm_referral_handler(callback_query: CallbackQuery):
 
         if user_data:
             # Отправляем сообщение пользователю
-            welcome_text = (
-                f"Отлично, {user_full_name}! 👍\n\n"
-                "Вы успешно зарегистрированы в системе.\n"
-                "Нажмите кнопку ниже, чтобы открыть приложение:"
+            await send_welcome_message(
+                user_id=user_id,
+                full_name=user_full_name,
+                callback_query=callback_query,
+                keyboard=get_webapp_keyboard()
             )
-
-            await callback_query.message.edit_text(welcome_text)
-            await callback_query.message.answer("Добро пожаловать!", reply_markup=get_webapp_keyboard())
 
             # Отвечаем на callback
             await callback_query.answer("Вы успешно зарегистрированы!")
         else:
-            await callback_query.message.answer("Произошла ошибка при регистрации. Попробуйте еще раз.")
-            await callback_query.answer("Ошибка при регистрации.")
+            await send_error_message(
+                user_id=user_id,
+                callback_query=callback_query,
+                error_text="Произошла ошибка при регистрации. Попробуйте еще раз."
+            )
 
     except TelegramNetworkError as e:
         logger.error(f"Ошибка сети при обработке подтверждения реферала: {e}")
@@ -199,14 +185,12 @@ async def continue_without_referral_handler(callback_query: CallbackQuery):
 
         if existing_user:
             # Пользователь уже существует, просто отправляем ему веб-приложение
-            welcome_text = (
-                f"Отлично, {user_full_name}! 👍\n\n"
-                "Вы уже зарегистрированы в системе.\n"
-                "Нажмите кнопку ниже, чтобы открыть приложение:"
+            await send_welcome_message(
+                user_id=user_id,
+                full_name=user_full_name,
+                callback_query=callback_query,
+                keyboard=get_webapp_keyboard()
             )
-
-            await callback_query.message.edit_text(welcome_text)
-            await callback_query.message.answer("Добро пожаловать!", reply_markup=get_webapp_keyboard())
 
             # Отвечаем на callback
             await callback_query.answer("Вы уже зарегистрированы!")
@@ -221,20 +205,21 @@ async def continue_without_referral_handler(callback_query: CallbackQuery):
             )
 
             if user_data:
-                welcome_text = (
-                    f"Отлично, {user_full_name}! 👍\n\n"
-                    "Вы успешно зарегистрированы в системе.\n"
-                    "Нажмите кнопку ниже, чтобы открыть приложение:"
+                await send_welcome_message(
+                    user_id=user_id,
+                    full_name=user_full_name,
+                    callback_query=callback_query,
+                    keyboard=get_webapp_keyboard()
                 )
-
-                await callback_query.message.edit_text(welcome_text)
-                await callback_query.message.answer("Добро пожаловать!", reply_markup=get_webapp_keyboard())
 
                 # Отвечаем на callback
                 await callback_query.answer("Вы успешно зарегистрированы!")
             else:
-                await callback_query.message.answer("Произошла ошибка при регистрации. Попробуйте еще раз.")
-                await callback_query.answer("Ошибка при регистрации.")
+                await send_error_message(
+                    user_id=user_id,
+                    callback_query=callback_query,
+                    error_text="Произошла ошибка при регистрации. Попробуйте еще раз."
+                )
 
     except TelegramNetworkError as e:
         logger.error(f"Ошибка сети при обработке продолжения без реферала: {e}")
