@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TelegramProvider } from '@/components/TelegramProvider';
 import { AppHeader } from '@/components/ui/AppHeader';
@@ -22,37 +22,37 @@ const viewVariants = {
   exit: { opacity: 0, x: -20 },
 };
 
-const Index = () => {
+const Index = memo(() => {
   const [activeTab, setActiveTab] = useState('info');
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [adminTab, setAdminTab] = useState('admin-stats');
 
-  const handleTabChange = (tab: string) => {
+  const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
     // Прокручиваем к началу при смене вкладки
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleEnterAdminMode = () => {
+  const handleEnterAdminMode = useCallback(() => {
     setIsAdminMode(true);
     setAdminTab('admin-stats');
     // Прокручиваем к началу при смене режима
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleExitAdminMode = () => {
+  const handleExitAdminMode = useCallback(() => {
     setIsAdminMode(false);
     // Прокручиваем к началу при выходе из режима администратора
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleAdminTabChange = (tab: string) => {
+  const handleAdminTabChange = useCallback((tab: string) => {
     setAdminTab(tab);
     // Прокручиваем к началу при смене админ-вкладки
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const renderAdminView = () => {
+  const renderAdminView = useCallback(() => {
     switch (adminTab) {
       case 'admin-stats':
         return <AdminStatsView key="admin-stats" />;
@@ -67,9 +67,9 @@ const Index = () => {
       default:
         return <AdminStatsView key="admin-stats" />;
     }
-  };
+  }, [adminTab]);
 
-  const renderView = () => {
+  const renderView = useCallback(() => {
     if (isAdminMode) {
       return renderAdminView();
     }
@@ -90,7 +90,7 @@ const Index = () => {
       default:
         return <InfoView key="info" />;
     }
-  };
+  }, [isAdminMode, activeTab, handleTabChange, handleEnterAdminMode, renderAdminView]);
 
   // Прокручиваем к началу при изменении вкладки
   useEffect(() => {
@@ -132,6 +132,6 @@ const Index = () => {
       </div>
     </TelegramProvider>
   );
-};
+});
 
 export default Index;

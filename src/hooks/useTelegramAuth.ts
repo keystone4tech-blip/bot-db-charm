@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { authenticateUser } from '@/lib/api';
 import { tg, isTelegramWebApp, getReferralCode } from '@/lib/telegram';
 import { toast } from 'sonner';
@@ -63,7 +63,7 @@ export const useTelegramAuth = () => {
     }
 
     const initData = tg.initData;
-    
+
     if (!initData) {
       console.error('No initData available');
       setAuthState(prev => ({
@@ -141,8 +141,11 @@ export const useTelegramAuth = () => {
     }
   }, [authenticate]);
 
-  return {
+  // Memoize the return value to prevent unnecessary re-renders
+  const returnValue = useMemo(() => ({
     ...authState,
     refetch: authenticate,
-  };
+  }), [authState, authenticate]);
+
+  return returnValue;
 };

@@ -98,7 +98,7 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
             }}
           />
         </div>
-        
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -119,21 +119,21 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
           >
             <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 backdrop-blur-sm border border-border flex items-center justify-center">
               <motion.div
-                animate={{ 
+                animate={{
                   rotate: 360,
                   scale: [1, 1.1, 1]
                 }}
-                transition={{ 
-                  duration: 2, 
-                  repeat: Infinity, 
-                  ease: "linear" 
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "linear"
                 }}
                 className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center"
               >
                 <Loader2 className="w-8 h-8 text-white" />
               </motion.div>
             </div>
-            
+
             {/* Floating particles */}
             {[...Array(6)].map((_, i) => (
               <motion.div
@@ -158,7 +158,7 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
               />
             ))}
           </motion.div>
-          
+
           <motion.h1
             className="text-2xl font-bold gold-gradient-text mb-2"
             animate={{
@@ -181,7 +181,7 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
           >
             Загрузка приложения...
           </motion.p>
-          
+
           {/* Progress bar */}
           <motion.div
             className="mt-6 w-48 h-1 bg-secondary/20 rounded-full mx-auto overflow-hidden"
@@ -200,13 +200,24 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
-              style={{ 
+              style={{
                 transformOrigin: 'left',
                 backgroundImage: 'linear-gradient(90deg, transparent, hsl(var(--primary)), transparent)',
                 backgroundSize: '200% 100%'
               }}
             />
           </motion.div>
+
+          {/* Добавляем процент загрузки */}
+          <motion.p
+            className="text-xs text-muted-foreground mt-2"
+            animate={{
+              opacity: [0.5, 1, 0.5],
+            }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            Подключение к серверу...
+          </motion.p>
         </motion.div>
       </div>
     );

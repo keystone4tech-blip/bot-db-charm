@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { 
-  UserProfile, 
-  UserBalance, 
+import { useState, useEffect, useCallback } from 'react';
+import {
+  UserProfile,
+  UserBalance,
   ReferralStats,
   VPNKey,
   TelegramChannel,
@@ -13,6 +13,7 @@ import {
   getUserSubscriptions
 } from '@/lib/api';
 import { useTelegramContext } from '@/components/TelegramProvider';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ProfileHookReturn {
   profile: UserProfile | null;
@@ -30,6 +31,8 @@ interface ProfileHookReturn {
 
 export const useProfile = (): ProfileHookReturn => {
   const { authProfile, authBalance, authReferralStats, isAuthenticated } = useTelegramContext();
+  const queryClient = useQueryClient();
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [balance, setBalance] = useState<UserBalance | null>(null);
   const [referralStats, setReferralStats] = useState<ReferralStats | null>(null);
@@ -52,7 +55,7 @@ export const useProfile = (): ProfileHookReturn => {
         updated_at: new Date().toISOString(),
       };
       setProfile(fullProfile);
-      
+
       // Преобразуем AuthBalance в UserBalance
       if (authBalance) {
         const fullBalance: UserBalance = {
@@ -63,7 +66,7 @@ export const useProfile = (): ProfileHookReturn => {
         };
         setBalance(fullBalance);
       }
-      
+
       // Преобразуем AuthReferralStats в ReferralStats
       if (authReferralStats) {
         const fullReferralStats: ReferralStats = {
@@ -74,12 +77,12 @@ export const useProfile = (): ProfileHookReturn => {
         };
         setReferralStats(fullReferralStats);
       }
-      
+
       // Генерируем реферальную ссылку
       if (authProfile.referral_code) {
         setReferralLink(`https://t.me/Keystone_Tech_bot?start=${authProfile.referral_code}`);
       }
-      
+
       // Загружаем дополнительные данные
       loadAdditionalData(authProfile.id);
     } else {
@@ -90,7 +93,7 @@ export const useProfile = (): ProfileHookReturn => {
   const loadAdditionalData = async (userId: string) => {
     try {
       setIsLoading(true);
-      
+
       // Загружаем дополнительные данные параллельно
       const [vpnResponse, channelResponse, botResponse, subscriptionResponse] = await Promise.allSettled([
         getUserVPNKeys(userId),
@@ -121,15 +124,24 @@ export const useProfile = (): ProfileHookReturn => {
     }
   };
 
-  const updateProfile = async (updates: Partial<UserProfile>) => {
+  const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
     try {
-      // В реальной реализации здесь будет вызов API для обновления профиля
+      // Оптимистично обновляем профиль в UI
+      const previousProfile = profile;
       setProfile(prev => prev ? { ...prev, ...updates } : null);
+
+      // В реальной реализации здесь будет вызов API для обновления профиля
+      // await updateProfileApi(updates);
+
+      // После успешного обновления инвалидируем кэш
+      await queryClient.invalidateQueries({ queryKey: ['user', 'profile'] });
     } catch (err) {
+      // При ошибке откатываем изменения
+      setProfile(previousProfile);
       setError(err instanceof Error ? err.message : 'Ошибка обновления профиля');
       throw err;
     }
-  };
+  }, [profile, queryClient]);
 
   return {
     profile,
