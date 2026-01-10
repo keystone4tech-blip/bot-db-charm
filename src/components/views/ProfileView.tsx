@@ -111,7 +111,7 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
         <ProfileHeader
           profile={displayProfile as ExtendedUserProfile}
           telegramUser={telegramUser}
-          onEditClick={() => setIsEditModalOpen(true)}
+          onEditClick={null} // Отключаем редактирование через ProfileHeader
         />
 
         {/* Balance Cards */}

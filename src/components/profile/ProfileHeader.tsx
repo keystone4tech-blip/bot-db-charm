@@ -8,7 +8,7 @@ import { TelegramUser } from '@/hooks/useTelegram';
 interface ProfileHeaderProps {
   profile: any; // UserProfile
   telegramUser: TelegramUser | null;
-  onEditClick: () => void;
+  onEditClick: (() => void) | null;
 }
 
 export const ProfileHeader = ({ profile, telegramUser, onEditClick }: ProfileHeaderProps) => {
@@ -62,14 +62,16 @@ export const ProfileHeader = ({ profile, telegramUser, onEditClick }: ProfileHea
           )}
         </div>
 
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onEditClick}
-          className="shrink-0"
-        >
-          <Edit3 className="w-4 h-4" />
-        </Button>
+        {onEditClick && (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onEditClick}
+            className="shrink-0"
+          >
+            <Edit3 className="w-4 h-4" />
+          </Button>
+        )}
       </div>
     </motion.div>
   );

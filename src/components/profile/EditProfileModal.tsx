@@ -48,11 +48,8 @@ export const EditProfileModal = ({ isOpen, onClose, profile, onSave }: EditProfi
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md sm:max-w-md rounded-2xl p-0 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="flex items-center justify-between">
+          <DialogTitle>
             <span>О себе</span>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
           </DialogTitle>
         </DialogHeader>
 
