@@ -38,135 +38,42 @@ export const usePlatformStats = () => {
       setIsLoading(true);
       setError(null);
 
-      // Fetch all stats in parallel
-      const [
-        usersResult,
-        botsResult,
-        subscriptionsResult,
-        vpnKeysResult,
-        transactionsResult,
-      ] = await Promise.all([
-        supabase.from('profiles').select('*'),
-        supabase.from('user_bots').select('*').eq('is_active', true),
-        supabase.from('subscriptions').select('*').eq('status', 'active'),
-        supabase.from('vpn_keys').select('*').eq('status', 'active'),
-        supabase.from('transactions').select('amount').eq('status', 'completed'),
-      ]);
-
-      // Calculate monthly revenue (last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      // Call edge function that uses service role to bypass RLS
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       
-      const { data: revenueData } = await supabase
-        .from('transactions')
-        .select('amount')
-        .gte('created_at', thirtyDaysAgo.toISOString())
-        .in('type', ['subscription_payment', 'vpn_payment', 'deposit']);
-
-      const monthlyRevenue = revenueData?.reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
-
-      setStats({
-        totalUsers: usersResult.data?.length || 0,
-        activeBots: botsResult.data?.length || 0,
-        activeSubscriptions: subscriptionsResult.data?.length || 0,
-        activeVpnKeys: vpnKeysResult.data?.length || 0,
-        monthlyRevenue,
-        totalTransactions: transactionsResult.data?.length || 0,
+      const response = await fetch(`${supabaseUrl}/functions/v1/platform-stats`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`,
+          'apikey': anonKey,
+        },
       });
 
-      // Fetch recent activity
-      await fetchRecentActivity();
+      if (!response.ok) {
+        throw new Error('Failed to fetch stats');
+      }
+
+      const data = await response.json();
+
+      if (data) {
+        setStats(data.stats);
+        
+        // Format time for recent activity
+        const formattedActivity: RecentActivity[] = data.recentActivity?.map((activity: any) => ({
+          ...activity,
+          time: formatDistanceToNow(new Date(activity.created_at), { addSuffix: true, locale: ru }),
+        })) || [];
+        
+        setRecentActivity(formattedActivity);
+      }
 
     } catch (err) {
       console.error('Error fetching platform stats:', err);
       setError('Ошибка загрузки статистики');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const fetchRecentActivity = async () => {
-    try {
-      const activities: RecentActivity[] = [];
-
-      // Get recent users
-      const { data: recentUsers } = await supabase
-        .from('profiles')
-        .select('id, telegram_username, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      recentUsers?.forEach((user) => {
-        activities.push({
-          id: `user-${user.id}`,
-          action: 'Новый пользователь',
-          user: user.telegram_username ? `@${user.telegram_username}` : 'Аноним',
-          time: formatDistanceToNow(new Date(user.created_at), { addSuffix: true, locale: ru }),
-          type: 'user',
-        });
-      });
-
-      // Get recent subscriptions
-      const { data: recentSubs } = await supabase
-        .from('subscriptions')
-        .select('id, user_id, created_at, profiles!inner(telegram_username)')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      recentSubs?.forEach((sub: any) => {
-        activities.push({
-          id: `sub-${sub.id}`,
-          action: 'Оплата подписки',
-          user: sub.profiles?.telegram_username ? `@${sub.profiles.telegram_username}` : 'Аноним',
-          time: formatDistanceToNow(new Date(sub.created_at), { addSuffix: true, locale: ru }),
-          type: 'subscription',
-        });
-      });
-
-      // Get recent bots
-      const { data: recentBots } = await supabase
-        .from('user_bots')
-        .select('id, user_id, created_at, profiles!inner(telegram_username)')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      recentBots?.forEach((bot: any) => {
-        activities.push({
-          id: `bot-${bot.id}`,
-          action: 'Создан бот',
-          user: bot.profiles?.telegram_username ? `@${bot.profiles.telegram_username}` : 'Аноним',
-          time: formatDistanceToNow(new Date(bot.created_at), { addSuffix: true, locale: ru }),
-          type: 'bot',
-        });
-      });
-
-      // Get recent VPN activations
-      const { data: recentVpn } = await supabase
-        .from('vpn_keys')
-        .select('id, user_id, activated_at, profiles!inner(telegram_username)')
-        .not('activated_at', 'is', null)
-        .order('activated_at', { ascending: false })
-        .limit(5);
-
-      recentVpn?.forEach((vpn: any) => {
-        activities.push({
-          id: `vpn-${vpn.id}`,
-          action: 'VPN ключ активирован',
-          user: vpn.profiles?.telegram_username ? `@${vpn.profiles.telegram_username}` : 'Аноним',
-          time: formatDistanceToNow(new Date(vpn.activated_at), { addSuffix: true, locale: ru }),
-          type: 'vpn',
-        });
-      });
-
-      // Sort by time (most recent first) and take top 10
-      activities.sort((a, b) => {
-        // Parse "X минут назад" format - recent items should come first
-        return 0; // Keep original order since they're already sorted by created_at
-      });
-
-      setRecentActivity(activities.slice(0, 10));
-    } catch (err) {
-      console.error('Error fetching recent activity:', err);
     }
   };
 
