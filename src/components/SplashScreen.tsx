@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTelegram } from '@/hooks/useTelegram';
+import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -21,6 +22,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   const [progress, setProgress] = useState(0);
 
   const { user, isReady } = useTelegram();
+  const { isAuthenticated, isLoading: isAuthLoading, error: authError, profile: authProfile } = useTelegramAuth();
 
   // Объединяем проверку пользователя и анимацию
   useEffect(() => {
@@ -33,39 +35,54 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
           clearInterval(progressInterval);
           return 100;
         }
-        return prev + 1;
+        return prev + 0.5; // Замедлим немного прогресс, чтобы анимация не заканчивалась слишком быстро
       });
-    }, 50); // Обновляем каждые 50мс для плавной анимации
+    }, 100); // Обновляем каждые 100мс
 
-    // Проверяем пользователя Telegram
+    // Проверяем состояние аутентификации
     if (isReady) {
-      // Если пользователь готов, проверяем его данные
-      if (user) {
-        // Проверяем, есть ли username у пользователя
-        if (!user.username) {
-          setShowUsernameDialog(true);
+      if (!isAuthLoading) {
+        // Если аутентификация завершена
+        if (authError) {
+          // Если произошла ошибка аутентификации
+          console.error('Auth error:', authError);
+          clearInterval(progressInterval);
           setIsLoading(false);
-          clearInterval(progressInterval);
-        } else {
-          // Если username есть, завершаем сплеш
-          setTimeout(() => {
+        } else if (isAuthenticated && authProfile) {
+          // Если пользователь аутентифицирован и профиль получен
+          // Проверяем, есть ли username у пользователя
+          const userProfile = user || { username: authProfile.telegram_username || null };
+
+          if (!userProfile.username) {
+            setShowUsernameDialog(true);
             setIsLoading(false);
-            setAnimationComplete(true);
-            onFinish();
-          }, 500); // Небольшая задержка для плавности
-          clearInterval(progressInterval);
+            clearInterval(progressInterval);
+          } else {
+            // Если username есть, завершаем сплеш
+            setTimeout(() => {
+              setIsLoading(false);
+              setAnimationComplete(true);
+              onFinish();
+            }, 500); // Небольшая задержка для плавности
+            clearInterval(progressInterval);
+          }
         }
-      } else {
-        // Если пользователь не определен, возможно, не в Telegram WebApp
-        setIsLoading(false);
-        clearInterval(progressInterval);
       }
+    } else if (!isReady && !isAuthLoading) {
+      // Если SDK не готов и не загружается, возможно, пользователь не в Telegram WebApp
+      // В этом случае просто завершаем сплеш
+      setTimeout(() => {
+        setIsLoading(false);
+        setAnimationComplete(true);
+        onFinish();
+      }, 1000); // Небольшая задержка для плавности
+      clearInterval(progressInterval);
     }
 
     return () => {
       if (progressInterval) clearInterval(progressInterval);
     };
-  }, [isReady, user, onFinish]);
+  }, [isReady, isAuthLoading, isAuthenticated, authError, authProfile, user, onFinish]);
 
   // Анимация холста
   useEffect(() => {
