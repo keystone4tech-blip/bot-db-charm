@@ -618,6 +618,147 @@ app.post('/api/support-tickets', async (req, res) => {
   }
 });
 
+// Маршрут для получения тикетов пользователя
+app.get('/api/support-tickets/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { status } = req.query; // Необязательный параметр для фильтрации по статусу
+
+    let query = 'SELECT * FROM support_tickets WHERE user_id = $1';
+    const queryParams = [userId];
+    let paramIndex = 2;
+
+    if (status) {
+      query += ` AND status = $${paramIndex}`;
+      queryParams.push(status);
+      paramIndex++;
+    }
+
+    query += ' ORDER BY created_at DESC';
+
+    const result = await pool.query(query, queryParams);
+
+    res.json({
+      success: true,
+      tickets: result.rows,
+    });
+  } catch (error) {
+    console.error('Error fetching support tickets:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Маршрут для обновления статуса тикета
+app.put('/api/support-tickets/:ticketId', async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+    const { status } = req.body;
+
+    const query = `
+      UPDATE support_tickets
+      SET status = $1, updated_at = $2
+      WHERE id = $3
+      RETURNING *
+    `;
+    const result = await pool.query(query, [status, new Date().toISOString(), ticketId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
+    res.json({
+      success: true,
+      ticket: result.rows[0],
+    });
+  } catch (error) {
+    console.error('Error updating support ticket:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Маршрут для получения сообщений чата по тикету
+app.get('/api/support-chat/:ticketId', async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+
+    const query = `
+      SELECT * FROM support_chat_messages
+      WHERE ticket_id = $1
+      ORDER BY created_at ASC
+    `;
+    const result = await pool.query(query, [ticketId]);
+
+    res.json({
+      success: true,
+      messages: result.rows,
+    });
+  } catch (error) {
+    console.error('Error fetching support chat messages:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Маршрут для отправки сообщения в чат поддержки
+app.post('/api/support-chat', async (req, res) => {
+  try {
+    const { ticket_id, sender_id, sender_type, message, file_url, file_type, file_name } = req.body;
+
+    const query = `
+      INSERT INTO support_chat_messages (
+        ticket_id, sender_id, sender_type, message, file_url, file_type, file_name
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `;
+    const result = await pool.query(query, [
+      ticket_id, sender_id, sender_type, message, file_url, file_type, file_name
+    ]);
+
+    // Обновляем статус тикета на "в процессе"
+    await pool.query(
+      'UPDATE support_tickets SET status = $1, updated_at = $2 WHERE id = $3',
+      ['in_progress', new Date().toISOString(), ticket_id]
+    );
+
+    res.json({
+      success: true,
+      message: result.rows[0],
+    });
+  } catch (error) {
+    console.error('Error sending support chat message:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Маршрут для получения всех тикетов (для администратора)
+app.get('/api/support-tickets', async (req, res) => {
+  try {
+    const { status } = req.query; // Необязательный параметр для фильтрации по статусу
+
+    let query = 'SELECT * FROM support_tickets';
+    const queryParams = [];
+    let paramIndex = 1;
+
+    if (status) {
+      query += ` WHERE status = $${paramIndex}`;
+      queryParams.push(status);
+      paramIndex++;
+    }
+
+    query += ' ORDER BY created_at DESC';
+
+    const result = await pool.query(query, queryParams);
+
+    res.json({
+      success: true,
+      tickets: result.rows,
+    });
+  } catch (error) {
+    console.error('Error fetching all support tickets:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
 // Запускаем сервер
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
