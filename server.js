@@ -607,6 +607,22 @@ app.post('/api/support-tickets', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    // Проверяем, существует ли таблица
+    const tableExistsQuery = `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'support_tickets'
+      ) AS table_exists;
+    `;
+
+    const tableCheckResult = await pool.query(tableExistsQuery);
+
+    if (!tableCheckResult.rows[0].table_exists) {
+      console.error('Table support_tickets does not exist');
+      return res.status(500).json({ error: 'Table support_tickets does not exist' });
+    }
+
     const query = `
       INSERT INTO support_tickets (user_id, category, subject, message, status)
       VALUES ($1, $2, $3, $4, $5)
@@ -767,9 +783,103 @@ app.get('/api/support-tickets', async (req, res) => {
   }
 });
 
-// Запускаем сервер
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// Функция для проверки и создания необходимых таблиц
+async function ensureTablesExist() {
+  try {
+    console.log('Checking if required tables exist...');
+
+    // Проверяем, существует ли таблица profiles
+    const profilesTableExistsQuery = `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'profiles'
+      ) AS table_exists;
+    `;
+
+    const profilesTableCheckResult = await pool.query(profilesTableExistsQuery);
+
+    if (!profilesTableCheckResult.rows[0].table_exists) {
+      console.log('profiles table does not exist, creating it...');
+
+      // Создаем таблицу profiles
+      const createProfilesTableQuery = `
+        CREATE TABLE IF NOT EXISTS profiles (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          telegram_id BIGINT UNIQUE NOT NULL,
+          telegram_username VARCHAR(255),
+          first_name VARCHAR(255) NOT NULL,
+          last_name VARCHAR(255),
+          avatar_url TEXT,
+          referral_code VARCHAR(50) UNIQUE,
+          referred_by UUID REFERENCES profiles(id),
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        );
+
+        -- Индекс для быстрого поиска по Telegram ID
+        CREATE INDEX IF NOT EXISTS idx_profiles_telegram_id ON profiles(telegram_id);
+
+        -- Индекс для быстрого поиска по реферальному коду
+        CREATE INDEX IF NOT EXISTS idx_profiles_referral_code ON profiles(referral_code);
+      `;
+
+      await pool.query(createProfilesTableQuery);
+      console.log('profiles table created successfully');
+    } else {
+      console.log('profiles table already exists');
+    }
+
+    // Проверяем, существует ли таблица support_tickets
+    const supportTicketsTableExistsQuery = `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'support_tickets'
+      ) AS table_exists;
+    `;
+
+    const supportTicketsTableCheckResult = await pool.query(supportTicketsTableExistsQuery);
+
+    if (!supportTicketsTableCheckResult.rows[0].table_exists) {
+      console.log('support_tickets table does not exist, creating it...');
+
+      // Создаем таблицу support_tickets
+      const createSupportTicketsTableQuery = `
+        CREATE TABLE IF NOT EXISTS support_tickets (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+          category VARCHAR(100) NOT NULL,
+          subject VARCHAR(255),
+          message TEXT NOT NULL,
+          status VARCHAR(20) DEFAULT 'open',
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        );
+
+        -- Индекс для быстрого поиска заявок по пользователю
+        CREATE INDEX IF NOT EXISTS idx_tickets_user_id ON support_tickets(user_id);
+      `;
+
+      await pool.query(createSupportTicketsTableQuery);
+      console.log('support_tickets table created successfully');
+    } else {
+      console.log('support_tickets table already exists');
+    }
+  } catch (error) {
+    console.error('Error ensuring tables exist:', error);
+  }
+}
+
+// Запускаем проверку таблиц при старте сервера
+ensureTablesExist().then(() => {
+  // Запускаем сервер после проверки таблиц
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}).catch(error => {
+  console.error('Failed to ensure tables exist:', error);
+  process.exit(1);
 });
 
 // Экспортируем app для использования в других модулях (например, для тестирования)
