@@ -15,17 +15,4 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-*', 'lucide-react'],
-          utils: ['date-fns', 'framer-motion'],
-          telegram: ['@twa-dev/sdk'],
-          query: ['@tanstack/react-query']
-        }
-      }
-    }
-  }
 }));

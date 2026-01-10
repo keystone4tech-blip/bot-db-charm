@@ -706,7 +706,7 @@ app.get('/api/support-chat/:ticketId', async (req, res) => {
     const { ticketId } = req.params;
 
     const query = `
-      SELECT * FROM ticket_messages
+      SELECT * FROM support_chat_messages
       WHERE ticket_id = $1
       ORDER BY created_at ASC
     `;
@@ -725,17 +725,17 @@ app.get('/api/support-chat/:ticketId', async (req, res) => {
 // Маршрут для отправки сообщения в чат поддержки
 app.post('/api/support-chat', async (req, res) => {
   try {
-    const { ticket_id, sender_id, sender_type, message } = req.body;
+    const { ticket_id, sender_id, sender_type, message, file_url, file_type, file_name } = req.body;
 
     const query = `
-      INSERT INTO ticket_messages (
-        ticket_id, sender_id, message, is_admin_reply
+      INSERT INTO support_chat_messages (
+        ticket_id, sender_id, sender_type, message, file_url, file_type, file_name
       )
-      VALUES ($1, $2, $3, $4)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `;
     const result = await pool.query(query, [
-      ticket_id, sender_id, message, sender_type === 'admin'
+      ticket_id, sender_id, sender_type, message, file_url, file_type, file_name
     ]);
 
     // Обновляем статус тикета на "в процессе"
@@ -865,41 +865,6 @@ async function ensureTablesExist() {
       console.log('support_tickets table created successfully');
     } else {
       console.log('support_tickets table already exists');
-    }
-
-    // Проверяем, существует ли таблица ticket_messages
-    const ticketMessagesTableExistsQuery = `
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_schema = 'public'
-        AND table_name = 'ticket_messages'
-      ) AS table_exists;
-    `;
-
-    const ticketMessagesTableCheckResult = await pool.query(ticketMessagesTableExistsQuery);
-
-    if (!ticketMessagesTableCheckResult.rows[0].table_exists) {
-      console.log('ticket_messages table does not exist, creating it...');
-
-      // Создаем таблицу ticket_messages
-      const createTicketMessagesTableQuery = `
-        CREATE TABLE IF NOT EXISTS ticket_messages (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
-          sender_id UUID NOT NULL,
-          message TEXT NOT NULL,
-          is_admin_reply BOOLEAN DEFAULT false,
-          created_at TIMESTAMP DEFAULT NOW()
-        );
-
-        -- Индекс для быстрого поиска сообщений по тикету
-        CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket_id ON ticket_messages(ticket_id);
-      `;
-
-      await pool.query(createTicketMessagesTableQuery);
-      console.log('ticket_messages table created successfully');
-    } else {
-      console.log('ticket_messages table already exists');
     }
   } catch (error) {
     console.error('Error ensuring tables exist:', error);

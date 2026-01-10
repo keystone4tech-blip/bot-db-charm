@@ -29,41 +29,16 @@ export const useSupportTickets = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Вспомогательная функция для выполнения запросов к Supabase функции
-  const callSupabaseFunction = async (endpoint: string, method: string, body?: any) => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-    if (!supabaseUrl || !anonKey) {
-      throw new Error('Supabase URL или ANON ключ не определены в переменных окружения');
-    }
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/${endpoint}`, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': anonKey,
-        'Authorization': `Bearer ${anonKey}`,
-      },
-      ...(body && { body: JSON.stringify(body) }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || `HTTP error! status: ${response.status}`);
-    }
-
-    return result;
-  };
-
   // Загрузка тикетов пользователя
   const fetchTickets = async (userId: string) => {
     try {
       setLoading(true);
       setError(null);
 
-      const result = await callSupabaseFunction(`support-tickets/${userId}`, 'GET');
+      const response = await fetch(`/api/support-tickets/${userId}`);
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || 'Failed to fetch tickets');
 
       setTickets(result.tickets || []);
     } catch (err) {
@@ -80,10 +55,10 @@ export const useSupportTickets = () => {
       setLoading(true);
       setError(null);
 
-      // Для администратора нужно будет создать отдельную функцию
-      // Пока используем тот же endpoint, но в реальности нужна отдельная функция
-      // с проверкой прав администратора
-      const result = await callSupabaseFunction('support-tickets', 'GET');
+      const response = await fetch('/api/support-tickets');
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || 'Failed to fetch tickets');
 
       setTickets(result.tickets || []);
     } catch (err) {
@@ -97,27 +72,10 @@ export const useSupportTickets = () => {
   // Загрузка сообщений для тикета
   const fetchMessages = async (ticketId: string) => {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      if (!supabaseUrl || !anonKey) {
-        throw new Error('Supabase URL или ANON ключ не определены в переменных окружения');
-      }
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/support-chat-messages/${ticketId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': anonKey,
-          'Authorization': `Bearer ${anonKey}`,
-        },
-      });
-
+      const response = await fetch(`/api/support-chat/${ticketId}`);
       const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || `HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(result.error || 'Failed to fetch messages');
 
       setMessages(prev => ({
         ...prev,
@@ -136,15 +94,20 @@ export const useSupportTickets = () => {
       setError(null);
 
       console.log('Sending ticket creation request:', { user_id: userId, category, subject, message });
-
-      const result = await callSupabaseFunction('support-tickets', 'POST', {
-        user_id: userId,
-        category,
-        subject,
-        message
+      
+      const response = await fetch('/api/support-tickets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: userId, category, subject, message }),
       });
 
-      console.log('Ticket created successfully:', result.ticket);
+      console.log('Response status:', response.status);
+      const result = await response.json();
+      console.log('Response result:', result);
+
+      if (!response.ok) throw new Error(result.error || 'Failed to create ticket');
 
       // Добавляем тикет в список
       setTickets(prev => [result.ticket, ...prev]);
@@ -162,33 +125,51 @@ export const useSupportTickets = () => {
   // Отправка сообщения в чат
   const sendMessage = async (ticketId: string, senderId: string, senderType: 'user' | 'admin', message: string, file?: File) => {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      if (!supabaseUrl || !anonKey) {
-        throw new Error('Supabase URL или ANON ключ не определены в переменных окружения');
+      // Если есть файл, загружаем его сначала
+      let fileUrl = '';
+      let fileType = '';
+      let fileName = '';
+      
+      if (file) {
+        // В реальной реализации нужно загрузить файл на сервер
+        // или в облачное хранилище, и получить URL
+        // Пока используем заглушку для демонстрации
+        
+        // В реальной реализации:
+        // 1. Загрузить файл на сервер или в облачное хранилище
+        // 2. Получить URL файла
+        // 3. Сохранить URL в базе данных
+        
+        // Для демонстрации используем Data URL
+        const reader = new FileReader();
+        fileUrl = await new Promise((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        
+        fileType = file.type;
+        fileName = file.name;
       }
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/support-chat-messages`, {
+      const response = await fetch('/api/support-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': anonKey,
-          'Authorization': `Bearer ${anonKey}`,
         },
         body: JSON.stringify({
           ticket_id: ticketId,
           sender_id: senderId,
-          sender_type: senderType,
-          message
+          sender_type,
+          message,
+          file_url: fileUrl,
+          file_type: fileType,
+          file_name: fileName
         }),
       });
 
       const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || `HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(result.error || 'Failed to send message');
 
       // Добавляем сообщение в список
       setMessages(prev => ({
@@ -207,11 +188,21 @@ export const useSupportTickets = () => {
   // Обновление статуса тикета
   const updateTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'closed') => {
     try {
-      const result = await callSupabaseFunction(`support-tickets/${ticketId}`, 'PUT', { status });
+      const response = await fetch(`/api/support-tickets/${ticketId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || 'Failed to update ticket status');
 
       // Обновляем статус в локальном состоянии
-      setTickets(prev =>
-        prev.map(ticket =>
+      setTickets(prev => 
+        prev.map(ticket => 
           ticket.id === ticketId ? { ...ticket, status: result.ticket.status } : ticket
         )
       );
@@ -226,6 +217,21 @@ export const useSupportTickets = () => {
   useEffect(() => {
     // В реальной реализации здесь будет WebSocket или Server-Sent Events
     // для получения обновлений в реальном времени
+
+    // Пример с WebSocket:
+    // const ws = new WebSocket('ws://your-websocket-url');
+    //
+    // ws.onmessage = (event) => {
+    //   const newMessage = JSON.parse(event.data);
+    //   setMessages(prev => ({
+    //     ...prev,
+    //     [newMessage.ticket_id]: [...(prev[newMessage.ticket_id] || []), newMessage]
+    //   }));
+    // };
+    //
+    // return () => {
+    //   ws.close();
+    // };
 
     // Пока используем опрос (polling) для получения новых сообщений
     const interval = setInterval(() => {

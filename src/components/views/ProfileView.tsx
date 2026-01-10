@@ -201,4 +201,3 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
     </div>
   );
 };
-

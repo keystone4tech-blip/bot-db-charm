@@ -63,7 +63,7 @@ export const useTelegramAuth = () => {
     }
 
     const initData = tg.initData;
-
+    
     if (!initData) {
       console.error('No initData available');
       setAuthState(prev => ({

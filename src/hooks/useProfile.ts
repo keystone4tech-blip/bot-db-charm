@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import {
-  UserProfile,
-  UserBalance,
+import { 
+  UserProfile, 
+  UserBalance, 
   ReferralStats,
   VPNKey,
   TelegramChannel,
@@ -52,7 +52,7 @@ export const useProfile = (): ProfileHookReturn => {
         updated_at: new Date().toISOString(),
       };
       setProfile(fullProfile);
-
+      
       // Преобразуем AuthBalance в UserBalance
       if (authBalance) {
         const fullBalance: UserBalance = {
@@ -63,7 +63,7 @@ export const useProfile = (): ProfileHookReturn => {
         };
         setBalance(fullBalance);
       }
-
+      
       // Преобразуем AuthReferralStats в ReferralStats
       if (authReferralStats) {
         const fullReferralStats: ReferralStats = {
@@ -74,12 +74,12 @@ export const useProfile = (): ProfileHookReturn => {
         };
         setReferralStats(fullReferralStats);
       }
-
+      
       // Генерируем реферальную ссылку
       if (authProfile.referral_code) {
         setReferralLink(`https://t.me/Keystone_Tech_bot?start=${authProfile.referral_code}`);
       }
-
+      
       // Загружаем дополнительные данные
       loadAdditionalData(authProfile.id);
     } else {
@@ -90,7 +90,7 @@ export const useProfile = (): ProfileHookReturn => {
   const loadAdditionalData = async (userId: string) => {
     try {
       setIsLoading(true);
-
+      
       // Загружаем дополнительные данные параллельно
       const [vpnResponse, channelResponse, botResponse, subscriptionResponse] = await Promise.allSettled([
         getUserVPNKeys(userId),
