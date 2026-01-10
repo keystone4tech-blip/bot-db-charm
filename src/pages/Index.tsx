@@ -96,12 +96,12 @@ const Index = () => {
 
   return (
     <TelegramProvider>
-      <div className="min-h-screen bg-background/90 backdrop-blur-sm max-w-md mx-auto overflow-x-hidden pt-14 relative z-10 flex flex-col pb-16">
+      <div className="min-h-screen bg-background/90 backdrop-blur-sm max-w-md mx-auto overflow-x-hidden pt-14 relative z-10">
         {/* App header */}
         <AppHeader isAdminMode={isAdminMode} />
 
         {/* Main content */}
-        <main className="flex-grow min-h-0 overflow-y-auto">
+        <main className="min-h-[calc(100vh-3.5rem-4rem)]">
           <AnimatePresence mode="wait">
             <motion.div
               key={isAdminMode ? adminTab : activeTab}
@@ -117,17 +117,15 @@ const Index = () => {
         </main>
 
         {/* Bottom navigation */}
-        <div className="fixed bottom-0 left-0 right-0 z-[100] w-full max-w-md mx-auto">
-          {isAdminMode ? (
-            <AdminBottomNav
-              activeTab={adminTab}
-              onTabChange={handleAdminTabChange}
-              onExitAdmin={handleExitAdminMode}
-            />
-          ) : (
-            <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
-          )}
-        </div>
+        {isAdminMode ? (
+          <AdminBottomNav
+            activeTab={adminTab}
+            onTabChange={handleAdminTabChange}
+            onExitAdmin={handleExitAdminMode}
+          />
+        ) : (
+          <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+        )}
       </div>
     </TelegramProvider>
   );

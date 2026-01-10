@@ -41,7 +41,7 @@ export const AdminBottomNav = ({ activeTab, onTabChange, onExitAdmin }: AdminBot
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-card/95 backdrop-blur-xl border-t border-primary/30 safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-primary/30 safe-area-bottom">
       <div className="flex items-center justify-around h-16 max-w-md mx-auto px-1">
         {adminNavItems.map((item) => {
           const Icon = item.icon;
@@ -54,10 +54,10 @@ export const AdminBottomNav = ({ activeTab, onTabChange, onExitAdmin }: AdminBot
               onClick={() => handleTabClick(item.id)}
               className={cn(
                 "flex flex-col items-center justify-center flex-1 h-full relative transition-all duration-300",
-                isExit
-                  ? "text-destructive hover:text-destructive/80"
-                  : isActive
-                    ? "text-primary"
+                isExit 
+                  ? "text-destructive hover:text-destructive/80" 
+                  : isActive 
+                    ? "text-primary" 
                     : "text-muted-foreground hover:text-foreground"
               )}
             >

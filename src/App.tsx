@@ -17,15 +17,13 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="relative w-full h-screen">
+          <div className="relative w-full h-screen overflow-hidden">
             <NeuralNetworkAnimation />
-            <div className="relative z-10 w-full h-full">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </div>
         </BrowserRouter>
       </TooltipProvider>
