@@ -12,6 +12,123 @@ interface SplashScreenProps {
   onFinish: () => void;
 }
 
+// Массив мотивационных сообщений
+const MOTIVATIONAL_MESSAGES = [
+  "Добро пожаловать в будущее!",
+  "Каждый шаг приближает к успеху",
+  "Великие дела начинаются с малого",
+  "Верь в себя и свои возможности",
+  "Лучшее еще впереди",
+  "Ты способен на большее, чем думаешь",
+  "Не бойся мечтать по-крупному",
+  "Успех — это путешествие, а не пункт назначения",
+  "Ты уже на правильном пути",
+  "Каждый день — это новая возможность",
+  "Твои усилия обязательно принесут плоды",
+  "Сегодня ты делаешь шаг к своей мечте",
+  "Ты сильнее своих страхов",
+  "Все возможно, если ты действительно хочешь",
+  "Ты уже преодолел половину пути",
+  "Твоя решимость вдохновляет",
+  "Ты уникален и обладаешь невероятным потенциалом",
+  "Каждый опыт делает тебя сильнее",
+  "Ты достоин великих свершений",
+  "Твоя вера в себя — твоя сила",
+  "Ты создаешь свою реальность",
+  "Ты уже сейчас становишься лучше",
+  "Твоя цель ближе, чем кажется",
+  "Ты способен изменить мир",
+  "Ты на правильном пути к успеху",
+  "Твоя энергия притягивает успех",
+  "Ты имеешь право на счастье",
+  "Ты уже сегодня можешь изменить свое завтра",
+  "Твоя смелость ведет к великим открытиям",
+  "Ты заслуживаешь всего самого лучшего",
+  "Ты обладаешь силой, чтобы преуспеть",
+  "Ты вдохновляешь окружающих",
+  "Ты на шаг ближе к своей мечте",
+  "Твоя настойчивость будет вознаграждена",
+  "Ты создаешь историю своего успеха",
+  "Ты имеешь силу изменить любую ситуацию",
+  "Ты уже сейчас являешься частью чего-то большего",
+  "Твоя вера двигает горами",
+  "Ты уникален и неповторим",
+  "Ты способен на невероятные вещи",
+  "Ты уже преодолеваешь границы",
+  "Твоя решимость формирует твое будущее",
+  "Ты достоин признания и уважения",
+  "Ты вносишь вклад в общее благо",
+  "Ты уже сейчас меняешь мир к лучшему",
+  "Твоя страсть ведет к достижениям",
+  "Ты имеешь право на свои мечты",
+  "Ты обладаешь внутренней силой",
+  "Ты на правильном пути к самореализации",
+  "Ты вносишь свет в этот мир",
+  "Ты создаешь возможности для других",
+  "Ты уже сейчас являешься лидером",
+  "Твоя инициатива ведет к переменам",
+  "Ты имеешь влияние на окружающих",
+  "Ты вдохновляешь других на действия",
+  "Ты обладаешь талантом и способностями",
+  "Ты на пути к личностному росту",
+  "Ты уже сейчас достигаешь прогресса",
+  "Твоя самоотдача впечатляет",
+  "Ты заслуживаешь любви и поддержки",
+  "Ты способен преодолеть любые трудности",
+  "Ты уже сейчас являешься примером для других",
+  "Твоя настойчивость ведет к результатам",
+  "Ты создаешь позитивные перемены",
+  "Ты имеешь право на успех",
+  "Ты обладаешь внутренней мудростью",
+  "Ты на пути к самопознанию",
+  "Ты вносишь гармонию в свою жизнь",
+  "Ты уже сейчас строишь свое будущее",
+  "Твоя энергия заряжает других",
+  "Ты имеешь силу менять обстоятельства",
+  "Ты достоин уважения и признания",
+  "Ты вносишь вклад в развитие общества",
+  "Ты уже сейчас являешься агентом изменений",
+  "Твоя решимость ведет к прорыву",
+  "Ты обладаешь творческим потенциалом",
+  "Ты на пути к внутреннему балансу",
+  "Ты создаешь основу для будущих побед",
+  "Ты имеешь право на личное счастье",
+  "Ты способен вдохновлять целые поколения",
+  "Ты уже сейчас формируешь свою судьбу",
+  "Твоя вера в себя — твой компас",
+  "Ты вносишь свет в темные времена",
+  "Ты обладаешь силой исцеления",
+  "Ты на пути к духовному росту",
+  "Ты уже сейчас являешься частью решения",
+  "Твоя искренность вызывает восхищение",
+  "Ты имеешь влияние на будущее",
+  "Ты вносишь вклад в развитие человечества",
+  "Ты способен на великие дела",
+  "Ты уже сейчас создаешь легенду",
+  "Твоя храбрость ведет к свободе",
+  "Ты обладаешь силой трансформации",
+  "Ты на пути к просветлению",
+  "Ты вносишь гармонию в хаос",
+  "Ты уже сейчас являешься источником света",
+  "Твоя любовь к жизни вдохновляет",
+  "Ты имеешь силу создавать чудеса",
+  "Ты достоин высоких наград",
+  "Ты вносишь порядок в беспорядок",
+  "Ты способен на безусловную любовь",
+  "Ты уже сейчас являешься примером силы",
+  "Твоя мудрость ведет к истине",
+  "Ты обладаешь даром исцеления душ",
+  "Ты на пути к вечной молодости духа",
+  "Ты вносишь свет в самые темные уголки",
+  "Ты уже сейчас являешься проводником любви",
+  "Твоя доброта меняет мир",
+  "Ты имеешь силу создавать рай на земле",
+  "Ты достоин безусловного счастья",
+  "Ты вносишь мир в разобщенные сердца",
+  "Ты способен на величайшие откровения",
+  "Ты уже сейчас являешься чудом природы"
+];
+
 const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [animationComplete, setAnimationComplete] = useState(false);
@@ -20,6 +137,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
+  const [currentMessage, setCurrentMessage] = useState('');
 
   const { user, isReady } = useTelegram();
   const { isAuthenticated, isLoading: isAuthLoading, error: authError, profile: authProfile } = useTelegramAuth();
@@ -28,6 +146,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   useEffect(() => {
     let progressInterval: NodeJS.Timeout;
     let minDisplayTimer: NodeJS.Timeout;
+    let messageInterval: NodeJS.Timeout;
     let isMinDisplayTimeCompleted = false;
 
     // Устанавливаем минимальное время отображения 10 секунд
@@ -39,17 +158,31 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       }
     }, 10000); // 10 секунд минимального времени отображения
 
-    // Имитируем прогресс загрузки
+    // Имитируем прогресс загрузки (10% в секунду, т.е. 1% каждые 100мс в течение 10 секунд)
     progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(progressInterval);
           return 100;
         }
-        // Увеличиваем прогресс медленнее, чтобы анимация длилась дольше
-        return prev + 0.2; // 0.2 * 100 = 20 секунд для полного прогресса, но ограничимся 10 секундами
+        // Увеличиваем прогресс на 1% каждые 100мс (10% в секунду)
+        return prev + 1;
       });
-    }, 200); // Обновляем каждые 200мс
+    }, 100); // Обновляем каждые 100мс для плавного увеличения на 1% за шаг
+
+    // Устанавливаем интервал для смены мотивационных сообщений (каждые 3 секунды)
+    messageInterval = setInterval(() => {
+      if (MOTIVATIONAL_MESSAGES.length > 0) {
+        const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length);
+        setCurrentMessage(MOTIVATIONAL_MESSAGES[randomIndex]);
+      }
+    }, 3000); // Меняем сообщение каждые 3 секунды
+
+    // Показываем первое случайное сообщение сразу
+    if (MOTIVATIONAL_MESSAGES.length > 0) {
+      const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length);
+      setCurrentMessage(MOTIVATIONAL_MESSAGES[randomIndex]);
+    }
 
     // Функция для завершения сплеш-экрана
     const finalizeSplash = () => {
@@ -60,6 +193,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
           onFinish();
         }, 500); // Небольшая задержка для плавности
         clearInterval(progressInterval);
+        clearInterval(messageInterval);
         clearTimeout(minDisplayTimer);
       }
     };
@@ -72,6 +206,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
           // Если произошла ошибка аутентификации
           console.error('Auth error:', authError);
           clearInterval(progressInterval);
+          clearInterval(messageInterval);
           clearTimeout(minDisplayTimer);
           setIsLoading(false);
         } else if (isAuthenticated && authProfile) {
@@ -83,6 +218,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
             setShowUsernameDialog(true);
             setIsLoading(false);
             clearInterval(progressInterval);
+            clearInterval(messageInterval);
             clearTimeout(minDisplayTimer);
           } else {
             // Если минимальное время отображения прошло, завершаем сплеш
@@ -103,12 +239,14 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
           onFinish();
         }, 1000); // Небольшая задержка для плавности
         clearInterval(progressInterval);
+        clearInterval(messageInterval);
         clearTimeout(minDisplayTimer);
       }
     }
 
     return () => {
       if (progressInterval) clearInterval(progressInterval);
+      if (messageInterval) clearInterval(messageInterval);
       if (minDisplayTimer) clearTimeout(minDisplayTimer);
     };
   }, [isReady, isAuthLoading, isAuthenticated, authError, authProfile, user, onFinish]);
@@ -414,6 +552,27 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Мотивационное сообщение */}
+      {!showUsernameDialog && (
+        <motion.div
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[10001] text-center px-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.p
+            className="text-xl md:text-2xl font-medium text-white max-w-md text-center"
+            key={currentMessage}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.5 }}
+          >
+            {currentMessage}
+          </motion.p>
+        </motion.div>
+      )}
 
       {/* Индикатор прогресса загрузки */}
       {!showUsernameDialog && (
