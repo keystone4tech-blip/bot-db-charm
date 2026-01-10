@@ -13,7 +13,6 @@ import { ChannelStatusCard } from '@/components/profile/ChannelStatusCard';
 import { BotStatusCard } from '@/components/profile/BotStatusCard';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/Skeleton';
 import { hapticFeedback } from '@/lib/telegram';
 
 interface ProfileViewProps {
@@ -51,52 +50,21 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
 
   if (isLoading) {
     return (
-      <div className="px-4 pb-24">
-        <div className="mt-6 space-y-6">
-          {/* Header Skeleton */}
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-
-          {/* Profile Header Skeleton */}
-          <div className="flex items-center justify-between p-4 bg-card rounded-2xl border border-border">
-            <div className="flex items-center space-x-4">
-              <Skeleton className="w-16 h-16 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-            </div>
-            <Skeleton className="w-10 h-10 rounded-lg" />
-          </div>
-
-          {/* Balance Cards Skeleton */}
-          <div className="grid grid-cols-2 gap-4">
-            <Skeleton className="h-24 rounded-2xl" />
-            <Skeleton className="h-24 rounded-2xl" />
-          </div>
-
-          {/* Quick Actions Skeleton */}
-          <div className="grid grid-cols-2 gap-3">
-            <Skeleton className="h-20 rounded-2xl" />
-            <Skeleton className="h-20 rounded-2xl" />
-          </div>
-
-          {/* Services Status Section Skeleton */}
-          <div className="space-y-4">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-24 rounded-2xl" />
-            <Skeleton className="h-24 rounded-2xl" />
-            <Skeleton className="h-24 rounded-2xl" />
-          </div>
-
-          {/* Admin Panel Button Skeleton */}
-          {isAdmin && <Skeleton className="h-14 rounded-2xl" />}
-
-          {/* Support Ticket Button Skeleton */}
-          <Skeleton className="h-12 rounded-2xl mt-4" />
-        </div>
+      <div className="px-4 pb-24 flex items-center justify-center min-h-[60vh]">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            className="w-12 h-12 mx-auto mb-4"
+          >
+            <Loader2 className="w-full h-full text-primary" />
+          </motion.div>
+          <p className="text-muted-foreground">Загрузка профиля...</p>
+        </motion.div>
       </div>
     );
   }

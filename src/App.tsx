@@ -8,8 +8,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { useState } from 'react';
 import SplashScreen from './components/SplashScreen';
-import GlobalLoader from './components/GlobalLoader';
-import ConnectionStatus from './components/ConnectionStatus';
 
 const queryClient = new QueryClient();
 
@@ -26,8 +24,6 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <GlobalLoader />
-          <ConnectionStatus />
           <BrowserRouter>
             {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
             <Routes>
