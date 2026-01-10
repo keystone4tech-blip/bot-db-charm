@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Save, User, Camera, MapPin, Mail, Phone, Globe } from 'lucide-react';
+import { X, Save, User, MapPin, Phone, FileText, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 interface EditProfileModalProps {
@@ -18,10 +18,10 @@ interface EditProfileModalProps {
 
 export const EditProfileModal = ({ isOpen, onClose, profile, onSave }: EditProfileModalProps) => {
   const [formData, setFormData] = useState({
-    first_name: profile?.first_name || '',
-    last_name: profile?.last_name || '',
-    telegram_username: profile?.telegram_username || '',
-    avatar_url: profile?.avatar_url || '',
+    city: profile?.city || '',
+    phone: profile?.phone || '',
+    bio: profile?.bio || '',
+    link: profile?.link || '',
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -49,67 +49,67 @@ export const EditProfileModal = ({ isOpen, onClose, profile, onSave }: EditProfi
       <DialogContent className="max-w-md sm:max-w-md rounded-2xl p-0 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center justify-between">
-            <span>Редактировать профиль</span>
+            <span>О себе</span>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="w-4 h-4" />
             </Button>
           </DialogTitle>
         </DialogHeader>
-        
-        <div className="p-6 pt-2">
-          <div className="flex flex-col items-center mb-6">
-            <div className="relative group">
-              <Avatar className="w-24 h-24 border-4 border-primary/20">
-                <AvatarImage src={formData.avatar_url} alt={formData.first_name} />
-                <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                  <User className="w-8 h-8" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                <Camera className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
 
+        <div className="p-6 pt-2">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="first_name">Имя</Label>
+              <Label htmlFor="city">Город</Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  id="first_name"
-                  value={formData.first_name}
-                  onChange={(e) => handleChange('first_name', e.target.value)}
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => handleChange('city', e.target.value)}
                   className="pl-10"
-                  placeholder="Введите ваше имя"
+                  placeholder="Введите ваш город"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="last_name">Фамилия</Label>
+              <Label htmlFor="phone">Телефон</Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  id="last_name"
-                  value={formData.last_name}
-                  onChange={(e) => handleChange('last_name', e.target.value)}
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => handleChange('phone', e.target.value)}
                   className="pl-10"
-                  placeholder="Введите вашу фамилию"
+                  placeholder="+7 (XXX) XXX-XX-XX"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="telegram_username">Telegram ник</Label>
+              <Label htmlFor="bio">О себе</Label>
               <div className="relative">
-                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <FileText className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                <Textarea
+                  id="bio"
+                  value={formData.bio}
+                  onChange={(e) => handleChange('bio', e.target.value)}
+                  className="pl-10 min-h-[100px]"
+                  placeholder="Расскажите немного о себе..."
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="link">Ссылка</Label>
+              <div className="relative">
+                <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  id="telegram_username"
-                  value={formData.telegram_username}
-                  onChange={(e) => handleChange('telegram_username', e.target.value)}
+                  id="link"
+                  value={formData.link}
+                  onChange={(e) => handleChange('link', e.target.value)}
                   className="pl-10"
-                  placeholder="@username"
+                  placeholder="https://example.com"
                 />
               </div>
             </div>

@@ -21,6 +21,16 @@ export interface UserProfile {
 }
 
 /**
+ * Интерфейс для расширенного профиля пользователя
+ */
+export interface ExtendedUserProfile extends UserProfile {
+  city?: string;
+  phone?: string;
+  bio?: string;
+  link?: string;
+}
+
+/**
  * Интерфейс для баланса пользователя
  */
 export interface UserBalance {
@@ -120,7 +130,7 @@ export interface Subscription {
  */
 export interface AuthResponse {
   success: boolean;
-  profile?: UserProfile;
+  profile?: ExtendedUserProfile;
   balance?: UserBalance;
   referralStats?: ReferralStats;
   role?: string;
@@ -361,6 +371,31 @@ export const getUserSubscriptions = async (userId: string) => {
     return data.subscriptions as any[];
   } catch (error) {
     console.error('Ошибка получения подписок пользователя:', error);
+    throw error;
+  }
+};
+
+/**
+ * Обновление профиля пользователя
+ */
+export const updateUserProfile = async (userId: string, updates: Partial<ExtendedUserProfile>) => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/profiles/${userId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+      throw new Error('Не удалось обновить профиль пользователя');
+    }
+
+    return await response.json() as ExtendedUserProfile;
+  } catch (error) {
+    console.error('Ошибка обновления профиля:', error);
     throw error;
   }
 };

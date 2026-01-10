@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { authenticateUser } from '@/lib/api';
+import { authenticateUser, updateUserProfile } from '@/lib/api';
 import { tg, isTelegramWebApp, getReferralCode } from '@/lib/telegram';
 import { toast } from 'sonner';
 
@@ -96,11 +96,45 @@ export const useTelegramAuth = () => {
 
       console.log('Authentication successful:', result.profile?.id);
 
+      // Проверяем, изменились ли данные Telegram и обновляем их в базе
+      const hasChanged =
+        result.profile?.first_name !== tg.initDataUnsafe?.user?.first_name ||
+        result.profile?.last_name !== tg.initDataUnsafe?.user?.last_name ||
+        result.profile?.telegram_username !== tg.initDataUnsafe?.user?.username ||
+        result.profile?.avatar_url !== tg.initDataUnsafe?.user?.photo_url;
+
+      let updatedProfile = result.profile;
+
+      if (hasChanged) {
+        // Подготавливаем обновленные данные профиля
+        updatedProfile = {
+          ...result.profile,
+          first_name: tg.initDataUnsafe?.user?.first_name || result.profile?.first_name,
+          last_name: tg.initDataUnsafe?.user?.last_name || result.profile?.last_name,
+          telegram_username: tg.initDataUnsafe?.user?.username || result.profile?.telegram_username,
+          avatar_url: tg.initDataUnsafe?.user?.photo_url || result.profile?.avatar_url,
+        };
+
+        // Обновляем данные в базе
+        try {
+          await updateUserProfile(updatedProfile.id, {
+            first_name: updatedProfile.first_name,
+            last_name: updatedProfile.last_name,
+            telegram_username: updatedProfile.telegram_username,
+            avatar_url: updatedProfile.avatar_url,
+          });
+        } catch (updateError) {
+          console.error('Ошибка обновления профиля в базе данных:', updateError);
+          // В случае ошибки используем старые данные
+          updatedProfile = result.profile;
+        }
+      }
+
       setAuthState({
         isAuthenticated: true,
         isLoading: false,
         error: null,
-        profile: result.profile,
+        profile: updatedProfile,
         balance: result.balance,
         referralStats: result.referralStats,
         role: result.role || 'user',

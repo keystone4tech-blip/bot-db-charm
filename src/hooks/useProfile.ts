@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { 
-  UserProfile, 
-  UserBalance, 
+import {
+  UserProfile,
+  UserBalance,
   ReferralStats,
   VPNKey,
   TelegramChannel,
@@ -14,8 +14,16 @@ import {
 } from '@/lib/api';
 import { useTelegramContext } from '@/components/TelegramProvider';
 
+// Расширяем интерфейс профиля дополнительными полями
+export interface ExtendedUserProfile extends UserProfile {
+  city?: string;
+  phone?: string;
+  bio?: string;
+  link?: string;
+}
+
 interface ProfileHookReturn {
-  profile: UserProfile | null;
+  profile: ExtendedUserProfile | null;
   balance: UserBalance | null;
   referralStats: ReferralStats | null;
   vpnKey: VPNKey | null;
@@ -25,12 +33,12 @@ interface ProfileHookReturn {
   referralLink: string | null;
   isLoading: boolean;
   error: string | null;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  updateProfile: (updates: Partial<ExtendedUserProfile>) => Promise<void>;
 }
 
 export const useProfile = (): ProfileHookReturn => {
-  const { authProfile, authBalance, authReferralStats, isAuthenticated } = useTelegramContext();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { authProfile, authBalance, authReferralStats, isAuthenticated, user: telegramUser } = useTelegramContext();
+  const [profile, setProfile] = useState<ExtendedUserProfile | null>(null);
   const [balance, setBalance] = useState<UserBalance | null>(null);
   const [referralStats, setReferralStats] = useState<ReferralStats | null>(null);
   const [vpnKey, setVpnKey] = useState<VPNKey | null>(null);
@@ -44,15 +52,51 @@ export const useProfile = (): ProfileHookReturn => {
   // Загружаем данные при изменении аутентификации
   useEffect(() => {
     if (isAuthenticated && authProfile) {
-      // Преобразуем AuthProfile в UserProfile с дополнительными полями
-      const fullProfile: UserProfile = {
-        ...authProfile,
-        referred_by: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+      // Проверяем, изменились ли данные Telegram и обновляем их в базе
+      const hasChanged =
+        authProfile.first_name !== telegramUser?.first_name ||
+        authProfile.last_name !== telegramUser?.last_name ||
+        authProfile.telegram_username !== telegramUser?.username ||
+        authProfile.avatar_url !== telegramUser?.photo_url;
+
+      // Загружаем расширенные данные профиля из базы данных (в реальной реализации)
+      // Для демонстрации используем заглушку
+      const extendedData = {
+        city: '', // В реальной реализации загружать из базы данных
+        phone: '', // В реальной реализации загружать из базы данных
+        bio: '', // В реальной реализации загружать из базы данных
+        link: '', // В реальной реализации загружать из базы данных
       };
-      setProfile(fullProfile);
-      
+
+      if (hasChanged) {
+        // Обновляем профиль с новыми данными из Telegram
+        const updatedProfile: ExtendedUserProfile = {
+          ...authProfile,
+          first_name: telegramUser?.first_name || authProfile.first_name,
+          last_name: telegramUser?.last_name || authProfile.last_name,
+          telegram_username: telegramUser?.username || authProfile.telegram_username,
+          avatar_url: telegramUser?.photo_url || authProfile.avatar_url,
+          referred_by: authProfile.referred_by,
+          created_at: authProfile.created_at,
+          updated_at: new Date().toISOString(),
+          ...extendedData // Добавляем расширенные данные
+        };
+
+        // Здесь в реальной реализации нужно вызвать API для обновления данных в базе
+        // updateProfileInDatabase(updatedProfile);
+        setProfile(updatedProfile);
+      } else {
+        // Преобразуем AuthProfile в ExtendedUserProfile с дополнительными полями
+        const fullProfile: ExtendedUserProfile = {
+          ...authProfile,
+          referred_by: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          ...extendedData // Добавляем расширенные данные
+        };
+        setProfile(fullProfile);
+      }
+
       // Преобразуем AuthBalance в UserBalance
       if (authBalance) {
         const fullBalance: UserBalance = {
@@ -63,7 +107,7 @@ export const useProfile = (): ProfileHookReturn => {
         };
         setBalance(fullBalance);
       }
-      
+
       // Преобразуем AuthReferralStats в ReferralStats
       if (authReferralStats) {
         const fullReferralStats: ReferralStats = {
@@ -74,18 +118,18 @@ export const useProfile = (): ProfileHookReturn => {
         };
         setReferralStats(fullReferralStats);
       }
-      
+
       // Генерируем реферальную ссылку
       if (authProfile.referral_code) {
         setReferralLink(`https://t.me/Keystone_Tech_bot?start=${authProfile.referral_code}`);
       }
-      
+
       // Загружаем дополнительные данные
       loadAdditionalData(authProfile.id);
     } else {
       setIsLoading(false);
     }
-  }, [isAuthenticated, authProfile, authBalance, authReferralStats]);
+  }, [isAuthenticated, authProfile, authBalance, authReferralStats, telegramUser]);
 
   const loadAdditionalData = async (userId: string) => {
     try {
@@ -121,10 +165,25 @@ export const useProfile = (): ProfileHookReturn => {
     }
   };
 
-  const updateProfile = async (updates: Partial<UserProfile>) => {
+  const updateProfile = async (updates: Partial<ExtendedUserProfile>) => {
     try {
       // В реальной реализации здесь будет вызов API для обновления профиля
       setProfile(prev => prev ? { ...prev, ...updates } : null);
+
+      // Если профиль существует, обновляем его в базе данных
+      if (profile) {
+        try {
+          await updateUserProfile(profile.id, updates);
+        } catch (apiError) {
+          console.error('Ошибка обновления профиля в базе данных:', apiError);
+          // Возвращаем предыдущее состояние в случае ошибки
+          setProfile(prev => prev ? { ...prev, ...Object.keys(updates).reduce((acc, key) => {
+            acc[key as keyof ExtendedUserProfile] = prev[key as keyof ExtendedUserProfile];
+            return acc;
+          }, {} as Partial<ExtendedUserProfile>) } : null);
+          throw apiError;
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка обновления профиля');
       throw err;

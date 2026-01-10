@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, User, Coins, Shield, MessageSquare, Bot, Settings, Crown } from 'lucide-react';
 import { useTelegramContext } from '@/components/TelegramProvider';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile, ExtendedUserProfile } from '@/hooks/useProfile';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { BalanceCards } from '@/components/profile/BalanceCards';
 import { ReferralSection } from '@/components/profile/ReferralSection';
@@ -109,7 +109,7 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
 
         {/* Profile Header */}
         <ProfileHeader
-          profile={displayProfile}
+          profile={displayProfile as ExtendedUserProfile}
           telegramUser={telegramUser}
           onEditClick={() => setIsEditModalOpen(true)}
         />
@@ -128,7 +128,7 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
             <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-primary/10 flex items-center justify-center">
               <User className="w-5 h-5 text-primary" />
             </div>
-            <p className="text-xs font-medium">Редактировать</p>
+            <p className="text-xs font-medium">О себе</p>
           </motion.div>
           <motion.div
             whileHover={{ scale: 1.02 }}
@@ -195,7 +195,7 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
       <EditProfileModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        profile={displayProfile}
+        profile={displayProfile as ExtendedUserProfile}
         onSave={updateProfile}
       />
     </div>

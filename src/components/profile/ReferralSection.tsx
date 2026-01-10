@@ -70,25 +70,44 @@ export const ReferralSection = ({ referralLink, referralStats, onNavigate }: Ref
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl">
-          <span className="text-sm text-muted-foreground">Ваша реферальная ссылка:</span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopy}
-            >
-              <Copy className="w-4 h-4 mr-1" />
-              Копировать
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleShare}
-            >
-              <Share2 className="w-4 h-4 mr-1" />
-              Поделиться
-            </Button>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl">
+            <span className="text-sm text-muted-foreground">Ваша реферальная ссылка:</span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopy}
+              >
+                <Copy className="w-4 h-4 mr-1" />
+                Копировать
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleShare}
+              >
+                <Share2 className="w-4 h-4 mr-1" />
+                Поделиться
+              </Button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl">
+            <span className="text-sm text-muted-foreground">Ваш реферальный код:</span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (referralStats?.referral_code) {
+                    navigator.clipboard.writeText(referralStats.referral_code);
+                  }
+                }}
+              >
+                <Copy className="w-4 h-4 mr-1" />
+                Копировать
+              </Button>
+            </div>
           </div>
         </div>
 
