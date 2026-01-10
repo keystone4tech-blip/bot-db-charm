@@ -15,41 +15,59 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [animationComplete, setAnimationComplete] = useState(false);
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
-  const [minimumLoadTimeReached, setMinimumLoadTimeReached] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const { user, isReady } = useTelegram();
 
-  // Минимальное время загрузки 10 секунд
+  // Объединяем проверку пользователя и анимацию
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMinimumLoadTimeReached(true);
-    }, 10000); // 10 секунд
+    let progressInterval: NodeJS.Timeout;
 
-    return () => clearTimeout(timer);
-  }, []);
+    // Имитируем прогресс загрузки
+    progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(progressInterval);
+          return 100;
+        }
+        return prev + 1;
+      });
+    }, 50); // Обновляем каждые 50мс для плавной анимации
 
-  // Проверяем пользователя после загрузки Telegram SDK
-  useEffect(() => {
-    if (isReady && minimumLoadTimeReached && user) {
-      // Проверяем, есть ли username у пользователя
-      if (!user.username) {
-        setShowUsernameDialog(true);
-      } else {
-        // Если username есть и прошло минимальное время загрузки, завершаем сплеш
-        if (minimumLoadTimeReached) {
+    // Проверяем пользователя Telegram
+    if (isReady) {
+      // Если пользователь готов, проверяем его данные
+      if (user) {
+        // Проверяем, есть ли username у пользователя
+        if (!user.username) {
+          setShowUsernameDialog(true);
+          setIsLoading(false);
+          clearInterval(progressInterval);
+        } else {
+          // Если username есть, завершаем сплеш
           setTimeout(() => {
+            setIsLoading(false);
             setAnimationComplete(true);
             onFinish();
           }, 500); // Небольшая задержка для плавности
+          clearInterval(progressInterval);
         }
+      } else {
+        // Если пользователь не определен, возможно, не в Telegram WebApp
+        setIsLoading(false);
+        clearInterval(progressInterval);
       }
     }
-  }, [isReady, user, minimumLoadTimeReached, onFinish]);
 
-  // Завершаем анимацию только когда прошло минимальное время и пользователь проверен
+    return () => {
+      if (progressInterval) clearInterval(progressInterval);
+    };
+  }, [isReady, user, onFinish]);
+
+  // Анимация холста
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || animationComplete) return;
@@ -98,22 +116,8 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
     }
 
     let animationFrameId: number;
-    let startTime: number | null = null;
-    const animationDuration = 3000; // 3 секунды
 
-    function drawNeural(timestamp: number) {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-
-      // Завершаем анимацию через 3 секунды, но не завершаем сплеш, если не прошло минимальное время
-      if (elapsed > animationDuration && minimumLoadTimeReached && (!user || user.username)) {
-        setAnimationComplete(true);
-        if (!showUsernameDialog) {
-          onFinish();
-        }
-        return;
-      }
-
+    function drawNeural() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // 3D движение
@@ -234,7 +238,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       window.removeEventListener('resize', resizeCanvas);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [animationComplete, minimumLoadTimeReached, user, showUsernameDialog, onFinish]);
+  }, [animationComplete]);
 
   // Обработка подтверждения username
   const handleUsernameSubmit = () => {
@@ -366,17 +370,17 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       </AnimatePresence>
 
       {/* Индикатор прогресса загрузки */}
-      {!showUsernameDialog && minimumLoadTimeReached && (
+      {!showUsernameDialog && (
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[10001]">
           <div className="w-48 h-1.5 bg-gray-700 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-yellow-500"
               initial={{ width: "0%" }}
-              animate={{ width: "100%" }}
-              transition={{ duration: 0.5 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.1 }}
             />
           </div>
-          <p className="text-xs text-white mt-2 text-center">Загрузка завершена</p>
+          <p className="text-xs text-white mt-2 text-center">Загрузка: {progress}%</p>
         </div>
       )}
     </>
