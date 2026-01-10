@@ -599,7 +599,13 @@ app.put('/api/profiles/:userId', async (req, res) => {
 // Маршрут для создания тикета в поддержку
 app.post('/api/support-tickets', async (req, res) => {
   try {
+    console.log('Received support ticket request:', req.body);
     const { user_id, category, subject, message } = req.body;
+
+    if (!user_id || !category || !subject || !message) {
+      console.log('Missing required fields:', { user_id, category, subject, message });
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
 
     const query = `
       INSERT INTO support_tickets (user_id, category, subject, message, status)
@@ -607,6 +613,8 @@ app.post('/api/support-tickets', async (req, res) => {
       RETURNING *
     `;
     const result = await pool.query(query, [user_id, category, subject, message, 'open']);
+
+    console.log('Ticket created successfully:', result.rows[0]);
 
     res.json({
       success: true,

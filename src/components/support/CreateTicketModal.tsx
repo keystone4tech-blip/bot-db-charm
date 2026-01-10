@@ -8,6 +8,8 @@ import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 import { useSupportTickets } from '@/hooks/useSupportTickets';
 import SupportChat from './SupportChat';
 
+console.log('CreateTicketModal component loaded');
+
 interface CreateTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,15 +25,19 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
   const { user } = useTelegramAuth();
   const { createTicket } = useSupportTickets();
 
+  console.log('CreateTicketModal render - user:', user, 'isOpen:', isOpen);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user || !category || !subject || !message || isSubmitting) {
+      console.log('Validation failed:', { user, category, subject, message, isSubmitting });
       return;
     }
 
     try {
       setIsSubmitting(true);
+      console.log('Creating ticket with data:', { userId: user.id, category, subject, message });
 
       const newTicket = await createTicket(
         user.id,
@@ -40,6 +46,7 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
         message
       );
 
+      console.log('Ticket created successfully:', newTicket);
       // После создания тикета открываем чат
       setActiveTicketId(newTicket.id);
     } catch (error) {
@@ -49,6 +56,7 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
   };
 
   const handleChatClose = () => {
+    console.log('handleChatClose called');
     setActiveTicketId(null);
     // Не закрываем модальное окно при закрытии чата, а возвращаемся к форме
     // onClose(); // Закрываем модальное окно при закрытии чата

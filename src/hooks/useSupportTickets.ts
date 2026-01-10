@@ -93,6 +93,8 @@ export const useSupportTickets = () => {
       setLoading(true);
       setError(null);
 
+      console.log('Sending ticket creation request:', { user_id: userId, category, subject, message });
+
       const response = await fetch('/api/support-tickets', {
         method: 'POST',
         headers: {
@@ -101,7 +103,9 @@ export const useSupportTickets = () => {
         body: JSON.stringify({ user_id: userId, category, subject, message }),
       });
 
+      console.log('Response status:', response.status);
       const result = await response.json();
+      console.log('Response result:', result);
 
       if (!response.ok) throw new Error(result.error || 'Failed to create ticket');
 
