@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useTelegramContext } from '@/components/TelegramProvider';
 import { useProfile } from '@/hooks/useProfile';
@@ -45,6 +47,9 @@ export const ChannelsView = () => {
   const [skippedChannels, setSkippedChannels] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showAddChannelForm, setShowAddChannelForm] = useState(false);
+  const [showInfoExpanded, setShowInfoExpanded] = useState(true); // Информация раскрыта по умолчанию
+  const [reportModal, setReportModal] = useState<{isOpen: boolean, channelId: string | null}>({isOpen: false, channelId: null});
+  const [reportReason, setReportReason] = useState('');
   const [newChannel, setNewChannel] = useState({
     name: '',
     username: '',
@@ -297,6 +302,46 @@ export const ChannelsView = () => {
     }
   };
 
+  const handleReportClick = (channelId: string) => {
+    // Открываем модальное окно с формой жалобы
+    setReportModal({isOpen: true, channelId});
+  };
+
+  const handleReportSubmit = async () => {
+    if (!reportModal.channelId || !reportReason.trim()) return;
+
+    try {
+      // В реальной реализации здесь будет отправка жалобы на сервер
+      console.log(`Жалоба на канал ${reportModal.channelId} отправлена: ${reportReason}`);
+
+      const channel = channels.find(c => c.id === reportModal.channelId);
+      if (channel?.is_required) {
+        // Для обязательных каналов показываем уведомление, но не убираем из списка
+        alert('Жалоба отправлена. Обязательный канал останется в списке до решения администрации.');
+      } else {
+        // Для новеньких каналов заменяем на другой
+        setChannels(prev =>
+          prev.map(c =>
+            c.id === reportModal.channelId
+              ? { ...c, status: 'reported' } // Помечаем как пожалованный
+              : c
+          )
+        );
+      }
+
+      // Закрываем модальное окно
+      setReportModal({isOpen: false, channelId: null});
+      setReportReason('');
+    } catch (error) {
+      console.error('Error submitting report:', error);
+    }
+  };
+
+  const handleReportCancel = () => {
+    setReportModal({isOpen: false, channelId: null});
+    setReportReason('');
+  };
+
   const handleAddChannel = async () => {
     if (!newChannel.name || !newChannel.username || !displayProfile?.id) {
       return;
@@ -417,35 +462,85 @@ export const ChannelsView = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Header */}
-      <PageHeader
-        icon="radio"
-        title="Подписки"
-        subtitle="Помоги другим — получи помощь"
-      />
+      {/* Info Section - теперь вверху */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <Card className="bg-gradient-to-br from-purple-500/5 to-indigo-500/5 border-purple-500/20">
+          <CardHeader className="cursor-pointer" onClick={() => setShowInfoExpanded(!showInfoExpanded)}>
+            <CardTitle className="flex items-center gap-2">
+              <Radio className="w-5 h-5 text-purple-500" />
+              Как это работает
+              <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${showInfoExpanded ? 'rotate-180' : ''}`} />
+            </CardTitle>
+          </CardHeader>
+          <AnimatePresence>
+            {showInfoExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <CardContent className="pt-4 space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Система построена на принципе "Помоги другим — получи помощь".
+                    Чтобы получить подписчиков на свой канал, вы сначала должны помочь другим,
+                    подписавшись на их каналы.
+                  </p>
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Этап 1: Обязательные подписки (15 каналов)</h4>
+                    <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+                      <li>5 реферальных каналов (от ваших рефералов уровней 1-5)</li>
+                      <li>5 платных каналов (владельцы которых оплатили продвижение)</li>
+                      <li>5 новеньких каналов (активные каналы новых пользователей)</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Этап 2: Заработок баллов</h4>
+                    <p className="text-sm text-muted-foreground">
+                      После обязательных 15 подписок вы можете добавить свой канал и начать зарабатывать баллы,
+                      подписываясь на другие каналы. 1 балл = 1 показ вашего канала другому пользователю.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Этап 3: Реферальная система</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Ваш канал будет показываться как обязательный для ваших рефералов уровней 1-5,
+                      создавая виральный эффект роста.
+                    </p>
+                  </div>
+                </CardContent>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Card>
+      </motion.div>
 
       {/* Progress Bar for Required Subscriptions */}
       {requiredChannels.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.2 }}
         >
           <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">
-                  Обязательные подписки: {completedRequiredSubscriptions}/{totalRequiredSubscriptions}
+                  Обязательные подписки: {completedRequiredSubscriptions}/15
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  {Math.round((completedRequiredSubscriptions / totalRequiredSubscriptions) * 100)}%
+                  {Math.round((completedRequiredSubscriptions / 15) * 100)}%
                 </span>
               </div>
               <div className="w-full bg-secondary rounded-full h-2.5">
                 <motion.div
                   className="bg-primary h-2.5 rounded-full"
                   initial={{ width: 0 }}
-                  animate={{ width: `${(completedRequiredSubscriptions / totalRequiredSubscriptions) * 100}%` }}
+                  animate={{ width: `${(completedRequiredSubscriptions / 15) * 100}%` }}
                   transition={{ duration: 0.5 }}
                 />
               </div>
@@ -487,12 +582,9 @@ export const ChannelsView = () => {
                           <CardTitle className="flex items-center gap-2">
                             <Radio className="w-5 h-5 text-primary" />
                             {channel.name}
-                            {channel.is_referal && (
-                              <Badge variant="outline" className="ml-2">Реферал</Badge>
-                            )}
-                            {channel.is_paid && (
-                              <Badge variant="outline" className="ml-2">Платный</Badge>
-                            )}
+                            <Badge variant={getStatusBadgeVariant(channel.status)} className="ml-2">
+                              {getStatusText(channel.status)}
+                            </Badge>
                           </CardTitle>
                           <p className="text-sm text-muted-foreground mt-1">
                             {channel.username}
@@ -515,36 +607,19 @@ export const ChannelsView = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCopyId(channel.id)}
-                          >
-                            {copiedId === channel.id ? (
-                              <Check className="w-4 h-4" />
-                            ) : (
-                              <Copy className="w-4 h-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Открываем канал в Telegram
-                              window.open(`https://t.me/${channel.username.replace('@', '')}`, '_blank');
-                            }}
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Открываем канал в Telegram
+                            window.open(`https://t.me/${channel.username.replace('@', '')}`, '_blank');
+                          }}
+                        >
+                          Подписаться
+                        </Button>
                       </div>
 
                       <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
-                        <Badge variant={getStatusBadgeVariant(channel.status)}>
-                          {getStatusText(channel.status)}
-                        </Badge>
-
                         <div className="flex gap-2">
                           {!isSubscribed ? (
                             <>
@@ -553,14 +628,14 @@ export const ChannelsView = () => {
                                 size="sm"
                                 onClick={() => handleSubscribe(channel.id)}
                               >
-                                Подписаться
+                                Проверить подписку
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleReport(channel.id)}
+                                onClick={() => handleReportClick(channel.id)}
                               >
-                                <Flag className="w-4 h-4" />
+                                Пожаловаться
                               </Button>
                             </>
                           ) : (
@@ -616,6 +691,9 @@ export const ChannelsView = () => {
                           <CardTitle className="flex items-center gap-2">
                             <Radio className="w-5 h-5 text-primary" />
                             {channel.name}
+                            <Badge variant={getStatusBadgeVariant(channel.status)} className="ml-2">
+                              {getStatusText(channel.status)}
+                            </Badge>
                           </CardTitle>
                           <p className="text-sm text-muted-foreground mt-1">
                             {channel.username}
@@ -664,33 +742,32 @@ export const ChannelsView = () => {
                       </div>
                       
                       <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
-                        <Badge variant={getStatusBadgeVariant(channel.status)}>
-                          {getStatusText(channel.status)}
-                        </Badge>
-                        
                         <div className="flex gap-2">
                           {!isSubscribed ? (
                             <>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleSubscribe(channel.id)}
+                                onClick={() => {
+                                  // Открываем канал в Telegram
+                                  window.open(`https://t.me/${channel.username.replace('@', '')}`, '_blank');
+                                }}
                               >
                                 Подписаться
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleSkip(channel.id)}
+                                onClick={() => handleSubscribe(channel.id)}
                               >
-                                <SkipForward className="w-4 h-4" />
+                                Проверить подписку
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleReport(channel.id)}
+                                onClick={() => handleReportClick(channel.id)}
                               >
-                                <Flag className="w-4 h-4" />
+                                Пожаловаться
                               </Button>
                             </>
                           ) : (
@@ -864,6 +941,56 @@ export const ChannelsView = () => {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Report Modal */}
+      <AnimatePresence>
+        {reportModal.isOpen && (
+          <motion.div
+            className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-md"
+            >
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle>Отправить жалобу</CardTitle>
+                  <CardDescription>
+                    Пожалуйста, опишите причину жалобы на канал
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="report-reason">Причина жалобы</Label>
+                      <Textarea
+                        id="report-reason"
+                        value={reportReason}
+                        onChange={(e) => setReportReason(e.target.value)}
+                        placeholder="Опишите причину жалобы..."
+                        rows={4}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={handleReportCancel}>
+                    Отмена
+                  </Button>
+                  <Button onClick={handleReportSubmit}>
+                    Отправить жалобу
+                  </Button>
+                </CardFooter>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
