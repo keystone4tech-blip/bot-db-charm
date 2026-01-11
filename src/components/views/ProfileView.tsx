@@ -53,6 +53,24 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
 
   const isAdmin = authRole === 'admin';
 
+  // Загружаем тикеты при загрузке профиля
+  useEffect(() => {
+    if (profile?.id) {
+      fetchTickets(profile.id);
+    }
+  }, [profile?.id]); // Убираем fetchTickets из зависимостей, чтобы избежать бесконечного цикла
+
+  // Проверяем, есть ли активные тикеты
+  useEffect(() => {
+    if (tickets && tickets.length > 0) {
+      // Находим первый незакрытый тикет
+      const openTicket = tickets.find(ticket => ticket.status !== 'closed');
+      if (openTicket) {
+        setActiveTicket(openTicket);
+      }
+    }
+  }, [tickets]);
+
   if (isLoading) {
     return (
       <div className="px-4 pb-24 flex items-center justify-center min-h-[60vh]">
@@ -96,24 +114,6 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
   const displayProfile = profile || authProfile;
   const displayBalance = balance || authBalance;
   const displayReferralStats = referralStats || authReferralStats;
-
-  // Загружаем тикеты при загрузке профиля
-  useEffect(() => {
-    if (displayProfile?.id) {
-      fetchTickets(displayProfile.id);
-    }
-  }, [displayProfile?.id, fetchTickets]);
-
-  // Проверяем, есть ли активные тикеты
-  useEffect(() => {
-    if (tickets && tickets.length > 0) {
-      // Находим первый незакрытый тикет
-      const openTicket = tickets.find(ticket => ticket.status !== 'closed');
-      if (openTicket) {
-        setActiveTicket(openTicket);
-      }
-    }
-  }, [tickets]);
 
   const handleOpenTicket = (ticket: Ticket) => {
     setActiveTicket(ticket);
@@ -220,10 +220,12 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
         )}
 
         {/* Support Chat View */}
-        <SupportChatView
-          activeTicket={activeTicket}
-          onCloseChat={handleCloseChat}
-        />
+        {displayProfile && (
+          <SupportChatView
+            activeTicket={activeTicket}
+            onCloseChat={handleCloseChat}
+          />
+        )}
 
         {/* Support Ticket Button */}
         <div className="pt-4">
