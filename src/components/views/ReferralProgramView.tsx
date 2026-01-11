@@ -91,14 +91,15 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
     const diff = nextBonus.getTime() - now.getTime();
 
     if (diff <= 0) {
-      return { days: 0, hours: 0, minutes: 0 };
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     }
 
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-    return { days, hours, minutes };
+    return { days, hours, minutes, seconds };
   };
 
   const [timeRemaining, setTimeRemaining] = useState(calculateTimeRemaining());
@@ -106,7 +107,7 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeRemaining(calculateTimeRemaining());
-    }, 60000); // Обновляем каждую минуту
+    }, 1000); // Обновляем каждую секунду
 
     return () => clearInterval(timer);
   }, []);
@@ -139,7 +140,7 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
           <Card className="bg-gradient-to-br from-purple-500/5 to-indigo-500/5 border-purple-500/20 rounded-2xl p-5">
             <div className="flex flex-col items-center">
               <div className="text-sm text-muted-foreground mb-2">Следующее начисление бонусов</div>
-              <div className="flex gap-4 justify-center">
+              <div className="flex gap-2 justify-center">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary">{timeRemaining.days}</div>
                   <div className="text-xs text-muted-foreground">дней</div>
@@ -151,6 +152,10 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary">{timeRemaining.minutes}</div>
                   <div className="text-xs text-muted-foreground">минут</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">{timeRemaining.seconds}</div>
+                  <div className="text-xs text-muted-foreground">секунд</div>
                 </div>
               </div>
               <div className="text-xs text-muted-foreground mt-2">Воскресенье, 9:00 по МСК</div>
