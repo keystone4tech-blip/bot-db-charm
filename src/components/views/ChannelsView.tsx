@@ -262,19 +262,6 @@ export const ChannelsView = () => {
 
     // Добавляем канал в список проверенных
     setCheckedChannels(prev => new Set(prev).add(channelId));
-
-    // Если это обязательный канал, проверяем, все ли обязательные подписаны
-    const channel = channels.find(c => c.id === channelId);
-    if (channel?.is_required) {
-      const allRequiredSubscribed = channels
-        .filter(c => c.is_required)
-        .every(c => subscribedChannels.has(c.id) || c.id === channelId);
-
-      if (allRequiredSubscribed && channels.filter(c => c.is_required).length === 15) {
-        // Все обязательные каналы подписаны, можно добавлять свой
-        console.log('Все обязательные каналы подписаны!');
-      }
-    }
   };
 
   const handleSkip = (channelId: string) => {
@@ -377,16 +364,13 @@ export const ChannelsView = () => {
     }
   };
 
-  // Проверяем, сколько обязательных каналов подписано
+  // Проверяем, сколько каналов подписано (все 15: 5 реферальных + 5 платных + 5 новичков)
   useEffect(() => {
-    const requiredChannelsCount = channels.filter(c => c.is_required).length;
-    const subscribedRequiredCount = channels.filter(c =>
-      c.is_required && subscribedChannels.has(c.id)
-    ).length;
+    const allSubscribedCount = Array.from(subscribedChannels).length;
 
-    setCompletedRequiredSubscriptions(subscribedRequiredCount);
-    setTotalRequiredSubscriptions(requiredChannelsCount);
-  }, [channels, subscribedChannels]);
+    setCompletedRequiredSubscriptions(allSubscribedCount);
+    setTotalRequiredSubscriptions(15);
+  }, [subscribedChannels, skippedChannels]);
 
   if (isLoading) {
     return (
@@ -427,9 +411,6 @@ export const ChannelsView = () => {
     );
   }
 
-  // Разделяем каналы на обязательные и новенькие
-  const requiredChannels = channels.filter(c => c.is_required);
-  const newChannels = channels.filter(c => c.is_new && !skippedChannels.has(c.id));
 
   return (
     <motion.div
@@ -495,7 +476,7 @@ export const ChannelsView = () => {
       </motion.div>
 
       {/* Progress Bar for Required Subscriptions */}
-      {requiredChannels.length > 0 && (
+      {channels.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -505,7 +486,7 @@ export const ChannelsView = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">
-                  Обязательные подписки: {completedRequiredSubscriptions}/{totalRequiredSubscriptions}
+                  Подписки: {completedRequiredSubscriptions}/{totalRequiredSubscriptions}
                 </span>
                 <span className="text-sm text-muted-foreground">
                   {Math.round((completedRequiredSubscriptions / totalRequiredSubscriptions) * 100)}%
@@ -524,22 +505,23 @@ export const ChannelsView = () => {
         </motion.div>
       )}
 
-      {/* Required Channels Section */}
-      {requiredChannels.length > 0 && (
+      {/* All Channels Section */}
+      {channels.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3 }}
         >
           <h2 className="text-lg font-semibold px-1 flex items-center gap-2 mb-4">
             <Radio className="w-5 h-5" />
-            Обязательные каналы ({requiredChannels.length})
+            Каналы для подписки ({channels.length})
           </h2>
 
           <div className="space-y-4">
-            {requiredChannels.map((channel, index) => {
+            {channels.map((channel, index) => {
               const isSubscribed = subscribedChannels.has(channel.id);
-              
+              const isNewChannel = channel.is_new;
+
               return (
                 <motion.div
                   key={channel.id}
@@ -623,131 +605,15 @@ export const ChannelsView = () => {
                             >
                               Проверить
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleReport(channel.id)}
-                            >
-                              Жалоба
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
-
-      {/* New Channels Section */}
-      {newChannels.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <h2 className="text-lg font-semibold px-1 flex items-center gap-2 mb-4">
-            <Radio className="w-5 h-5" />
-            Новенькие каналы ({newChannels.length})
-          </h2>
-
-          <div className="space-y-4">
-            {newChannels.map((channel, index) => {
-              const isSubscribed = subscribedChannels.has(channel.id);
-              
-              return (
-                <motion.div
-                  key={channel.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: (requiredChannels.length + index) * 0.05 }}
-                >
-                  <Card className={cn(
-                    "overflow-hidden",
-                    isSubscribed ? "border-primary/50 bg-primary/5" : ""
-                  )}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="flex items-center gap-2">
-                            <Radio className="w-5 h-5 text-primary" />
-                            {channel.name}
-                          </CardTitle>
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-sm text-muted-foreground">
-                              {channel.username}
-                            </p>
-                            <Badge variant={getStatusBadgeVariant(channel.status)}>
-                              {getStatusText(channel.status)}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {channel.description}
-                          </p>
-                        </div>
-                        {isSubscribed && (
-                          <CheckCircle className="w-6 h-6 text-green-500" />
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            <span>{channel.subscribers.toLocaleString()} подписчиков</span>
-                          </div>
-                        </div>
-
-                        {checkedChannels.has(channel.id) ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Открываем канал в Telegram
-                              window.open(`https://t.me/${channel.username.replace('@', '')}`, '_blank');
-                            }}
-                          >
-                            Перейти
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Открываем канал в Telegram
-                              window.open(`https://t.me/${channel.username.replace('@', '')}`, '_blank');
-                            }}
-                          >
-                            Подписаться
-                          </Button>
-                        )}
-                      </div>
-
-                      <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
-                        <div></div>
-
-                        {checkedChannels.has(channel.id) ? (
-                          <div></div> // Пустой div вместо кнопок после проверки
-                        ) : (
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSubscribe(channel.id)}
-                            >
-                              Проверить
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSkip(channel.id)}
-                            >
-                              Пропустить
-                            </Button>
+                            {isNewChannel && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSkip(channel.id)}
+                              >
+                                Пропустить
+                              </Button>
+                            )}
                             <Button
                               variant="outline"
                               size="sm"
