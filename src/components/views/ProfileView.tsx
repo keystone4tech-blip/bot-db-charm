@@ -125,19 +125,8 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
     setActiveTicket(ticket);
   };
 
-  const handleCloseChat = async () => {
-    if (activeTicket && activeTicket.status !== 'closed') {
-      // Обновляем статус тикета на 'closed'
-      try {
-        await updateTicketStatus(activeTicket.id, 'closed');
-        // После обновления статуса обновляем список тикетов
-        if (displayProfile?.id) {
-          fetchTickets(displayProfile.id);
-        }
-      } catch (error) {
-        console.error('Error closing ticket:', error);
-      }
-    }
+  const handleCloseChat = () => {
+    // Просто сбрасываем активный тикет, обновление статуса происходит в SupportChatView
     setActiveTicket(null);
   };
 

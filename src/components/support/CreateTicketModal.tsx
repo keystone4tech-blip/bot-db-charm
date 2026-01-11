@@ -35,8 +35,10 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
       return;
     }
 
+    // Устанавливаем флаг, чтобы предотвратить повторные нажатия
+    setIsSubmitting(true);
+
     try {
-      setIsSubmitting(true);
       console.log('Creating ticket with data:', { userId: profile.id, category, subject, message });
 
       const newTicket = await createTicket(
@@ -57,6 +59,8 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
       onClose();
     } catch (error) {
       console.error('Error creating ticket:', error);
+    } finally {
+      // Сбрасываем флаг в любом случае
       setIsSubmitting(false);
     }
   };
