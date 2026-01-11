@@ -15,7 +15,7 @@ interface SupportChatProps {
 const SupportChat = ({ ticketId, onClose }: SupportChatProps) => {
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const { user } = useTelegramAuth();
+  const { profile } = useTelegramAuth();
   const { messages, sendMessage, fetchMessages, updateTicketStatus } = useSupportTickets();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +38,7 @@ const SupportChat = ({ ticketId, onClose }: SupportChatProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!message.trim() || !user || isSending) {
+    if (!message.trim() || !profile || isSending) {
       return;
     }
 
@@ -47,7 +47,7 @@ const SupportChat = ({ ticketId, onClose }: SupportChatProps) => {
 
       await sendMessage(
         ticketId,
-        user.id,
+        profile.id,
         'user',
         message
       );
@@ -100,13 +100,13 @@ const SupportChat = ({ ticketId, onClose }: SupportChatProps) => {
               ticketMessages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${msg.is_admin_reply ? 'justify-start' : 'justify-end'}`}
                 >
                   <div
                     className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      msg.sender_type === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-secondary text-secondary-foreground'
+                      msg.is_admin_reply
+                        ? 'bg-secondary text-secondary-foreground'
+                        : 'bg-primary text-primary-foreground'
                     }`}
                   >
                     {renderMessageContent(msg)}

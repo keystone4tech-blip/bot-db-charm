@@ -22,25 +22,25 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
 
-  const { user } = useTelegramAuth();
+  const { profile } = useTelegramAuth();
   const { createTicket } = useSupportTickets();
 
-  console.log('CreateTicketModal render - user:', user, 'isOpen:', isOpen);
+  console.log('CreateTicketModal render - profile:', profile, 'isOpen:', isOpen);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user || !category || !subject || !message || isSubmitting) {
-      console.log('Validation failed:', { user, category, subject, message, isSubmitting });
+    if (!profile || !category || !subject || !message || isSubmitting) {
+      console.log('Validation failed:', { profile, category, subject, message, isSubmitting });
       return;
     }
 
     try {
       setIsSubmitting(true);
-      console.log('Creating ticket with data:', { userId: user.id, category, subject, message });
+      console.log('Creating ticket with data:', { userId: profile.id, category, subject, message });
 
       const newTicket = await createTicket(
-        user.id,
+        profile.id,
         category,
         subject,
         message
