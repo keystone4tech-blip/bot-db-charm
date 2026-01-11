@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, User, Coins, Shield, MessageSquare, Bot, Settings, Crown } from 'lucide-react';
 import { useTelegramContext } from '@/components/TelegramProvider';
 import { useProfile, ExtendedUserProfile } from '@/hooks/useProfile';
+import { useSupportTickets, Ticket } from '@/hooks/useSupportTickets';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { BalanceCards } from '@/components/profile/BalanceCards';
 import { ReferralSection } from '@/components/profile/ReferralSection';
@@ -12,6 +13,7 @@ import { VPNStatusCard } from '@/components/profile/VPNStatusCard';
 import { ChannelStatusCard } from '@/components/profile/ChannelStatusCard';
 import { BotStatusCard } from '@/components/profile/BotStatusCard';
 import { UserInfoCard } from '@/components/profile/UserInfoCard';
+import SupportChatView from '@/components/profile/SupportChatView';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { hapticFeedback } from '@/lib/telegram';
@@ -36,7 +38,9 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
     error,
     updateProfile
   } = useProfile();
+  const { tickets, fetchTickets } = useSupportTickets();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
 
   const handleNavigate = (tab: string) => {
     onNavigate?.(tab);
@@ -92,6 +96,32 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
   const displayProfile = profile || authProfile;
   const displayBalance = balance || authBalance;
   const displayReferralStats = referralStats || authReferralStats;
+
+  // Загружаем тикеты при загрузке профиля
+  useEffect(() => {
+    if (displayProfile?.id) {
+      fetchTickets(displayProfile.id);
+    }
+  }, [displayProfile?.id, fetchTickets]);
+
+  // Проверяем, есть ли активные тикеты
+  useEffect(() => {
+    if (tickets && tickets.length > 0) {
+      // Находим первый незакрытый тикет
+      const openTicket = tickets.find(ticket => ticket.status !== 'closed');
+      if (openTicket) {
+        setActiveTicket(openTicket);
+      }
+    }
+  }, [tickets]);
+
+  const handleOpenTicket = (ticket: Ticket) => {
+    setActiveTicket(ticket);
+  };
+
+  const handleCloseChat = () => {
+    setActiveTicket(null);
+  };
 
   return (
     <div className="px-4 pb-24">
@@ -189,9 +219,23 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
           </motion.div>
         )}
 
+        {/* Support Chat View */}
+        <SupportChatView
+          activeTicket={activeTicket}
+          onCloseChat={handleCloseChat}
+        />
+
         {/* Support Ticket Button */}
         <div className="pt-4">
-          <SupportTicketButton profileId={displayProfile?.id || null} />
+          <SupportTicketButton
+            profileId={displayProfile?.id || null}
+            onTicketCreated={() => {
+              // Обновляем список тикетов при создании нового
+              if (displayProfile?.id) {
+                fetchTickets(displayProfile.id);
+              }
+            }}
+          />
         </div>
       </motion.div>
 

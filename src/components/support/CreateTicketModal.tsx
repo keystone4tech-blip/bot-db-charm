@@ -13,6 +13,7 @@ console.log('CreateTicketModal component loaded');
 interface CreateTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onTicketCreated?: (ticket: any) => void; // Колбэк, вызываемый при создании тикета
 }
 
 const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
@@ -20,7 +21,6 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
 
   const { profile } = useTelegramAuth();
   const { createTicket } = useSupportTickets();
@@ -47,19 +47,18 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
       );
 
       console.log('Ticket created successfully:', newTicket);
-      // После создания тикета открываем чат
-      setActiveTicketId(newTicket.id);
+
+      // Вызываем колбэк при создании тикета
+      if (onTicketCreated) {
+        onTicketCreated(newTicket);
+      }
+
+      // Закрываем модальное окно после успешного создания тикета
+      onClose();
     } catch (error) {
       console.error('Error creating ticket:', error);
       setIsSubmitting(false);
     }
-  };
-
-  const handleChatClose = () => {
-    console.log('handleChatClose called');
-    setActiveTicketId(null);
-    // Не закрываем модальное окно при закрытии чата, а возвращаемся к форме
-    // onClose(); // Закрываем модальное окно при закрытии чата
   };
 
   const categories = [
@@ -69,21 +68,6 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
     { value: 'referral', label: 'Рефералы' },
     { value: 'other', label: 'Другое' },
   ];
-
-  if (activeTicketId) {
-    return (
-      <Dialog open={true} onOpenChange={(open) => {
-        // При закрытии диалога (например, через клавишу Escape), возвращаемся к форме
-        if (!open) {
-          handleChatClose();
-        }
-      }}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden p-0">
-          <SupportChat ticketId={activeTicketId} onClose={handleChatClose} />
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

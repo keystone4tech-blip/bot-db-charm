@@ -6,9 +6,10 @@ import CreateTicketModal from '@/components/support/CreateTicketModal';
 
 interface SupportTicketButtonProps {
   profileId: string | null;
+  onTicketCreated?: () => void; // Функция для обновления списка тикетов
 }
 
-export const SupportTicketButton = ({ profileId }: SupportTicketButtonProps) => {
+export const SupportTicketButton = ({ profileId, onTicketCreated }: SupportTicketButtonProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   console.log('SupportTicketButton render - isModalOpen:', isModalOpen);
@@ -35,6 +36,13 @@ export const SupportTicketButton = ({ profileId }: SupportTicketButtonProps) => 
         onClose={() => {
           console.log('Closing ticket modal from button');
           setIsModalOpen(false);
+        }}
+        onTicketCreated={(ticket) => {
+          // При создании тикета, вызываем функцию обновления в ProfileView
+          console.log('Ticket created in modal:', ticket);
+          if (onTicketCreated) {
+            onTicketCreated();
+          }
         }}
       />
     </>
