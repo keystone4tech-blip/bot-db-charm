@@ -9,6 +9,7 @@ export interface PlatformStats {
   activeBots: number;
   activeSubscriptions: number;
   activeVpnKeys: number;
+  activeChannels: number;
   monthlyRevenue: number;
   totalTransactions: number;
 }
@@ -27,6 +28,7 @@ export const usePlatformStats = (autoRefresh: boolean = false, refreshInterval: 
     activeBots: 0,
     activeSubscriptions: 0,
     activeVpnKeys: 0,
+    activeChannels: 0,
     monthlyRevenue: 0,
     totalTransactions: 0,
   });

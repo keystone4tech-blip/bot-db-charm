@@ -66,11 +66,11 @@ export const InfoView = () => {
 
   const stats = [
     { value: formatNumber(platformStats.totalUsers), label: 'Пользователей' },
-    { value: formatNumber(platformStats.activeBots), label: 'Ботов' },
-    { value: formatNumber(platformStats.activeSubscriptions), label: 'Подписок' },
     { value: formatNumber(platformStats.activeVpnKeys), label: 'VPN ключей' },
-    { value: '24/7', label: 'Поддержка' },
-    { value: '100%', label: 'Безопасность' },
+    { value: formatNumber(platformStats.activeChannels), label: 'Каналов/групп' },
+    { value: formatNumber(platformStats.activeSubscriptions), label: 'Подписок' },
+    { value: '100%', label: 'Гарантия' },
+    { value: formatNumber(platformStats.activeBots), label: 'Ботов' },
   ];
 
   if (error) {
