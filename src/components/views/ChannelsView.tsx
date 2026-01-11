@@ -50,6 +50,7 @@ export const ChannelsView = () => {
   const [reportChannelId, setReportChannelId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState('');
   const [checkedChannels, setCheckedChannels] = useState<Set<string>>(new Set());
+  const [shouldScrollToAddChannel, setShouldScrollToAddChannel] = useState(false);
   const [newChannel, setNewChannel] = useState({
     name: '',
     username: '',
@@ -262,6 +263,12 @@ export const ChannelsView = () => {
 
     // Добавляем канал в список проверенных
     setCheckedChannels(prev => new Set(prev).add(channelId));
+
+    // Проверяем, достигли ли мы 15 подписок
+    const newSubscribedCount = Array.from(new Set([...subscribedChannels, channelId])).length;
+    if (newSubscribedCount >= 15 && !userChannel) {
+      setShouldScrollToAddChannel(true);
+    }
   };
 
   const handleSkip = (channelId: string) => {
@@ -269,6 +276,12 @@ export const ChannelsView = () => {
     const channel = channels.find(c => c.id === channelId);
     if (channel?.is_new) {
       setSkippedChannels(prev => new Set(prev).add(channelId));
+
+      // Проверяем, достигли ли мы 15 подписок
+      const newSubscribedCount = Array.from(subscribedChannels).length;
+      if (newSubscribedCount >= 15 && !userChannel) {
+        setShouldScrollToAddChannel(true);
+      }
     }
   };
 
@@ -326,6 +339,8 @@ export const ChannelsView = () => {
     setUserChannel(newUserChannel);
     setShowAddChannelForm(false);
     setNewChannel({ name: '', username: '', description: '' });
+    // Сбрасываем флаг прокрутки, так как канал уже добавлен
+    setShouldScrollToAddChannel(false);
   };
 
   const handleCopyId = (channelId: string) => {
@@ -370,7 +385,26 @@ export const ChannelsView = () => {
 
     setCompletedRequiredSubscriptions(allSubscribedCount);
     setTotalRequiredSubscriptions(15);
-  }, [subscribedChannels, skippedChannels]);
+
+    // Если достигли 15 подписок и еще не отображается форма добавления канала
+    if (allSubscribedCount >= 15 && !userChannel) {
+      setShouldScrollToAddChannel(true);
+    }
+  }, [subscribedChannels, skippedChannels, userChannel]);
+
+  // Эффект для прокрутки к секции добавления канала
+  useEffect(() => {
+    if (shouldScrollToAddChannel) {
+      // Ждем немного, чтобы компонент отрисовался
+      setTimeout(() => {
+        const element = document.getElementById('add-channel-section');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setShouldScrollToAddChannel(false);
+        }
+      }, 100);
+    }
+  }, [shouldScrollToAddChannel]);
 
   if (isLoading) {
     return (
@@ -474,6 +508,87 @@ export const ChannelsView = () => {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Add User Channel Section - Moved here to appear after "How it works" section */}
+      {completedRequiredSubscriptions >= 15 && !userChannel && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          id="add-channel-section"
+        >
+          <Card className="bg-gradient-to-br from-green-500/5 to-emerald-500/5 border-green-500/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="w-5 h-5 text-green-500" />
+                Добавить свой канал
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                После добавления канала вы получите 1 балл и сможете зарабатывать больше
+              </p>
+            </CardHeader>
+            <CardContent>
+              {showAddChannelForm ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="channelName" className="text-sm font-medium">Название канала</label>
+                    <Input
+                      id="channelName"
+                      value={newChannel.name}
+                      onChange={(e) => setNewChannel({...newChannel, name: e.target.value})}
+                      placeholder="Введите название вашего канала"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="channelUsername" className="text-sm font-medium">Имя пользователя</label>
+                    <Input
+                      id="channelUsername"
+                      value={newChannel.username}
+                      onChange={(e) => setNewChannel({...newChannel, username: e.target.value})}
+                      placeholder="@your_channel_name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="channelDescription" className="text-sm font-medium">Описание</label>
+                    <Input
+                      id="channelDescription"
+                      value={newChannel.description}
+                      onChange={(e) => setNewChannel({...newChannel, description: e.target.value})}
+                      placeholder="Краткое описание вашего канала"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1"
+                      onClick={handleAddChannel}
+                      disabled={!newChannel.name || !newChannel.username}
+                    >
+                      Добавить канал
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAddChannelForm(false)}
+                    >
+                      Отмена
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  className="w-full gold-gradient text-primary-foreground font-medium py-6"
+                  onClick={() => setShowAddChannelForm(true)}
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Добавить мой канал
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Progress Bar for Required Subscriptions */}
       {channels.length > 0 && (
@@ -630,86 +745,6 @@ export const ChannelsView = () => {
               );
             })}
           </div>
-        </motion.div>
-      )}
-
-      {/* Add User Channel Section */}
-      {completedRequiredSubscriptions >= 15 && !userChannel && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <Card className="bg-gradient-to-br from-green-500/5 to-emerald-500/5 border-green-500/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Plus className="w-5 h-5 text-green-500" />
-                Добавить свой канал
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                После добавления канала вы получите 1 балл и сможете зарабатывать больше
-              </p>
-            </CardHeader>
-            <CardContent>
-              {showAddChannelForm ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="channelName" className="text-sm font-medium">Название канала</label>
-                    <Input
-                      id="channelName"
-                      value={newChannel.name}
-                      onChange={(e) => setNewChannel({...newChannel, name: e.target.value})}
-                      placeholder="Введите название вашего канала"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="channelUsername" className="text-sm font-medium">Имя пользователя</label>
-                    <Input
-                      id="channelUsername"
-                      value={newChannel.username}
-                      onChange={(e) => setNewChannel({...newChannel, username: e.target.value})}
-                      placeholder="@your_channel_name"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="channelDescription" className="text-sm font-medium">Описание</label>
-                    <Input
-                      id="channelDescription"
-                      value={newChannel.description}
-                      onChange={(e) => setNewChannel({...newChannel, description: e.target.value})}
-                      placeholder="Краткое описание вашего канала"
-                    />
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      className="flex-1"
-                      onClick={handleAddChannel}
-                      disabled={!newChannel.name || !newChannel.username}
-                    >
-                      Добавить канал
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowAddChannelForm(false)}
-                    >
-                      Отмена
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  className="w-full gold-gradient text-primary-foreground font-medium py-6"
-                  onClick={() => setShowAddChannelForm(true)}
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Добавить мой канал
-                </Button>
-              )}
-            </CardContent>
-          </Card>
         </motion.div>
       )}
 
