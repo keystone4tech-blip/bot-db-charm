@@ -10,7 +10,8 @@ import {
   getUserVPNKeys,
   getUserChannels,
   getUserBots,
-  getUserSubscriptions
+  getUserSubscriptions,
+  updateUserProfile as apiUpdateUserProfile
 } from '@/lib/api';
 import { useTelegramContext } from '@/components/TelegramProvider';
 
@@ -78,8 +79,8 @@ export const useProfile = (): ProfileHookReturn => {
           last_name: telegramUser?.last_name || authProfile.last_name,
           telegram_username: telegramUser?.username || authProfile.telegram_username,
           avatar_url: telegramUser?.photo_url || authProfile.avatar_url,
-          referred_by: authProfile.referred_by,
-          created_at: authProfile.created_at,
+          referred_by: null,
+          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           ...extendedData // Добавляем расширенные данные
         };
@@ -175,14 +176,14 @@ export const useProfile = (): ProfileHookReturn => {
       // Если профиль существует, обновляем его в базе данных
       if (profile) {
         try {
-          await updateUserProfile(profile.id, updates);
+          await apiUpdateUserProfile(profile.id, updates);
         } catch (apiError) {
           console.error('Ошибка обновления профиля в базе данных:', apiError);
           // Возвращаем предыдущее состояние в случае ошибки
-          setProfile(prev => prev ? { ...prev, ...Object.keys(updates).reduce((acc, key) => {
-            acc[key as keyof ExtendedUserProfile] = prev[key as keyof ExtendedUserProfile];
-            return acc;
-          }, {} as Partial<ExtendedUserProfile>) } : null);
+          setProfile(prev => prev ? { 
+            ...prev, 
+            ...updates 
+          } : null);
           throw apiError;
         }
       }

@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export interface Ticket {
   id: string;
@@ -6,7 +9,8 @@ export interface Ticket {
   category: string;
   subject: string;
   message: string;
-  status: 'open' | 'in_progress' | 'closed';
+  status: 'open' | 'in_progress' | 'closed' | 'resolved';
+  priority: string;
   created_at: string;
   updated_at: string;
 }
@@ -15,27 +19,32 @@ export interface ChatMessage {
   id: string;
   ticket_id: string;
   sender_id: string;
-  sender_type: 'user' | 'admin';
+  is_admin_reply: boolean;
   message: string;
-  file_url?: string;
-  file_type?: string;
-  file_name?: string;
   created_at: string;
 }
 
 export const useSupportTickets = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Загрузка тикетов пользователя
-  const fetchTickets = async (userId: string) => {
+  const fetchTickets = useCallback(async (userId: string) => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/support-tickets/${userId}`);
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/support-tickets?user_id=${userId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.error || 'Failed to fetch tickets');
@@ -47,15 +56,23 @@ export const useSupportTickets = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Загрузка всех тикетов (для администратора)
-  const fetchAllTickets = async () => {
+  const fetchAllTickets = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/support-tickets');
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/support-tickets?admin=true`,
+        {
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.error || 'Failed to fetch tickets');
@@ -67,12 +84,20 @@ export const useSupportTickets = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Загрузка сообщений для тикета
-  const fetchMessages = async (ticketId: string) => {
+  const fetchMessages = useCallback(async (ticketId: string) => {
     try {
-      const response = await fetch(`/api/support-chat/${ticketId}`);
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/support-chat?ticket_id=${ticketId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.error || 'Failed to fetch messages');
@@ -85,23 +110,27 @@ export const useSupportTickets = () => {
       console.error('Error fetching messages:', err);
       setError('Ошибка загрузки сообщений');
     }
-  };
+  }, []);
 
   // Создание нового тикета
-  const createTicket = async (userId: string, category: string, subject: string, message: string) => {
+  const createTicket = async (userId: string, category: string, subject: string, message: string): Promise<Ticket> => {
     try {
       setLoading(true);
       setError(null);
 
       console.log('Sending ticket creation request:', { user_id: userId, category, subject, message });
       
-      const response = await fetch('/api/support-tickets', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user_id: userId, category, subject, message }),
-      });
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/support-tickets`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ user_id: userId, category, subject, message }),
+        }
+      );
 
       console.log('Response status:', response.status);
       const result = await response.json();
@@ -123,49 +152,24 @@ export const useSupportTickets = () => {
   };
 
   // Отправка сообщения в чат
-  const sendMessage = async (ticketId: string, senderId: string, senderType: 'user' | 'admin', message: string, file?: File) => {
+  const sendMessage = async (ticketId: string, senderId: string, senderType: 'user' | 'admin', message: string): Promise<ChatMessage> => {
     try {
-      // Если есть файл, загружаем его сначала
-      let fileUrl = '';
-      let fileType = '';
-      let fileName = '';
-      
-      if (file) {
-        // В реальной реализации нужно загрузить файл на сервер
-        // или в облачное хранилище, и получить URL
-        // Пока используем заглушку для демонстрации
-        
-        // В реальной реализации:
-        // 1. Загрузить файл на сервер или в облачное хранилище
-        // 2. Получить URL файла
-        // 3. Сохранить URL в базе данных
-        
-        // Для демонстрации используем Data URL
-        const reader = new FileReader();
-        fileUrl = await new Promise((resolve) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-        
-        fileType = file.type;
-        fileName = file.name;
-      }
-
-      const response = await fetch('/api/support-chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ticket_id: ticketId,
-          sender_id: senderId,
-          sender_type,
-          message,
-          file_url: fileUrl,
-          file_type: fileType,
-          file_name: fileName
-        }),
-      });
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/support-chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ticket_id: ticketId,
+            sender_id: senderId,
+            is_admin_reply: senderType === 'admin',
+            message,
+          }),
+        }
+      );
 
       const result = await response.json();
 
@@ -186,15 +190,19 @@ export const useSupportTickets = () => {
   };
 
   // Обновление статуса тикета
-  const updateTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'closed') => {
+  const updateTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'closed' | 'resolved') => {
     try {
-      const response = await fetch(`/api/support-tickets/${ticketId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status }),
-      });
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/support-tickets`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ticket_id: ticketId, status }),
+        }
+      );
 
       const result = await response.json();
 
@@ -213,30 +221,13 @@ export const useSupportTickets = () => {
     }
   };
 
-  // Подписка на обновления чата
+  // Подписка на обновления чата (polling)
   useEffect(() => {
-    // В реальной реализации здесь будет WebSocket или Server-Sent Events
-    // для получения обновлений в реальном времени
+    const ticketIds = Object.keys(messages);
+    if (ticketIds.length === 0) return;
 
-    // Пример с WebSocket:
-    // const ws = new WebSocket('ws://your-websocket-url');
-    //
-    // ws.onmessage = (event) => {
-    //   const newMessage = JSON.parse(event.data);
-    //   setMessages(prev => ({
-    //     ...prev,
-    //     [newMessage.ticket_id]: [...(prev[newMessage.ticket_id] || []), newMessage]
-    //   }));
-    // };
-    //
-    // return () => {
-    //   ws.close();
-    // };
-
-    // Пока используем опрос (polling) для получения новых сообщений
     const interval = setInterval(() => {
-      // Обновляем только те тикеты, для которых уже загружены сообщения
-      Object.keys(messages).forEach(ticketId => {
+      ticketIds.forEach(ticketId => {
         fetchMessages(ticketId);
       });
     }, 5000); // Обновляем каждые 5 секунд
