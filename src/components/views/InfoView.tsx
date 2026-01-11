@@ -76,7 +76,7 @@ export const InfoView = () => {
     { value: formatNumber(extendedPlatformStats.activeChannels), label: 'Каналов/групп' }, // Вместо "Подписок" → "Каналов/групп"
     { value: formatNumber(extendedPlatformStats.activeSubscriptions), label: 'Подписок' }, // Вместо "VPN ключей" → "Подписок"
     { value: '100%', label: 'Гарантия' }, // Вместо "Поддержка" → "100% гарантия"
-    { value: formatNumber(extendedPlatformStats.activeBots), label: 'Ботов' }, // Вместо "Безопасности" → "Ботов"
+    { value: '100%', label: 'Безопасность' }, // Вместо "Безопасности" → "Безопасность" (фиксированное значение)
   ];
 
   if (error) {
