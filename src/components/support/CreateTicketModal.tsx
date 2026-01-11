@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 import { useSupportTickets } from '@/hooks/useSupportTickets';
 import SupportChat from './SupportChat';
+import { toast } from 'sonner';
 
 console.log('CreateTicketModal component loaded');
 
@@ -21,21 +22,42 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitInProgress = useRef(false); // Для предотвращения повторных вызовов
 
   const { profile } = useTelegramAuth();
-  const { createTicket } = useSupportTickets();
+  const { createTicket, fetchTickets } = useSupportTickets();
 
   console.log('CreateTicketModal render - profile:', profile, 'isOpen:', isOpen);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!profile || !category || !subject || !message || isSubmitting) {
-      console.log('Validation failed:', { profile, category, subject, message, isSubmitting });
+    // Проверяем, не выполняется ли уже отправка
+    if (submitInProgress.current) {
+      return; // Если отправка уже в процессе, выходим
+    }
+
+    if (!profile || !category || !subject || !message) {
+      console.log('Validation failed:', { profile, category, subject, message });
       return;
     }
 
+    // Проверяем, есть ли уже активный тикет у пользователя
+    try {
+      const userTickets = await fetchTickets(profile.id);
+      const activeTicket = userTickets.find(ticket => ticket.status !== 'closed');
+
+      if (activeTicket) {
+        toast.error('У вас уже есть активное обращение в поддержку. Пожалуйста, дождитесь ответа или закройте текущее обращение.');
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking for active tickets:', error);
+      // Продолжаем создание тикета, если не удалось проверить
+    }
+
     // Устанавливаем флаг, чтобы предотвратить повторные нажатия
+    submitInProgress.current = true;
     setIsSubmitting(true);
 
     try {
@@ -60,7 +82,8 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
     } catch (error) {
       console.error('Error creating ticket:', error);
     } finally {
-      // Сбрасываем флаг в любом случае
+      // Сбрасываем флаги в любом случае
+      submitInProgress.current = false;
       setIsSubmitting(false);
     }
   };

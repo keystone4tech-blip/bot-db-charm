@@ -6,10 +6,11 @@ import CreateTicketModal from '@/components/support/CreateTicketModal';
 
 interface SupportTicketButtonProps {
   profileId: string | null;
+  isCreatingTicket?: boolean; // Флаг, указывающий, идет ли процесс создания тикета
   onTicketCreated?: () => void; // Функция для обновления списка тикетов
 }
 
-export const SupportTicketButton = ({ profileId, onTicketCreated }: SupportTicketButtonProps) => {
+export const SupportTicketButton = ({ profileId, isCreatingTicket, onTicketCreated }: SupportTicketButtonProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   console.log('SupportTicketButton render - isModalOpen:', isModalOpen);
