@@ -10,9 +10,10 @@ import { Send, X, MessageCircle } from 'lucide-react';
 interface SupportChatViewProps {
   activeTicket: Ticket | null;
   onCloseChat: () => void;
+  newlyCreatedTicket?: Ticket; // Новый тикет для отображения уведомления
 }
 
-const SupportChatView = ({ activeTicket, onCloseChat }: SupportChatViewProps) => {
+const SupportChatView = ({ activeTicket, onCloseChat, newlyCreatedTicket }: SupportChatViewProps) => {
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const { profile } = useTelegramAuth();
@@ -25,6 +26,25 @@ const SupportChatView = ({ activeTicket, onCloseChat }: SupportChatViewProps) =>
       fetchMessages(activeTicket.id);
     }
   }, [activeTicket, fetchMessages]);
+
+  // Состояние для отображения уведомления о создании тикета
+  const [showCreationNotification, setShowCreationNotification] = useState(false);
+  const [creationNotificationMessage, setCreationNotificationMessage] = useState('');
+
+  // Показываем уведомление о создании тикета
+  useEffect(() => {
+    if (newlyCreatedTicket && activeTicket && newlyCreatedTicket.id === activeTicket.id && !showCreationNotification) {
+      setCreationNotificationMessage(`Ваш тикет #${newlyCreatedTicket.id.substring(0, 8)} создан. Ожидайте ответа.`);
+      setShowCreationNotification(true);
+
+      // Автоматически скрываем уведомление через 3 секунды
+      const timer = setTimeout(() => {
+        setShowCreationNotification(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [newlyCreatedTicket, activeTicket, showCreationNotification]);
 
   // Прокручиваем к последнему сообщению
   useEffect(() => {
@@ -105,6 +125,12 @@ const SupportChatView = ({ activeTicket, onCloseChat }: SupportChatViewProps) =>
         </Button>
       </CardHeader>
       <CardContent className="p-0">
+        {/* Уведомление о создании тикета */}
+        {showCreationNotification && (
+          <div className="m-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg text-center">
+            <p className="text-blue-700 dark:text-blue-300">{creationNotificationMessage}</p>
+          </div>
+        )}
         <div className="border rounded-lg m-4">
           <ScrollArea className="h-64 p-4">
             <div className="space-y-4">

@@ -41,6 +41,7 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
   const { tickets, fetchTickets, updateTicketStatus } = useSupportTickets();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
+  const [newlyCreatedTicket, setNewlyCreatedTicket] = useState<Ticket | null>(null);
 
   const handleNavigate = (tab: string) => {
     onNavigate?.(tab);
@@ -231,6 +232,7 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
           <SupportChatView
             activeTicket={activeTicket}
             onCloseChat={handleCloseChat}
+            newlyCreatedTicket={newlyCreatedTicket}
           />
         )}
 
@@ -239,11 +241,13 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
           <div className="pt-4">
             <SupportTicketButton
               profileId={displayProfile?.id || null}
-              onTicketCreated={() => {
+              onTicketCreated={(ticket) => {
                 // Обновляем список тикетов при создании нового
                 if (displayProfile?.id) {
                   fetchTickets(displayProfile.id);
                 }
+                // Сохраняем информацию о новом тикете для отображения уведомления
+                setNewlyCreatedTicket(ticket);
               }}
             />
           </div>

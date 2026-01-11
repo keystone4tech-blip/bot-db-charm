@@ -60,6 +60,9 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
     submitInProgress.current = true;
     setIsSubmitting(true);
 
+    // Закрываем окно ДО отправки для предотвращения повторных нажатий
+    onClose();
+
     try {
       console.log('Creating ticket with data:', { userId: profile.id, category, subject, message });
 
@@ -76,11 +79,9 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
       if (onTicketCreated) {
         onTicketCreated(newTicket);
       }
-
-      // Закрываем модальное окно после успешного создания тикета
-      onClose();
     } catch (error) {
       console.error('Error creating ticket:', error);
+      toast.error('Ошибка создания тикета. Попробуйте еще раз.');
     } finally {
       // Сбрасываем флаги в любом случае
       submitInProgress.current = false;

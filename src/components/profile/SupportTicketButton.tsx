@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import CreateTicketModal from '@/components/support/CreateTicketModal';
 
+import { Ticket } from '@/hooks/useSupportTickets';
+
 interface SupportTicketButtonProps {
   profileId: string | null;
   isCreatingTicket?: boolean; // Флаг, указывающий, идет ли процесс создания тикета
-  onTicketCreated?: () => void; // Функция для обновления списка тикетов
+  onTicketCreated?: (ticket: Ticket) => void; // Функция для обновления списка тикетов, принимающая тикет
 }
 
 export const SupportTicketButton = ({ profileId, isCreatingTicket, onTicketCreated }: SupportTicketButtonProps) => {
