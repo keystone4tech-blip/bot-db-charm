@@ -49,6 +49,7 @@ export const ChannelsView = () => {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportChannelId, setReportChannelId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState('');
+  const [checkedChannels, setCheckedChannels] = useState<Set<string>>(new Set());
   const [newChannel, setNewChannel] = useState({
     name: '',
     username: '',
@@ -258,6 +259,9 @@ export const ChannelsView = () => {
     // В реальной реализации здесь будет проверка подписки через Telegram API
     // Для демонстрации просто добавляем в список подписанных
     setSubscribedChannels(prev => new Set(prev).add(channelId));
+
+    // Добавляем канал в список проверенных
+    setCheckedChannels(prev => new Set(prev).add(channelId));
 
     // Если это обязательный канал, проверяем, все ли обязательные подписаны
     const channel = channels.find(c => c.id === channelId);
@@ -554,9 +558,14 @@ export const ChannelsView = () => {
                             <Radio className="w-5 h-5 text-primary" />
                             {channel.name}
                           </CardTitle>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {channel.username}
-                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <p className="text-sm text-muted-foreground">
+                              {channel.username}
+                            </p>
+                            <Badge variant={getStatusBadgeVariant(channel.status)}>
+                              {getStatusText(channel.status)}
+                            </Badge>
+                          </div>
                           <p className="text-sm text-muted-foreground mt-1">
                             {channel.description}
                           </p>
@@ -575,39 +584,54 @@ export const ChannelsView = () => {
                           </div>
                         </div>
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            // Открываем канал в Telegram
-                            window.open(`https://t.me/${channel.username.replace('@', '')}`, '_blank');
-                          }}
-                        >
-                          Подписаться
-                        </Button>
+                        {checkedChannels.has(channel.id) ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Открываем канал в Telegram
+                              window.open(`https://t.me/${channel.username.replace('@', '')}`, '_blank');
+                            }}
+                          >
+                            Перейти
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Открываем канал в Telegram
+                              window.open(`https://t.me/${channel.username.replace('@', '')}`, '_blank');
+                            }}
+                          >
+                            Подписаться
+                          </Button>
+                        )}
                       </div>
 
                       <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
-                        <Badge variant={getStatusBadgeVariant(channel.status)}>
-                          {getStatusText(channel.status)}
-                        </Badge>
+                        <div></div>
 
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleSubscribe(channel.id)}
-                          >
-                            Проверить
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleReport(channel.id)}
-                          >
-                            Жалоба
-                          </Button>
-                        </div>
+                        {checkedChannels.has(channel.id) ? (
+                          <div></div> // Пустой div вместо кнопок после проверки
+                        ) : (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSubscribe(channel.id)}
+                            >
+                              Проверить
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReport(channel.id)}
+                            >
+                              Жалоба
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -652,9 +676,14 @@ export const ChannelsView = () => {
                             <Radio className="w-5 h-5 text-primary" />
                             {channel.name}
                           </CardTitle>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {channel.username}
-                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <p className="text-sm text-muted-foreground">
+                              {channel.username}
+                            </p>
+                            <Badge variant={getStatusBadgeVariant(channel.status)}>
+                              {getStatusText(channel.status)}
+                            </Badge>
+                          </div>
                           <p className="text-sm text-muted-foreground mt-1">
                             {channel.description}
                           </p>
@@ -673,46 +702,61 @@ export const ChannelsView = () => {
                           </div>
                         </div>
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            // Открываем канал в Telegram
-                            window.open(`https://t.me/${channel.username.replace('@', '')}`, '_blank');
-                          }}
-                        >
-                          Подписаться
-                        </Button>
+                        {checkedChannels.has(channel.id) ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Открываем канал в Telegram
+                              window.open(`https://t.me/${channel.username.replace('@', '')}`, '_blank');
+                            }}
+                          >
+                            Перейти
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Открываем канал в Telegram
+                              window.open(`https://t.me/${channel.username.replace('@', '')}`, '_blank');
+                            }}
+                          >
+                            Подписаться
+                          </Button>
+                        )}
                       </div>
 
                       <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
-                        <Badge variant={getStatusBadgeVariant(channel.status)}>
-                          {getStatusText(channel.status)}
-                        </Badge>
+                        <div></div>
 
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleSubscribe(channel.id)}
-                          >
-                            Проверить
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleSkip(channel.id)}
-                          >
-                            Пропустить
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleReport(channel.id)}
-                          >
-                            Жалоба
-                          </Button>
-                        </div>
+                        {checkedChannels.has(channel.id) ? (
+                          <div></div> // Пустой div вместо кнопок после проверки
+                        ) : (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSubscribe(channel.id)}
+                            >
+                              Проверить
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSkip(channel.id)}
+                            >
+                              Пропустить
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReport(channel.id)}
+                            >
+                              Жалоба
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -724,7 +768,7 @@ export const ChannelsView = () => {
       )}
 
       {/* Add User Channel Section */}
-      {completedRequiredSubscriptions >= totalRequiredSubscriptions && !userChannel && (
+      {completedRequiredSubscriptions >= 15 && !userChannel && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -752,7 +796,7 @@ export const ChannelsView = () => {
                       placeholder="Введите название вашего канала"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="channelUsername" className="text-sm font-medium">Имя пользователя</label>
                     <Input
@@ -762,7 +806,7 @@ export const ChannelsView = () => {
                       placeholder="@your_channel_name"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="channelDescription" className="text-sm font-medium">Описание</label>
                     <Input
@@ -772,7 +816,7 @@ export const ChannelsView = () => {
                       placeholder="Краткое описание вашего канала"
                     />
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button
                       className="flex-1"
