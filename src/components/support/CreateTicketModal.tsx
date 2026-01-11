@@ -65,8 +65,8 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
   const categories = [
     { value: 'technical', label: 'Технические вопросы' },
     { value: 'billing', label: 'Платежи и подписки' },
-    { value: 'account', label: 'Проблемы с аккаунтом' },
-    { value: 'feature-request', label: 'Предложения по улучшению' },
+    { value: 'vpn', label: 'VPN / ключи' },
+    { value: 'referral', label: 'Рефералы' },
     { value: 'other', label: 'Другое' },
   ];
 
