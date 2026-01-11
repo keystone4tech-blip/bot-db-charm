@@ -772,6 +772,53 @@ export const ChannelsView = () => {
         </motion.div>
       )}
 
+      {/* User Channel Info - Moved between "How it works" and progress bar */}
+      {userChannel && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Card className="bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border-blue-500/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Radio className="w-5 h-5 text-blue-500" />
+                Мой канал/группа
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium">{userChannel.name}</h3>
+                    <p className="text-sm text-muted-foreground">{userChannel.username}</p>
+                  </div>
+                  <Badge variant={getStatusBadgeVariant(userChannel.status)}>
+                    {getStatusText(userChannel.status)}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 bg-secondary/30 rounded-xl">
+                    <div className="text-xl font-bold text-primary">{userChannel.subscribers.toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground">Подписчики</div>
+                  </div>
+                  <div className="text-center p-3 bg-secondary/30 rounded-xl">
+                    <div className="text-xl font-bold text-green-500">{userChannel.balance}</div>
+                    <div className="text-xs text-muted-foreground">Баланс показов</div>
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <p className="text-sm text-muted-foreground mb-2">Описание:</p>
+                  <p className="text-sm">{userChannel.description}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Progress Bar for Required Subscriptions */}
       {channels.length > 0 && (
         <motion.div
@@ -930,52 +977,6 @@ export const ChannelsView = () => {
         </motion.div>
       )}
 
-      {/* User Channel Info */}
-      {userChannel && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Card className="bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border-blue-500/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Radio className="w-5 h-5 text-blue-500" />
-                Мой канал
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">{userChannel.name}</h3>
-                    <p className="text-sm text-muted-foreground">{userChannel.username}</p>
-                  </div>
-                  <Badge variant={getStatusBadgeVariant(userChannel.status)}>
-                    {getStatusText(userChannel.status)}
-                  </Badge>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-secondary/30 rounded-xl">
-                    <div className="text-xl font-bold text-primary">{userChannel.subscribers.toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground">Подписчики</div>
-                  </div>
-                  <div className="text-center p-3 bg-secondary/30 rounded-xl">
-                    <div className="text-xl font-bold text-green-500">{userChannel.balance}</div>
-                    <div className="text-xs text-muted-foreground">Баланс показов</div>
-                  </div>
-                </div>
-                
-                <div className="pt-4">
-                  <p className="text-sm text-muted-foreground mb-2">Описание:</p>
-                  <p className="text-sm">{userChannel.description}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
 
     {/* Report Modal */}
     {reportModalOpen && (
