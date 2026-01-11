@@ -11,19 +11,17 @@ export const VPNView = () => {
   // Состояние подписки (в реальной реализации будет получаться из профиля пользователя)
   const { authProfile, authBalance, authReferralStats } = useTelegramContext();
 
-  // В реальной реализации это будет определяться на основе данных подписки пользователя
-  // Например, из поля subscription в профиле или отдельного API-вызова
-  // Здесь мы используем заглушку, но в реальности нужно будет проверять статус подписки
-  const hasSubscription = false; // Заглушка - в реальной реализации будет проверка статуса подписки
-
   // В реальной реализации данные о VPN ключе будут получаться из профиля пользователя
   // или отдельного API-вызова
-  const vpnKey = hasSubscription ? {
-    key: 'vpn-key-abc123def456',
-    serverLocation: 'США - Нью-Йорк',
-    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Через 30 дней
-    status: 'active'
+  const vpnKey = authProfile?.vpn_key ? {
+    key: authProfile.vpn_key.key_value,
+    serverLocation: authProfile.vpn_key.server_location || 'США - Нью-Йорк',
+    expiresAt: new Date(authProfile.vpn_key.expires_at),
+    status: authProfile.vpn_key.status,
+    isTrial: authProfile.vpn_key.is_trial
   } : null;
+
+  const hasSubscription = !!vpnKey && vpnKey.status === 'active';
 
   return (
     <div className="px-4 py-6 pb-24 space-y-6">
@@ -64,13 +62,42 @@ export const VPNView = () => {
         </Card>
       </motion.div>
 
+      {/* Пробный период информации */}
+      {hasSubscription && vpnKey?.isTrial && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="bg-gradient-to-br from-green-500/5 to-emerald-500/5 border-green-500/20 rounded-2xl p-5">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-green-500/10 mt-0.5">
+                <Shield className="w-5 h-5 text-green-500" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-green-700 dark:text-green-300">Пробный период</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Вам предоставлен пробный бесплатный период на 7 дней.
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  За каждого нового реферала вы получите +3 дня.
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Если один из ваших рефералов приобретет подписку VPN, вы получите 100% на внутренний баланс для оплаты сервисов.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Информация в зависимости от статуса подписки */}
       {hasSubscription ? (
         // Если подписка есть
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3 }}
         >
           <Card className="bg-card rounded-2xl p-5 border border-border">
             <div className="flex items-center gap-2 mb-4">
@@ -99,7 +126,10 @@ export const VPNView = () => {
                   <Download className="w-4 h-4 mr-2" />
                   Конфиг
                 </Button>
-                <Button className="flex-1 gold-gradient text-white">
+                <Button
+                  className="flex-1 gold-gradient text-white"
+                  onClick={() => navigator.clipboard.writeText(vpnKey?.key || '')}
+                >
                   <Copy className="w-4 h-4 mr-2" />
                   Копировать
                 </Button>
@@ -112,7 +142,7 @@ export const VPNView = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3 }}
         >
           <Card className="bg-card rounded-2xl p-5 border border-border">
             <div className="flex items-center gap-2 mb-4">

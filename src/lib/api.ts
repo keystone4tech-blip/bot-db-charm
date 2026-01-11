@@ -75,6 +75,7 @@ export interface VPNKey {
   bandwidth_limit: number | null;
   bandwidth_used: number | null;
   last_connected_at: string | null;
+  is_trial: boolean | null;
   created_at: string;
 }
 
@@ -272,6 +273,32 @@ export const getUserReferralStats = async (userId: string) => {
     return await response.json() as ReferralStats;
   } catch (error) {
     console.error('Ошибка получения статистики рефералов:', error);
+    throw error;
+  }
+};
+
+/**
+ * Создание VPN ключа
+ */
+export const createVPNKey = async (keyData: any) => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/vpn-keys`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(keyData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Не удалось создать VPN ключ');
+    }
+
+    const data = await response.json();
+    return data.vpnKey as any;
+  } catch (error) {
+    console.error('Ошибка создания VPN ключа:', error);
     throw error;
   }
 };

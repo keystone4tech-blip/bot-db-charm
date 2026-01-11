@@ -11,7 +11,8 @@ import {
   getUserChannels,
   getUserBots,
   getUserSubscriptions,
-  updateUserProfile as apiUpdateUserProfile
+  updateUserProfile as apiUpdateUserProfile,
+  createVPNKey
 } from '@/lib/api';
 import { useTelegramContext } from '@/components/TelegramProvider';
 
@@ -148,6 +149,9 @@ export const useProfile = (): ProfileHookReturn => {
 
       if (vpnResponse.status === 'fulfilled' && vpnResponse.value?.length > 0) {
         setVpnKey(vpnResponse.value[0]);
+      } else if (vpnResponse.status === 'fulfilled' && vpnResponse.value?.length === 0) {
+        // Если у пользователя нет VPN ключа, создаем пробный на 7 дней
+        createTrialVPNKey(userId);
       }
 
       if (channelResponse.status === 'fulfilled' && channelResponse.value?.length > 0) {
@@ -168,6 +172,29 @@ export const useProfile = (): ProfileHookReturn => {
     }
   };
 
+  const createTrialVPNKey = async (userId: string) => {
+    try {
+      // Создаем пробный VPN ключ на 7 дней
+      const trialKey = {
+        user_id: userId,
+        key_value: `trial-${userId.substring(0, 8)}-${Date.now()}`,
+        server_location: 'США - Нью-Йорк', // или другое значение по умолчанию
+        status: 'active',
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 дней
+        is_trial: true
+      };
+
+      // Сохраняем пробный ключ в базе данных
+      const response = await createVPNKey(trialKey);
+      if (response) {
+        setVpnKey(response);
+      }
+    } catch (err) {
+      console.error('Ошибка создания пробного VPN ключа:', err);
+      setError(err instanceof Error ? err.message : 'Ошибка создания пробного VPN ключа');
+    }
+  };
+
   const updateProfile = async (updates: Partial<ExtendedUserProfile>) => {
     try {
       // В реальной реализации здесь будет вызов API для обновления профиля
@@ -180,9 +207,9 @@ export const useProfile = (): ProfileHookReturn => {
         } catch (apiError) {
           console.error('Ошибка обновления профиля в базе данных:', apiError);
           // Возвращаем предыдущее состояние в случае ошибки
-          setProfile(prev => prev ? { 
-            ...prev, 
-            ...updates 
+          setProfile(prev => prev ? {
+            ...prev,
+            ...updates
           } : null);
           throw apiError;
         }

@@ -15,6 +15,7 @@ export const VPNStatusCard = ({ vpnKey, onNavigate }: VPNStatusCardProps) => {
   const expiresAt = vpnKey?.expires_at ? new Date(vpnKey.expires_at) : null;
   const isExpired = expiresAt && expiresAt < new Date();
   const serverLocation = vpnKey?.server_location || 'США - Нью-Йорк';
+  const vpnKeyText = vpnKey?.key_value || 'Ключ недоступен';
 
   return (
     <motion.div
@@ -27,7 +28,7 @@ export const VPNStatusCard = ({ vpnKey, onNavigate }: VPNStatusCardProps) => {
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${isActive && !isExpired ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
                 {isActive && !isExpired ? (
-                  <Shield className="w-5 h-5 text-green-500" />
+                  <CheckCircle className="w-5 h-5 text-green-500" />
                 ) : (
                   <Wifi className="w-5 h-5 text-red-500" />
                 )}
@@ -36,7 +37,7 @@ export const VPNStatusCard = ({ vpnKey, onNavigate }: VPNStatusCardProps) => {
                 <h3 className="font-semibold">VPN Сервис</h3>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant={isActive && !isExpired ? 'default' : 'destructive'}>
-                    {isActive && !isExpired ? 'Активен' : 'Не активен'}
+                    {isActive && !isExpired ? (vpnKey?.is_trial ? 'Пробный' : 'Активен') : 'Не активен'}
                   </Badge>
                   {isActive && !isExpired && (
                     <Badge variant="outline" className="text-blue-500 border-blue-500/30">
@@ -49,6 +50,33 @@ export const VPNStatusCard = ({ vpnKey, onNavigate }: VPNStatusCardProps) => {
                     </span>
                   )}
                 </div>
+
+                {/* Отображение VPN ключа и возможности копирования */}
+                {isActive && !isExpired && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs text-muted-foreground truncate max-w-[120px] font-mono">
+                        {vpnKeyText}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        onClick={() => navigator.clipboard.writeText(vpnKeyText)}
+                      >
+                        Копировать
+                      </Button>
+                    </div>
+
+                    {/* Информация о пробном периоде */}
+                    {vpnKey?.is_trial && (
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        <p>Пробный период: 7 дней</p>
+                        <p>+3 дня за каждого реферала</p>
+                        <p>+100% на баланс за подписку реферала</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex gap-2">
