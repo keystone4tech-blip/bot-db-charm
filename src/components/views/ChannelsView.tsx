@@ -51,6 +51,7 @@ export const ChannelsView = () => {
   const [reportReason, setReportReason] = useState('');
   const [checkedChannels, setCheckedChannels] = useState<Set<string>>(new Set());
   const [shouldScrollToAddChannel, setShouldScrollToAddChannel] = useState(false);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [newChannel, setNewChannel] = useState({
     name: '',
     username: '',
@@ -318,8 +319,16 @@ export const ChannelsView = () => {
     setReportChannelId(null);
   };
 
+  const handleTopicChange = (topic: string) => {
+    if (selectedTopics.includes(topic)) {
+      setSelectedTopics(selectedTopics.filter(t => t !== topic));
+    } else {
+      setSelectedTopics([...selectedTopics, topic]);
+    }
+  };
+
   const handleAddChannel = async () => {
-    if (!newChannel.name || !newChannel.username || !displayProfile?.id) {
+    if (!newChannel.name || !newChannel.username || !displayProfile?.id || selectedTopics.length === 0) {
       return;
     }
 
@@ -339,6 +348,7 @@ export const ChannelsView = () => {
     setUserChannel(newUserChannel);
     setShowAddChannelForm(false);
     setNewChannel({ name: '', username: '', description: '' });
+    setSelectedTopics([]); // Очищаем выбранные тематики
     // Сбрасываем флаг прокрутки, так как канал уже добавлен
     setShouldScrollToAddChannel(false);
   };
@@ -667,32 +677,32 @@ export const ChannelsView = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Plus className="w-5 h-5 text-green-500" />
-                Добавить свой канал
+                Добавить свой канал/группу
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                После добавления канала вы получите 1 балл и сможете зарабатывать больше
+                После добавления канала/группы вы получите 1 балл и сможете зарабатывать больше
               </p>
             </CardHeader>
             <CardContent>
               {showAddChannelForm ? (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label htmlFor="channelName" className="text-sm font-medium">Название канала</label>
+                    <label htmlFor="channelName" className="text-sm font-medium">Название канала/группы</label>
                     <Input
                       id="channelName"
                       value={newChannel.name}
                       onChange={(e) => setNewChannel({...newChannel, name: e.target.value})}
-                      placeholder="Введите название вашего канала"
+                      placeholder="Введите название вашего канала или группы"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="channelUsername" className="text-sm font-medium">Имя пользователя</label>
+                    <label htmlFor="channelUsername" className="text-sm font-medium">Ссылка на канал/группу</label>
                     <Input
                       id="channelUsername"
                       value={newChannel.username}
                       onChange={(e) => setNewChannel({...newChannel, username: e.target.value})}
-                      placeholder="@your_channel_name"
+                      placeholder="https://t.me/your_channel_name"
                     />
                   </div>
 
@@ -702,17 +712,43 @@ export const ChannelsView = () => {
                       id="channelDescription"
                       value={newChannel.description}
                       onChange={(e) => setNewChannel({...newChannel, description: e.target.value})}
-                      placeholder="Краткое описание вашего канала"
+                      placeholder="Краткое описание вашего канала или группы"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Тематика канала/группы</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        'Технологии', 'Бизнес', 'Маркетинг', 'Образование',
+                        'Здоровье', 'Спорт', 'Путешествия', 'Еда',
+                        'Искусство', 'Музыка', 'Фотография', 'Видеоигры',
+                        'Криптовалюты', 'Финансы', 'Политика', 'Наука',
+                        'Психология', 'Мода', 'Дизайн', 'Продуктивность'
+                      ].map((topic) => (
+                        <div key={topic} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`topic-${topic}`}
+                            checked={selectedTopics.includes(topic)}
+                            onChange={() => handleTopicChange(topic)}
+                            className="mr-2 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                          <label htmlFor={`topic-${topic}`} className="text-sm">
+                            {topic}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="flex gap-2">
                     <Button
                       className="flex-1"
                       onClick={handleAddChannel}
-                      disabled={!newChannel.name || !newChannel.username}
+                      disabled={!newChannel.name || !newChannel.username || selectedTopics.length === 0}
                     >
-                      Добавить канал
+                      Добавить канал/группу
                     </Button>
                     <Button
                       variant="outline"
@@ -728,7 +764,7 @@ export const ChannelsView = () => {
                   onClick={() => setShowAddChannelForm(true)}
                 >
                   <Plus className="w-5 h-5 mr-2" />
-                  Добавить мой канал
+                  Добавить мой канал/группу
                 </Button>
               )}
             </CardContent>
