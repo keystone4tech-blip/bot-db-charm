@@ -62,9 +62,10 @@ const SupportChatView = ({ activeTicket, onCloseChat }: SupportChatViewProps) =>
 
   const handleTicketClose = async () => {
     if (!activeTicket) return;
-    
+
     try {
       await updateTicketStatus(activeTicket.id, 'closed');
+      // Вызываем onCloseChat, который в ProfileView теперь обновляет статус тикета
       onCloseChat();
     } catch (error) {
       console.error('Error closing ticket:', error);

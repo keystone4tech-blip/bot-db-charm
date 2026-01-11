@@ -38,7 +38,7 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
     error,
     updateProfile
   } = useProfile();
-  const { tickets, fetchTickets } = useSupportTickets();
+  const { tickets, fetchTickets, updateTicketStatus } = useSupportTickets();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
 
@@ -67,7 +67,13 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
       const openTicket = tickets.find(ticket => ticket.status !== 'closed');
       if (openTicket) {
         setActiveTicket(openTicket);
+      } else {
+        // Если нет незакрытых тикетов, сбрасываем активный тикет
+        setActiveTicket(null);
       }
+    } else {
+      // Если нет тикетов вообще, сбрасываем активный тикет
+      setActiveTicket(null);
     }
   }, [tickets]);
 
@@ -119,7 +125,19 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
     setActiveTicket(ticket);
   };
 
-  const handleCloseChat = () => {
+  const handleCloseChat = async () => {
+    if (activeTicket && activeTicket.status !== 'closed') {
+      // Обновляем статус тикета на 'closed'
+      try {
+        await updateTicketStatus(activeTicket.id, 'closed');
+        // После обновления статуса обновляем список тикетов
+        if (displayProfile?.id) {
+          fetchTickets(displayProfile.id);
+        }
+      } catch (error) {
+        console.error('Error closing ticket:', error);
+      }
+    }
     setActiveTicket(null);
   };
 
@@ -228,17 +246,19 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
         )}
 
         {/* Support Ticket Button */}
-        <div className="pt-4">
-          <SupportTicketButton
-            profileId={displayProfile?.id || null}
-            onTicketCreated={() => {
-              // Обновляем список тикетов при создании нового
-              if (displayProfile?.id) {
-                fetchTickets(displayProfile.id);
-              }
-            }}
-          />
-        </div>
+        {(!activeTicket || activeTicket.status === 'closed') && (
+          <div className="pt-4">
+            <SupportTicketButton
+              profileId={displayProfile?.id || null}
+              onTicketCreated={() => {
+                // Обновляем список тикетов при создании нового
+                if (displayProfile?.id) {
+                  fetchTickets(displayProfile.id);
+                }
+              }}
+            />
+          </div>
+        )}
       </motion.div>
 
       {/* Edit Profile Modal */}
