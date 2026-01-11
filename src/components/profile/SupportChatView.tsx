@@ -29,7 +29,7 @@ const SupportChatView = ({ activeTicket, onCloseChat }: SupportChatViewProps) =>
   // Прокручиваем к последнему сообщению
   useEffect(() => {
     scrollToBottom();
-  }, [messages[activeTicket?.id || '']]);
+  }, [messages[activeTicket?.id || '']?.length]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -120,10 +120,13 @@ const SupportChatView = ({ activeTicket, onCloseChat }: SupportChatViewProps) =>
                     <div
                       className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                         msg.is_admin_reply
-                          ? 'bg-secondary text-secondary-foreground'
-                          : 'bg-primary text-primary-foreground'
+                          ? 'bg-secondary text-secondary-foreground rounded-tl-none'
+                          : 'bg-primary text-primary-foreground rounded-tr-none'
                       }`}
                     >
+                      <div className="text-xs opacity-70 mb-1">
+                        {msg.is_admin_reply ? 'Техподдержка' : 'Вы'}
+                      </div>
                       {renderMessageContent(msg)}
                       <div className="text-xs opacity-70 mt-1 text-right">
                         {new Date(msg.created_at).toLocaleTimeString('ru-RU', {
