@@ -64,13 +64,19 @@ const itemVariants = {
 export const InfoView = () => {
   const { stats: platformStats, isLoading, error, isUserActive } = usePlatformStats(false, 30000, true); // Disable auto-refresh, enable smart refresh
 
+  // Добавляем поле activeChannels к результату хука, если его нет
+  const extendedPlatformStats = {
+    ...platformStats,
+    activeChannels: platformStats.activeChannels || 0 // Используем 0 как значение по умолчанию
+  };
+
   const stats = [
-    { value: formatNumber(platformStats.totalUsers), label: 'Пользователей' },
-    { value: formatNumber(platformStats.activeVpnKeys), label: 'VPN ключей' },
-    { value: formatNumber(platformStats.activeChannels), label: 'Каналов/групп' },
-    { value: formatNumber(platformStats.activeSubscriptions), label: 'Подписок' },
-    { value: '100%', label: 'Гарантия' },
-    { value: formatNumber(platformStats.activeBots), label: 'Ботов' },
+    { value: formatNumber(extendedPlatformStats.totalUsers), label: 'Пользователей' },
+    { value: formatNumber(extendedPlatformStats.activeVpnKeys), label: 'VPN ключей' }, // Вместо "Ботов" → "VPN ключей"
+    { value: formatNumber(extendedPlatformStats.activeChannels), label: 'Каналов/групп' }, // Вместо "Подписок" → "Каналов/групп"
+    { value: formatNumber(extendedPlatformStats.activeSubscriptions), label: 'Подписок' }, // Вместо "VPN ключей" → "Подписок"
+    { value: '100%', label: 'Гарантия' }, // Вместо "Поддержка" → "100% гарантия"
+    { value: formatNumber(extendedPlatformStats.activeBots), label: 'Ботов' }, // Вместо "Безопасности" → "Ботов"
   ];
 
   if (error) {
