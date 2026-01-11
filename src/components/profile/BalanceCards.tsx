@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Coins, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Coins, TrendingUp, TrendingDown, Wallet, PiggyBank, Receipt, DollarSign } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -18,28 +18,36 @@ export const BalanceCards = ({ balance }: BalanceCardsProps) => {
       title: 'Внутренний баланс',
       value: internalBalance.toFixed(2),
       icon: Wallet,
+      currencyIcon: Coins,
       color: 'text-blue-500',
+      currencyColor: 'text-yellow-500',
       bgColor: 'bg-blue-500/10'
     },
     {
       title: 'Внешний баланс',
       value: externalBalance.toFixed(2),
-      icon: Coins,
+      icon: PiggyBank,
+      currencyIcon: Coins,
       color: 'text-green-500',
+      currencyColor: 'text-blue-500',
       bgColor: 'bg-green-500/10'
     },
     {
       title: 'Всего заработано',
       value: totalEarned.toFixed(2),
       icon: TrendingUp,
+      currencyIcon: Receipt,
       color: 'text-emerald-500',
+      currencyColor: 'text-emerald-500',
       bgColor: 'bg-emerald-500/10'
     },
     {
       title: 'Всего выведено',
       value: totalWithdrawn.toFixed(2),
       icon: TrendingDown,
+      currencyIcon: DollarSign,
       color: 'text-orange-500',
+      currencyColor: 'text-orange-500',
       bgColor: 'bg-orange-500/10'
     }
   ];
@@ -50,6 +58,7 @@ export const BalanceCards = ({ balance }: BalanceCardsProps) => {
       <div className="grid grid-cols-2 gap-3">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
+          const CurrencyIcon = stat.currencyIcon;
           return (
             <motion.div
               key={stat.title}
@@ -69,7 +78,7 @@ export const BalanceCards = ({ balance }: BalanceCardsProps) => {
                       </p>
                       <p className="font-semibold truncate flex items-center gap-1 has-text-outline">
                         {stat.value}
-                        <Coins className="w-4 h-4 text-yellow-500" />
+                        <CurrencyIcon className={`w-4 h-4 ${stat.currencyColor}`} />
                       </p>
                     </div>
                   </div>
