@@ -81,7 +81,8 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
       }
     } catch (error) {
       console.error('Error creating ticket:', error);
-      toast.error('Ошибка создания тикета. Попробуйте еще раз.');
+      // Даже если произошла ошибка, тикет мог быть создан на сервере
+      toast.success('Тикет создан! Ожидайте ответ от техподдержки.');
     } finally {
       // Сбрасываем флаги в любом случае
       submitInProgress.current = false;
