@@ -20,7 +20,7 @@ export const BalanceCards = ({ balance }: BalanceCardsProps) => {
       icon: Wallet,
       currencyIcon: Coins,
       color: 'text-blue-500',
-      currencyColor: 'text-yellow-500',
+      currencyColor: 'text-blue-500',
       bgColor: 'bg-blue-500/10'
     },
     {
@@ -29,7 +29,7 @@ export const BalanceCards = ({ balance }: BalanceCardsProps) => {
       icon: PiggyBank,
       currencyIcon: Coins,
       color: 'text-green-500',
-      currencyColor: 'text-blue-500',
+      currencyColor: 'text-green-500',
       bgColor: 'bg-green-500/10'
     },
     {
@@ -37,9 +37,9 @@ export const BalanceCards = ({ balance }: BalanceCardsProps) => {
       value: totalEarned.toFixed(2),
       icon: TrendingUp,
       currencyIcon: Receipt,
-      color: 'text-emerald-500',
-      currencyColor: 'text-emerald-500',
-      bgColor: 'bg-emerald-500/10'
+      color: 'text-yellow-500',
+      currencyColor: 'text-yellow-500',
+      bgColor: 'bg-yellow-500/10'
     },
     {
       title: 'Всего выведено',
