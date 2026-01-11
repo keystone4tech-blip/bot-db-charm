@@ -5,6 +5,7 @@ import { AppHeader } from '@/components/ui/AppHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { AdminBottomNav } from '@/components/admin/AdminBottomNav';
 import { InfoView } from '@/components/views/InfoView';
+import { ChannelsView } from '@/components/views/ChannelsView';
 import { SubscriptionView } from '@/components/views/SubscriptionView';
 import { PromotionView } from '@/components/views/PromotionView';
 import { VPNView } from '@/components/views/VPNView';
@@ -77,6 +78,8 @@ const Index = () => {
     switch (activeTab) {
       case 'info':
         return <InfoView key="info" />;
+      case 'channels':
+        return <ChannelsView key="channels" />;
       case 'subscription':
         return <SubscriptionView key="subscription" />;
       case 'promotion':

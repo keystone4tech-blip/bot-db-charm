@@ -1,4 +1,4 @@
-import { Info, CreditCard, TrendingUp, Shield, User, Users } from 'lucide-react';
+import { Info, CreditCard, TrendingUp, Shield, User, Users, Radio } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { hapticFeedback } from '@/lib/telegram';
@@ -11,6 +11,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: Info, label: 'Инфо', id: 'info' },
+  { icon: Radio, label: 'Каналы', id: 'channels' },
   { icon: CreditCard, label: 'Подписка', id: 'subscription' },
   { icon: TrendingUp, label: 'Продвиж.', id: 'promotion' },
   { icon: Shield, label: 'VPN', id: 'vpn' },
