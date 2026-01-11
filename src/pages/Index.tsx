@@ -11,6 +11,7 @@ import { PromotionView } from '@/components/views/PromotionView';
 import { VPNView } from '@/components/views/VPNView';
 import { ProfileView } from '@/components/views/ProfileView';
 import { ReferralProgramView } from '@/components/views/ReferralProgramView';
+import { BotsView } from '@/components/views/BotsView';
 import { AdminStatsView } from '@/components/admin/AdminStatsView';
 import { AdminUsersView } from '@/components/admin/AdminUsersView';
 import { AdminBotsView } from '@/components/admin/AdminBotsView';
@@ -78,18 +79,20 @@ const Index = () => {
     switch (activeTab) {
       case 'info':
         return <InfoView key="info" />;
-      case 'channels':
-        return <ChannelsView key="channels" />;
-      case 'subscription':
-        return <SubscriptionView key="subscription" />;
-      case 'promotion':
-        return <PromotionView key="promotion" />;
       case 'vpn':
         return <VPNView key="vpn" />;
-      case 'profile':
-        return <ProfileView key="profile" onNavigate={handleTabChange} onEnterAdminMode={handleEnterAdminMode} />;
+      case 'channels':
+        return <ChannelsView key="channels" />;
+      case 'promotion':
+        return <PromotionView key="promotion" />;
+      case 'bots':
+        return <BotsView key="bots" />;
       case 'referral':
         return <ReferralProgramView key="referral" />;
+      case 'profile':
+        return <ProfileView key="profile" onNavigate={handleTabChange} onEnterAdminMode={handleEnterAdminMode} />;
+      case 'subscription':
+        return <SubscriptionView key="subscription" />;
       default:
         return <InfoView key="info" />;
     }
