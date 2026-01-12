@@ -60,7 +60,7 @@ export const VPNStatusCard = ({ vpnKey, onNavigate }: VPNStatusCardProps) => {
                       </span>
                       <Button
                         variant="outline"
-                        size="xs"
+                        size="sm"
                         onClick={() => navigator.clipboard.writeText(vpnKeyText)}
                       >
                         Копировать

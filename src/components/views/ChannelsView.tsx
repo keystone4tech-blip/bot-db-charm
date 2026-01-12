@@ -16,12 +16,12 @@ interface Channel {
   username: string;
   description: string;
   subscribers: number;
-  status: 'active' | 'inactive' | 'pending' | 'banned';
+  status: 'active' | 'inactive' | 'pending' | 'banned' | 'reported';
   joined_at: string;
-  is_required: boolean; // Обязательный канал для подписки
-  is_referal?: boolean; // Реферальный канал
-  is_paid?: boolean; // Платный канал
-  is_new?: boolean; // Новенький канал
+  is_required: boolean;
+  is_referal?: boolean;
+  is_paid?: boolean;
+  is_new?: boolean;
 }
 
 interface UserChannel {
@@ -248,8 +248,8 @@ export const ChannelsView = () => {
         id: channel.id,
         name: channel.channel_title || 'Мой канал',
         username: channel.channel_username || `@${channel.id}`,
-        description: channel.description || 'Мой Telegram канал',
-        balance: channel.subscription_balance || 0,
+        description: 'Мой Telegram канал',
+        balance: 0,
         subscribers: channel.subscribers_count || 0,
         status: channel.is_verified ? 'active' : 'pending'
       };

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -13,6 +14,17 @@ export interface Ticket {
   priority: string;
   created_at: string;
   updated_at: string;
+  // User profile info for admin view
+  user_profile?: {
+    id: string;
+    telegram_id: number;
+    telegram_username: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+    email: string | null;
+    phone: string | null;
+  };
 }
 
 export interface ChatMessage {
@@ -21,6 +33,9 @@ export interface ChatMessage {
   sender_id: string;
   is_admin_reply: boolean;
   message: string;
+  message_type?: 'text' | 'system' | 'file' | 'voice';
+  file_url?: string;
+  file_name?: string;
   created_at: string;
 }
 
@@ -30,8 +45,8 @@ export const useSupportTickets = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Загрузка тикетов пользователя
-  const fetchTickets = useCallback(async (userId: string) => {
+  // Загрузка тикетов пользователя - возвращает массив
+  const fetchTickets = useCallback(async (userId: string): Promise<Ticket[]> => {
     try {
       setLoading(true);
       setError(null);
@@ -49,10 +64,13 @@ export const useSupportTickets = () => {
 
       if (!response.ok) throw new Error(result.error || 'Failed to fetch tickets');
 
-      setTickets(result.tickets || []);
+      const ticketsList = result.tickets || [];
+      setTickets(ticketsList);
+      return ticketsList;
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError('Ошибка загрузки тикетов');
+      return [];
     } finally {
       setLoading(false);
     }
@@ -138,13 +156,33 @@ export const useSupportTickets = () => {
 
       if (!response.ok) throw new Error(result.error || 'Failed to create ticket');
 
-      // Добавляем тикет в список
-      setTickets(prev => [result.ticket, ...prev]);
+      const newTicket = result.ticket;
 
-      return result.ticket;
+      // Добавляем тикет в список
+      setTickets(prev => [newTicket, ...prev]);
+
+      // Добавляем системное сообщение о создании тикета
+      const systemMessage: ChatMessage = {
+        id: `system-${Date.now()}`,
+        ticket_id: newTicket.id,
+        sender_id: 'system',
+        is_admin_reply: false,
+        message: `📋 Тикет создан\n\n**Категория:** ${getCategoryLabel(category)}\n**Тема:** ${subject}\n\n${message}\n\n⏳ Ожидайте ответа от службы поддержки. Вы сможете написать сообщение после того, как поддержка ответит.`,
+        message_type: 'system',
+        created_at: new Date().toISOString()
+      };
+
+      setMessages(prev => ({
+        ...prev,
+        [newTicket.id]: [systemMessage]
+      }));
+
+      toast.success('Тикет успешно создан!');
+      return newTicket;
     } catch (err) {
       console.error('Error creating ticket:', err);
       setError('Ошибка создания тикета');
+      toast.error('Ошибка создания тикета');
       throw err;
     } finally {
       setLoading(false);
@@ -152,7 +190,15 @@ export const useSupportTickets = () => {
   };
 
   // Отправка сообщения в чат
-  const sendMessage = async (ticketId: string, senderId: string, senderType: 'user' | 'admin', message: string): Promise<ChatMessage> => {
+  const sendMessage = async (
+    ticketId: string, 
+    senderId: string, 
+    senderType: 'user' | 'admin', 
+    message: string,
+    messageType: 'text' | 'file' | 'voice' = 'text',
+    fileUrl?: string,
+    fileName?: string
+  ): Promise<ChatMessage> => {
     try {
       const response = await fetch(
         `${SUPABASE_URL}/functions/v1/support-chat`,
@@ -167,6 +213,9 @@ export const useSupportTickets = () => {
             sender_id: senderId,
             is_admin_reply: senderType === 'admin',
             message,
+            message_type: messageType,
+            file_url: fileUrl,
+            file_name: fileName,
           }),
         }
       );
@@ -181,10 +230,22 @@ export const useSupportTickets = () => {
         [ticketId]: [...(prev[ticketId] || []), result.message]
       }));
 
+      // Обновляем статус тикета если это первый ответ админа
+      if (senderType === 'admin') {
+        setTickets(prev => 
+          prev.map(ticket => 
+            ticket.id === ticketId && ticket.status === 'open' 
+              ? { ...ticket, status: 'in_progress' as const } 
+              : ticket
+          )
+        );
+      }
+
       return result.message;
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Ошибка отправки сообщения');
+      toast.error('Ошибка отправки сообщения');
       throw err;
     }
   };
@@ -214,28 +275,50 @@ export const useSupportTickets = () => {
           ticket.id === ticketId ? { ...ticket, status: result.ticket.status } : ticket
         )
       );
+
+      // Добавляем системное сообщение о закрытии тикета
+      if (status === 'closed') {
+        const systemMessage: ChatMessage = {
+          id: `system-${Date.now()}`,
+          ticket_id: ticketId,
+          sender_id: 'system',
+          is_admin_reply: false,
+          message: '✅ Тикет закрыт. Спасибо за обращение!',
+          message_type: 'system',
+          created_at: new Date().toISOString()
+        };
+
+        setMessages(prev => ({
+          ...prev,
+          [ticketId]: [...(prev[ticketId] || []), systemMessage]
+        }));
+      }
+
+      toast.success(status === 'closed' ? 'Тикет закрыт' : 'Статус обновлен');
     } catch (err) {
       console.error('Error updating ticket status:', err);
       setError('Ошибка обновления статуса тикета');
+      toast.error('Ошибка обновления статуса');
       throw err;
     }
   };
 
-  // Подписка на обновления чата (polling)
-  useEffect(() => {
-    const ticketIds = Object.keys(messages);
-    if (ticketIds.length === 0) return;
-
+  // Подписка на realtime обновления чата (polling fallback)
+  const subscribeToChat = useCallback((ticketId: string) => {
+    // Используем polling каждые 3 секунды
     const interval = setInterval(() => {
-      ticketIds.forEach(ticketId => {
-        fetchMessages(ticketId);
-      });
-    }, 5000); // Обновляем каждые 5 секунд
+      fetchMessages(ticketId);
+    }, 3000);
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, [messages, fetchMessages]);
+    return () => clearInterval(interval);
+  }, [fetchMessages]);
+
+  // Проверка, может ли пользователь писать (только если админ уже ответил)
+  const canUserReply = useCallback((ticketId: string): boolean => {
+    const ticketMessages = messages[ticketId] || [];
+    // Пользователь может писать, если админ уже ответил
+    return ticketMessages.some(msg => msg.is_admin_reply && msg.message_type !== 'system');
+  }, [messages]);
 
   return {
     tickets,
@@ -247,6 +330,20 @@ export const useSupportTickets = () => {
     fetchMessages,
     createTicket,
     sendMessage,
-    updateTicketStatus
+    updateTicketStatus,
+    subscribeToChat,
+    canUserReply
   };
 };
+
+// Helper function
+function getCategoryLabel(category: string): string {
+  const categories: Record<string, string> = {
+    'technical': 'Технические вопросы',
+    'billing': 'Платежи и подписки',
+    'vpn': 'VPN / ключи',
+    'referral': 'Рефералы',
+    'other': 'Другое',
+  };
+  return categories[category] || category;
+}

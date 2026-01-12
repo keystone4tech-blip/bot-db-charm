@@ -5,67 +5,56 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTelegramAuth } from '@/hooks/useTelegramAuth';
-import { useSupportTickets } from '@/hooks/useSupportTickets';
-import SupportChat from './SupportChat';
+import { useSupportTickets, Ticket } from '@/hooks/useSupportTickets';
 import { toast } from 'sonner';
-
-console.log('CreateTicketModal component loaded');
 
 interface CreateTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onTicketCreated?: (ticket: any) => void; // Колбэк, вызываемый при создании тикета
+  onTicketCreated?: (ticket: Ticket) => void;
 }
 
-const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
+const CreateTicketModal = ({ isOpen, onClose, onTicketCreated }: CreateTicketModalProps) => {
   const [category, setCategory] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const submitInProgress = useRef(false); // Для предотвращения повторных вызовов
+  const submitInProgress = useRef(false);
 
   const { profile } = useTelegramAuth();
   const { createTicket, fetchTickets } = useSupportTickets();
 
-  console.log('CreateTicketModal render - profile:', profile, 'isOpen:', isOpen);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Проверяем, не выполняется ли уже отправка
     if (submitInProgress.current) {
-      return; // Если отправка уже в процессе, выходим
+      return;
     }
 
     if (!profile || !category || !subject || !message) {
-      console.log('Validation failed:', { profile, category, subject, message });
+      toast.error('Пожалуйста, заполните все поля');
       return;
     }
 
     // Проверяем, есть ли уже активный тикет у пользователя
     try {
       const userTickets = await fetchTickets(profile.id);
-      const activeTicket = userTickets.find(ticket => ticket.status !== 'closed');
+      const activeTicket = userTickets.find((ticket: Ticket) => 
+        ticket.status !== 'closed' && ticket.status !== 'resolved'
+      );
 
       if (activeTicket) {
-        toast.error('У вас уже есть активное обращение в поддержку. Пожалуйста, дождитесь ответа или закройте текущее обращение.');
+        toast.error('У вас уже есть активное обращение. Дождитесь ответа или закройте текущее обращение.');
         return;
       }
     } catch (error) {
       console.error('Error checking for active tickets:', error);
-      // Продолжаем создание тикета, если не удалось проверить
     }
 
-    // Устанавливаем флаг, чтобы предотвратить повторные нажатия
     submitInProgress.current = true;
     setIsSubmitting(true);
 
-    // Закрываем окно ДО отправки для предотвращения повторных нажатий
-    onClose();
-
     try {
-      console.log('Creating ticket with data:', { userId: profile.id, category, subject, message });
-
       const newTicket = await createTicket(
         profile.id,
         category,
@@ -73,18 +62,20 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
         message
       );
 
-      console.log('Ticket created successfully:', newTicket);
+      // Сбрасываем форму
+      setCategory('');
+      setSubject('');
+      setMessage('');
 
-      // Вызываем колбэк при создании тикета
+      // Вызываем колбэк
       if (onTicketCreated) {
         onTicketCreated(newTicket);
       }
+
+      onClose();
     } catch (error) {
       console.error('Error creating ticket:', error);
-      // Даже если произошла ошибка, тикет мог быть создан на сервере
-      toast.success('Тикет создан! Ожидайте ответ от техподдержки.');
     } finally {
-      // Сбрасываем флаги в любом случае
       submitInProgress.current = false;
       setIsSubmitting(false);
     }
@@ -100,21 +91,21 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-lg mx-4 sm:mx-auto max-h-[85vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle>Создать обращение в поддержку</DialogTitle>
+          <DialogTitle className="text-xl">Создать обращение</DialogTitle>
           <DialogDescription>
-            Заполните форму, чтобы создать тикет в службу поддержки
+            Опишите вашу проблему, и мы ответим как можно скорее
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div className="space-y-2">
             <label htmlFor="category" className="text-sm font-medium">
               Категория
             </label>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-xl">
                 <SelectValue placeholder="Выберите категорию" />
               </SelectTrigger>
               <SelectContent>
@@ -136,6 +127,7 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Кратко опишите проблему"
+              className="rounded-xl"
             />
           </div>
 
@@ -148,16 +140,26 @@ const CreateTicketModal = ({ isOpen, onClose }: CreateTicketModalProps) => {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Подробно опишите вашу проблему или вопрос..."
-              rows={5}
+              rows={4}
+              className="rounded-xl resize-none"
             />
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex gap-3 pt-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="flex-1 rounded-xl"
+            >
               Отмена
             </Button>
-            <Button type="submit" disabled={!category || !subject || !message || isSubmitting}>
-              {isSubmitting ? 'Создание...' : 'Создать тикет'}
+            <Button 
+              type="submit" 
+              disabled={!category || !subject || !message || isSubmitting}
+              className="flex-1 rounded-xl"
+            >
+              {isSubmitting ? 'Создание...' : 'Создать'}
             </Button>
           </div>
         </form>

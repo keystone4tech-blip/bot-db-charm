@@ -1,52 +1,110 @@
-import { useState } from 'react';
-import { MessageCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { MessageCircle, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import CreateTicketModal from '@/components/support/CreateTicketModal';
-
-import { Ticket } from '@/hooks/useSupportTickets';
+import SupportChat from '@/components/support/SupportChat';
+import { Ticket, useSupportTickets } from '@/hooks/useSupportTickets';
+import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 
 interface SupportTicketButtonProps {
   profileId: string | null;
-  isCreatingTicket?: boolean; // Флаг, указывающий, идет ли процесс создания тикета
-  onTicketCreated?: (ticket: Ticket) => void; // Функция для обновления списка тикетов, принимающая тикет
+  isCreatingTicket?: boolean;
+  onTicketCreated?: (ticket: Ticket) => void;
 }
 
-export const SupportTicketButton = ({ profileId, isCreatingTicket, onTicketCreated }: SupportTicketButtonProps) => {
+export const SupportTicketButton = ({ profileId, onTicketCreated }: SupportTicketButtonProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  const { profile } = useTelegramAuth();
+  const { fetchTickets, tickets } = useSupportTickets();
 
-  console.log('SupportTicketButton render - isModalOpen:', isModalOpen);
+  // Загружаем активный тикет при монтировании
+  useEffect(() => {
+    if (profileId) {
+      loadActiveTicket();
+    }
+  }, [profileId]);
+
+  // Обновляем активный тикет при изменении списка тикетов
+  useEffect(() => {
+    const active = tickets.find(t => t.status !== 'closed' && t.status !== 'resolved');
+    setActiveTicket(active || null);
+  }, [tickets]);
+
+  const loadActiveTicket = async () => {
+    if (!profileId) return;
+    try {
+      const userTickets = await fetchTickets(profileId);
+      const active = userTickets.find((t: Ticket) => t.status !== 'closed' && t.status !== 'resolved');
+      setActiveTicket(active || null);
+    } catch (error) {
+      console.error('Error loading tickets:', error);
+    }
+  };
+
+  const handleTicketCreated = (ticket: Ticket) => {
+    setActiveTicket(ticket);
+    setShowChat(true);
+    if (onTicketCreated) {
+      onTicketCreated(ticket);
+    }
+  };
+
+  const handleOpenSupport = () => {
+    if (activeTicket) {
+      setShowChat(true);
+    } else {
+      setIsModalOpen(true);
+    }
+  };
+
+  // Если открыт чат, показываем его на весь экран
+  if (showChat && activeTicket) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background">
+        <SupportChat 
+          ticketId={activeTicket.id}
+          ticket={activeTicket}
+          onClose={() => {
+            setShowChat(false);
+            loadActiveTicket();
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <>
-      <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
+      <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20 overflow-hidden">
         <CardContent className="p-4">
           <Button
-            className="w-full gold-gradient text-white"
-            onClick={() => {
-              console.log('Opening ticket modal');
-              setIsModalOpen(true);
-            }}
+            className="w-full justify-between gold-gradient text-white rounded-xl h-12"
+            onClick={handleOpenSupport}
           >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Служба поддержки
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5" />
+              <span>Служба поддержки</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {activeTicket && (
+                <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                  {activeTicket.status === 'open' ? 'Ожидает' : 'В работе'}
+                </Badge>
+              )}
+              <ChevronRight className="w-5 h-5" />
+            </div>
           </Button>
         </CardContent>
       </Card>
 
       <CreateTicketModal
         isOpen={isModalOpen}
-        onClose={() => {
-          console.log('Closing ticket modal from button');
-          setIsModalOpen(false);
-        }}
-        onTicketCreated={(ticket) => {
-          // При создании тикета, вызываем функцию обновления в ProfileView
-          console.log('Ticket created in modal:', ticket);
-          if (onTicketCreated) {
-            onTicketCreated();
-          }
-        }}
+        onClose={() => setIsModalOpen(false)}
+        onTicketCreated={handleTicketCreated}
       />
     </>
   );
