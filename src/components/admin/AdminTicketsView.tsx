@@ -79,7 +79,12 @@ const AdminTicketsView = () => {
           </div>
         </div>
         <div className="flex-1 overflow-hidden">
-          <SupportChat ticketId={selectedTicket.id} onClose={closeChat} />
+          <SupportChat
+            ticketId={selectedTicket.id}
+            ticket={selectedTicket}
+            isAdmin
+            onClose={closeChat}
+          />
         </div>
       </div>
     );
