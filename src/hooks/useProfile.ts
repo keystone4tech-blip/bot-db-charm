@@ -139,28 +139,21 @@ export const useProfile = (): ProfileHookReturn => {
     try {
       setIsLoading(true);
 
-      // Загружаем данные по отдельности, чтобы сначала проверить VPN ключ
-      let vpnKeys = [];
-      try {
-        vpnKeys = await getUserVPNKeys(userId);
-      } catch (error) {
-        console.error('Ошибка получения VPN ключей:', error);
-        // Если произошла ошибка при получении VPN ключей, продолжаем без них
-      }
-
-      if (Array.isArray(vpnKeys) && vpnKeys.length > 0) {
-        setVpnKey(vpnKeys[0]);
-      } else if (Array.isArray(vpnKeys) && vpnKeys.length === 0) {
-        // Если у пользователя нет VPN ключа, создаем пробный на 7 дней
-        await createTrialVPNKey(userId);
-      }
-
-      // Загружаем остальные данные параллельно
-      const [channelResponse, botResponse, subscriptionResponse] = await Promise.allSettled([
+      // Загружаем все данные параллельно
+      const [vpnResponse, channelResponse, botResponse, subscriptionResponse] = await Promise.allSettled([
+        getUserVPNKeys(userId),
         getUserChannels(userId),
         getUserBots(userId),
         getUserSubscriptions(userId)
       ]);
+
+      if (vpnResponse.status === 'fulfilled' && vpnResponse.value?.length > 0) {
+        setVpnKey(vpnResponse.value[0]);
+      } else if (vpnResponse.status === 'fulfilled' && vpnResponse.value?.length === 0) {
+        // Если у пользователя нет VPN ключа, создаем пробный на 7 дней
+        // Вызываем функцию без await, чтобы не блокировать остальные загрузки
+        createTrialVPNKey(userId);
+      }
 
       if (channelResponse.status === 'fulfilled' && channelResponse.value?.length > 0) {
         setChannel(channelResponse.value[0]);
