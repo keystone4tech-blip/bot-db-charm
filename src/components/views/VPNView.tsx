@@ -8,18 +8,10 @@ import { useTelegramContext } from '@/components/TelegramProvider';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export const VPNView = () => {
-  // Состояние подписки (в реальной реализации будет получаться из профиля пользователя)
-  const { authProfile, authBalance, authReferralStats } = useTelegramContext();
+  const { authProfile } = useTelegramContext();
 
-  // В реальной реализации данные о VPN ключе будут получаться из профиля пользователя
-  // или отдельного API-вызова
-  const vpnKey = authProfile?.vpn_key ? {
-    key: authProfile.vpn_key.key_value,
-    serverLocation: authProfile.vpn_key.server_location || 'США - Нью-Йорк',
-    expiresAt: new Date(authProfile.vpn_key.expires_at),
-    status: authProfile.vpn_key.status,
-    isTrial: authProfile.vpn_key.is_trial
-  } : null;
+  // Заглушка для VPN ключа - в реальной реализации загружать из useProfile
+  const vpnKey = null as { key: string; serverLocation: string; expiresAt: Date; status: string; isTrial: boolean } | null;
 
   const hasSubscription = !!vpnKey && vpnKey.status === 'active';
 
