@@ -152,9 +152,10 @@ export const useProfile = (): ProfileHookReturn => {
         console.log('Найден существующий VPN ключ:', vpnResponse.value[0]);
       } else if (vpnResponse.status === 'fulfilled' && vpnResponse.value?.length === 0) {
         // Если у пользователя нет VPN ключа, создаем пробный на 7 дней
-        // Вызываем функцию без await, чтобы не блокировать остальные загрузки
-        console.log('У пользователя нет VPN ключа, создаем пробный ключ...');
-        createTrialVPNKey(userId);
+        // Пока отключено, чтобы избежать ошибок при загрузке
+        console.log('У пользователя нет VPN ключа, пробный ключ будет создан позже...');
+        // Отложенная генерация пробного ключа (временно отключена)
+        // setTimeout(() => createTrialVPNKey(userId), 1000);
       } else if (vpnResponse.status === 'rejected') {
         console.error('Ошибка при получении VPN ключей:', vpnResponse.reason);
       }
