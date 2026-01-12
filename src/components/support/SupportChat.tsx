@@ -20,10 +20,11 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const { profile } = useTelegramAuth();
-  const { 
-    messages, 
-    sendMessage, 
-    fetchMessages, 
+  const {
+    messages,
+    messagesLoading,
+    sendMessage,
+    fetchMessages,
     updateTicketStatus,
     subscribeToChat,
     canUserReply
@@ -108,8 +109,8 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
     return <p className="whitespace-pre-wrap break-words">{msg.message}</p>;
   };
 
-  const ticketMessages = messages[ticketId] || [];
-  const userCanReply = isAdmin || canUserReply(ticketId);
+  const fetchedMessages = messages[ticketId] || [];
+  const isMessagesLoading = messagesLoading[ticketId] ?? (fetchedMessages.length === 0);
   const ticketStatus = ticket?.status || 'open';
   const isClosed = ticketStatus === 'closed' || ticketStatus === 'resolved';
 
@@ -152,8 +153,8 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
         <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
           <div className="py-4 space-y-3">
             <AnimatePresence>
-              {ticketMessages.length === 0 ? (
-                <motion.div 
+              {isMessagesLoading ? (
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="text-center text-muted-foreground py-12"
@@ -161,8 +162,25 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
                   <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p>Загрузка сообщений...</p>
                 </motion.div>
+              ) : fetchedMessages.length === 0 ? (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  {/* Показываем “старт” чата из данных тикета, даже если в БД еще нет сообщений */}
+                  <div className="text-center py-4">
+                    <div className="inline-block bg-muted/50 rounded-xl px-4 py-3 max-w-md">
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                        📋 Тикет создан
+                        {ticket?.category ? `\n\nКатегория: ${ticket.category}` : ''}
+                        {ticket?.subject ? `\nТема: ${ticket.subject}` : ''}
+                        {ticket?.message ? `\n\n${ticket.message}` : ''}
+                        {isAdmin
+                          ? '\n\nНапишите первое сообщение пользователю, чтобы перевести тикет в работу.'
+                          : '\n\n⏳ Ожидайте ответа от поддержки. Вы сможете написать после первого ответа поддержки.'}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
               ) : (
-                ticketMessages.map((msg, index) => (
+                fetchedMessages.map((msg, index) => (
                   <motion.div
                     key={msg.id}
                     initial={{ opacity: 0, y: 10 }}
@@ -210,13 +228,17 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
         {/* Input area */}
         {!isClosed ? (
           <div className="border-t bg-card/50 backdrop-blur-sm p-3">
-            {!userCanReply && !isAdmin ? (
-              <div className="flex items-center justify-center gap-2 py-3 text-muted-foreground">
-                <Lock className="w-4 h-4" />
-                <span className="text-sm">Ожидайте ответа от поддержки</span>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-2">
+            {(() => {
+              const userCanReply = isAdmin || canUserReply(ticketId);
+              if (!userCanReply && !isAdmin) {
+                return (
+                  <div className="flex items-center justify-center gap-2 py-3 text-muted-foreground">
+                    <Lock className="w-4 h-4" />
+                    <span className="text-sm">Ожидайте ответа от поддержки</span>
+                  </div>
+                );
+              }
+              return (
                 <div className="flex gap-2">
                   <Textarea
                     value={message}

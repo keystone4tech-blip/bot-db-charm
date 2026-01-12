@@ -42,6 +42,7 @@ export interface ChatMessage {
 export const useSupportTickets = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({});
+  const [messagesLoading, setMessagesLoading] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -107,6 +108,9 @@ export const useSupportTickets = () => {
   // Загрузка сообщений для тикета
   const fetchMessages = useCallback(async (ticketId: string) => {
     try {
+      setMessagesLoading((prev) => ({ ...prev, [ticketId]: true }));
+      setError(null);
+
       const response = await fetch(
         `${SUPABASE_URL}/functions/v1/support-chat?ticket_id=${ticketId}`,
         {
@@ -127,6 +131,8 @@ export const useSupportTickets = () => {
     } catch (err) {
       console.error('Error fetching messages:', err);
       setError('Ошибка загрузки сообщений');
+    } finally {
+      setMessagesLoading((prev) => ({ ...prev, [ticketId]: false }));
     }
   }, []);
 
@@ -191,15 +197,19 @@ export const useSupportTickets = () => {
 
   // Отправка сообщения в чат
   const sendMessage = async (
-    ticketId: string, 
-    senderId: string, 
-    senderType: 'user' | 'admin', 
+    ticketId: string,
+    senderId: string,
+    senderType: 'user' | 'admin',
     message: string,
     messageType: 'text' | 'file' | 'voice' = 'text',
     fileUrl?: string,
     fileName?: string
   ): Promise<ChatMessage> => {
     try {
+      const hadAdminReplyBefore = (messages[ticketId] || []).some(
+        (m) => m.is_admin_reply && m.message_type !== 'system'
+      );
+
       const response = await fetch(
         `${SUPABASE_URL}/functions/v1/support-chat`,
         {
@@ -230,15 +240,33 @@ export const useSupportTickets = () => {
         [ticketId]: [...(prev[ticketId] || []), result.message]
       }));
 
-      // Обновляем статус тикета если это первый ответ админа
-      if (senderType === 'admin') {
-        setTickets(prev => 
-          prev.map(ticket => 
-            ticket.id === ticketId && ticket.status === 'open' 
-              ? { ...ticket, status: 'in_progress' as const } 
-              : ticket
-          )
-        );
+      // Если это первое сообщение от админа — переводим тикет в in_progress на бэкенде
+      if (senderType === 'admin' && !hadAdminReplyBefore) {
+        try {
+          const statusResp = await fetch(
+            `${SUPABASE_URL}/functions/v1/support-tickets`,
+            {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ ticket_id: ticketId, status: 'in_progress' }),
+            }
+          );
+          const statusResult = await statusResp.json();
+
+          if (statusResp.ok && statusResult?.ticket) {
+            setTickets(prev =>
+              prev.map(ticket =>
+                ticket.id === ticketId ? { ...ticket, status: statusResult.ticket.status } : ticket
+              )
+            );
+          }
+        } catch (e) {
+          // Не блокируем отправку сообщения из-за обновления статуса
+          console.warn('Failed to update ticket status to in_progress:', e);
+        }
       }
 
       return result.message;
@@ -323,6 +351,7 @@ export const useSupportTickets = () => {
   return {
     tickets,
     messages,
+    messagesLoading,
     loading,
     error,
     fetchTickets,
