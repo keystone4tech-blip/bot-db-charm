@@ -149,10 +149,14 @@ export const useProfile = (): ProfileHookReturn => {
 
       if (vpnResponse.status === 'fulfilled' && vpnResponse.value?.length > 0) {
         setVpnKey(vpnResponse.value[0]);
+        console.log('Найден существующий VPN ключ:', vpnResponse.value[0]);
       } else if (vpnResponse.status === 'fulfilled' && vpnResponse.value?.length === 0) {
         // Если у пользователя нет VPN ключа, создаем пробный на 7 дней
         // Вызываем функцию без await, чтобы не блокировать остальные загрузки
+        console.log('У пользователя нет VPN ключа, создаем пробный ключ...');
         createTrialVPNKey(userId);
+      } else if (vpnResponse.status === 'rejected') {
+        console.error('Ошибка при получении VPN ключей:', vpnResponse.reason);
       }
 
       if (channelResponse.status === 'fulfilled' && channelResponse.value?.length > 0) {
@@ -175,6 +179,8 @@ export const useProfile = (): ProfileHookReturn => {
 
   const createTrialVPNKey = async (userId: string) => {
     try {
+      console.log('Попытка создания пробного VPN ключа для пользователя:', userId);
+
       // Создаем пробный VPN ключ на 7 дней
       const trialKey = {
         user_id: userId,
@@ -185,10 +191,17 @@ export const useProfile = (): ProfileHookReturn => {
         is_trial: true
       };
 
+      console.log('Данные для создания VPN ключа:', trialKey);
+
       // Сохраняем пробный ключ в базе данных
       const response = await createVPNKey(trialKey);
+      console.log('Ответ от API при создании VPN ключа:', response);
+
       if (response) {
         setVpnKey(response);
+        console.log('VPN ключ успешно установлен в состояние');
+      } else {
+        console.warn('Ответ от API пустой при создании VPN ключа');
       }
     } catch (err) {
       console.error('Ошибка создания пробного VPN ключа:', err);
