@@ -43,6 +43,7 @@ export const useSupportTickets = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({});
   const [messagesLoading, setMessagesLoading] = useState<Record<string, boolean>>({});
+  const [messagesFetched, setMessagesFetched] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +57,7 @@ export const useSupportTickets = () => {
         `${SUPABASE_URL}/functions/v1/support-tickets?user_id=${userId}`,
         {
           headers: {
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json',
           },
         }
@@ -83,15 +84,12 @@ export const useSupportTickets = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/support-tickets?admin=true`,
-        {
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/support-tickets?admin=true`, {
+        headers: {
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.error || 'Failed to fetch tickets');
@@ -105,34 +103,67 @@ export const useSupportTickets = () => {
     }
   }, []);
 
+  type FetchMessagesOptions = {
+    background?: boolean; // не показываем "Загрузка сообщений..." при авто-обновлениях
+  };
+
   // Загрузка сообщений для тикета
-  const fetchMessages = useCallback(async (ticketId: string) => {
+  const fetchMessages = useCallback(async (ticketId: string, options: FetchMessagesOptions = {}) => {
+    const { background = false } = options;
+
     try {
-      setMessagesLoading((prev) => ({ ...prev, [ticketId]: true }));
+      if (!background) {
+        setMessagesLoading((prev) => ({ ...prev, [ticketId]: true }));
+      }
       setError(null);
 
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/support-chat?ticket_id=${ticketId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/support-chat?ticket_id=${ticketId}`, {
+        headers: {
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.error || 'Failed to fetch messages');
 
-      setMessages(prev => ({
-        ...prev,
-        [ticketId]: result.messages || []
+      const incoming: ChatMessage[] = (result.messages || []).map((m: ChatMessage) => ({
+        ...m,
+        message_type: m.message_type ?? 'text',
       }));
+
+      setMessages((prev) => {
+        const existing = prev[ticketId] || [];
+        const systemMessages = existing.filter((m) => m.message_type === 'system');
+
+        // Если из бэка пришло пусто, не затираем локальные системные сообщения ("Тикет создан")
+        if (incoming.length === 0) {
+          return {
+            ...prev,
+            [ticketId]: systemMessages.length ? systemMessages : existing,
+          };
+        }
+
+        // Сливаем: системные сверху + сообщения из бэка (без дублей)
+        const byId = new Map<string, ChatMessage>();
+        for (const m of systemMessages) byId.set(m.id, m);
+        for (const m of incoming) byId.set(m.id, m);
+
+        return {
+          ...prev,
+          [ticketId]: Array.from(byId.values()),
+        };
+      });
+
+      setMessagesFetched((prev) => ({ ...prev, [ticketId]: true }));
     } catch (err) {
       console.error('Error fetching messages:', err);
       setError('Ошибка загрузки сообщений');
+      setMessagesFetched((prev) => ({ ...prev, [ticketId]: true }));
     } finally {
-      setMessagesLoading((prev) => ({ ...prev, [ticketId]: false }));
+      if (!background) {
+        setMessagesLoading((prev) => ({ ...prev, [ticketId]: false }));
+      }
     }
   }, []);
 
@@ -142,46 +173,39 @@ export const useSupportTickets = () => {
       setLoading(true);
       setError(null);
 
-      console.log('Sending ticket creation request:', { user_id: userId, category, subject, message });
-      
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/support-tickets`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ user_id: userId, category, subject, message }),
-        }
-      );
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/support-tickets`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: userId, category, subject, message }),
+      });
 
-      console.log('Response status:', response.status);
       const result = await response.json();
-      console.log('Response result:', result);
-
       if (!response.ok) throw new Error(result.error || 'Failed to create ticket');
 
       const newTicket = result.ticket;
 
       // Добавляем тикет в список
-      setTickets(prev => [newTicket, ...prev]);
+      setTickets((prev) => [newTicket, ...prev]);
 
-      // Добавляем системное сообщение о создании тикета
+      // Локальное системное сообщение о создании тикета (может быть затёрто fetchMessages — мы это предотвращаем)
       const systemMessage: ChatMessage = {
         id: `system-${Date.now()}`,
         ticket_id: newTicket.id,
         sender_id: 'system',
         is_admin_reply: false,
-        message: `📋 Тикет создан\n\n**Категория:** ${getCategoryLabel(category)}\n**Тема:** ${subject}\n\n${message}\n\n⏳ Ожидайте ответа от службы поддержки. Вы сможете написать сообщение после того, как поддержка ответит.`,
+        message: `📋 Тикет создан\n\nКатегория: ${getCategoryLabel(category)}\nТема: ${subject}\n\n${message}\n\n⏳ Ожидайте ответа от службы поддержки. Вы сможете написать сообщение после того, как поддержка ответит.`,
         message_type: 'system',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
 
-      setMessages(prev => ({
+      setMessages((prev) => ({
         ...prev,
-        [newTicket.id]: [systemMessage]
+        [newTicket.id]: [systemMessage],
       }));
+      setMessagesFetched((prev) => ({ ...prev, [newTicket.id]: true }));
 
       toast.success('Тикет успешно создан!');
       return newTicket;
@@ -207,69 +231,50 @@ export const useSupportTickets = () => {
   ): Promise<ChatMessage> => {
     try {
       const hadAdminReplyBefore = (messages[ticketId] || []).some(
-        (m) => m.is_admin_reply && m.message_type !== 'system'
+        (m) => m.is_admin_reply && (m.message_type ?? 'text') !== 'system'
       );
 
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/support-chat`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ticket_id: ticketId,
-            sender_id: senderId,
-            is_admin_reply: senderType === 'admin',
-            message,
-            message_type: messageType,
-            file_url: fileUrl,
-            file_name: fileName,
-          }),
-        }
-      );
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/support-chat`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ticket_id: ticketId,
+          sender_id: senderId,
+          is_admin_reply: senderType === 'admin',
+          message,
+          message_type: messageType,
+          file_url: fileUrl,
+          file_name: fileName,
+        }),
+      });
 
       const result = await response.json();
-
       if (!response.ok) throw new Error(result.error || 'Failed to send message');
 
+      const saved: ChatMessage = {
+        ...result.message,
+        message_type: result.message?.message_type ?? messageType,
+      };
+
       // Добавляем сообщение в список
-      setMessages(prev => ({
+      setMessages((prev) => ({
         ...prev,
-        [ticketId]: [...(prev[ticketId] || []), result.message]
+        [ticketId]: [...(prev[ticketId] || []), saved],
       }));
 
-      // Если это первое сообщение от админа — переводим тикет в in_progress на бэкенде
+      // Если это первое сообщение от админа — переводим тикет в in_progress (через API статуса)
       if (senderType === 'admin' && !hadAdminReplyBefore) {
         try {
-          const statusResp = await fetch(
-            `${SUPABASE_URL}/functions/v1/support-tickets`,
-            {
-              method: 'PUT',
-              headers: {
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ ticket_id: ticketId, status: 'in_progress' }),
-            }
-          );
-          const statusResult = await statusResp.json();
-
-          if (statusResp.ok && statusResult?.ticket) {
-            setTickets(prev =>
-              prev.map(ticket =>
-                ticket.id === ticketId ? { ...ticket, status: statusResult.ticket.status } : ticket
-              )
-            );
-          }
+          await updateTicketStatus(ticketId, 'in_progress');
         } catch (e) {
-          // Не блокируем отправку сообщения из-за обновления статуса
           console.warn('Failed to update ticket status to in_progress:', e);
         }
       }
 
-      return result.message;
+      return saved;
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Ошибка отправки сообщения');
@@ -281,27 +286,21 @@ export const useSupportTickets = () => {
   // Обновление статуса тикета
   const updateTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'closed' | 'resolved') => {
     try {
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/support-tickets`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ ticket_id: ticketId, status }),
-        }
-      );
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/support-tickets`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ticket_id: ticketId, status }),
+      });
 
       const result = await response.json();
-
       if (!response.ok) throw new Error(result.error || 'Failed to update ticket status');
 
       // Обновляем статус в локальном состоянии
-      setTickets(prev => 
-        prev.map(ticket => 
-          ticket.id === ticketId ? { ...ticket, status: result.ticket.status } : ticket
-        )
+      setTickets((prev) =>
+        prev.map((ticket) => (ticket.id === ticketId ? { ...ticket, status: result.ticket.status } : ticket))
       );
 
       // Добавляем системное сообщение о закрытии тикета
@@ -313,16 +312,17 @@ export const useSupportTickets = () => {
           is_admin_reply: false,
           message: '✅ Тикет закрыт. Спасибо за обращение!',
           message_type: 'system',
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         };
 
-        setMessages(prev => ({
+        setMessages((prev) => ({
           ...prev,
-          [ticketId]: [...(prev[ticketId] || []), systemMessage]
+          [ticketId]: [...(prev[ticketId] || []), systemMessage],
         }));
       }
 
       toast.success(status === 'closed' ? 'Тикет закрыт' : 'Статус обновлен');
+      return result.ticket as Ticket;
     } catch (err) {
       console.error('Error updating ticket status:', err);
       setError('Ошибка обновления статуса тикета');
@@ -331,27 +331,56 @@ export const useSupportTickets = () => {
     }
   };
 
-  // Подписка на realtime обновления чата (polling fallback)
-  const subscribeToChat = useCallback((ticketId: string) => {
-    // Используем polling каждые 3 секунды
-    const interval = setInterval(() => {
-      fetchMessages(ticketId);
-    }, 3000);
+  // Подписка на обновления чата (без "вечной" загрузки)
+  const subscribeToChat = useCallback(
+    (ticketId: string) => {
+      let cancelled = false;
+      let lastSeenId: string | null = null;
 
-    return () => clearInterval(interval);
-  }, [fetchMessages]);
+      // начальная загрузка
+      fetchMessages(ticketId).then(() => {
+        const arr = (messages[ticketId] || []).filter((m) => (m.message_type ?? 'text') !== 'system');
+        lastSeenId = arr.length ? arr[arr.length - 1].id : null;
+      });
+
+      const interval = setInterval(async () => {
+        if (cancelled) return;
+
+        // фон: без спиннера
+        await fetchMessages(ticketId, { background: true });
+
+        const arr = (messages[ticketId] || []).filter((m) => (m.message_type ?? 'text') !== 'system');
+        const latestId = arr.length ? arr[arr.length - 1].id : null;
+
+        if (latestId && latestId !== lastSeenId) {
+          lastSeenId = latestId;
+          // тут ничего не нужно — setMessages уже обновил состояние
+        }
+      }, 2000);
+
+      return () => {
+        cancelled = true;
+        clearInterval(interval);
+      };
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [fetchMessages]
+  );
 
   // Проверка, может ли пользователь писать (только если админ уже ответил)
-  const canUserReply = useCallback((ticketId: string): boolean => {
-    const ticketMessages = messages[ticketId] || [];
-    // Пользователь может писать, если админ уже ответил
-    return ticketMessages.some(msg => msg.is_admin_reply && msg.message_type !== 'system');
-  }, [messages]);
+  const canUserReply = useCallback(
+    (ticketId: string): boolean => {
+      const ticketMessages = messages[ticketId] || [];
+      return ticketMessages.some((msg) => msg.is_admin_reply && (msg.message_type ?? 'text') !== 'system');
+    },
+    [messages]
+  );
 
   return {
     tickets,
     messages,
     messagesLoading,
+    messagesFetched,
     loading,
     error,
     fetchTickets,
@@ -361,7 +390,7 @@ export const useSupportTickets = () => {
     sendMessage,
     updateTicketStatus,
     subscribeToChat,
-    canUserReply
+    canUserReply,
   };
 };
 
