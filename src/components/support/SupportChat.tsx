@@ -8,6 +8,7 @@ import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 import { useSupportTickets, ChatMessage, Ticket } from '@/hooks/useSupportTickets';
 import { Send, X, Lock, CheckCircle, Clock, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { UserProfilePopup } from '@/components/admin/UserProfilePopup';
 
 interface SupportChatProps {
   ticketId: string;
@@ -19,6 +20,7 @@ interface SupportChatProps {
 const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChatProps) => {
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [showUserProfile, setShowUserProfile] = useState(false);
   const { profile } = useTelegramAuth();
   const {
     messages,
@@ -117,6 +119,16 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
   const ticketStatus = ticket?.status || 'open';
   const isClosed = ticketStatus === 'closed' || ticketStatus === 'resolved';
 
+  // Get user display name for admin view
+  const getUserDisplayName = () => {
+    if (!ticket?.user_profile) return 'Пользователь';
+    const { first_name, last_name, telegram_username } = ticket.user_profile;
+    if (first_name || last_name) {
+      return [first_name, last_name].filter(Boolean).join(' ');
+    }
+    return telegram_username ? `@${telegram_username}` : 'Пользователь';
+  };
+
   return (
     <Card className="w-full h-full flex flex-col bg-background border-0 rounded-none sm:rounded-2xl sm:border">
       {/* Header */}
@@ -127,7 +139,16 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
           </div>
           <div>
             <CardTitle className="text-base font-semibold">
-              {isAdmin ? `Тикет #${ticketId.substring(0, 8)}` : 'Чат поддержки'}
+              {isAdmin ? (
+                <span 
+                  className="cursor-pointer hover:text-primary transition-colors"
+                  onClick={() => ticket?.user_id && setShowUserProfile(true)}
+                >
+                  💬 {getUserDisplayName()}
+                </span>
+              ) : (
+                'Чат поддержки'
+              )}
             </CardTitle>
             <div className="flex items-center gap-2 mt-0.5">
               <Badge 
@@ -143,6 +164,11 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
                 {ticketStatus === 'closed' && 'Закрыт'}
                 {ticketStatus === 'resolved' && 'Решен'}
               </Badge>
+              {isAdmin && (
+                <span className="text-xs text-muted-foreground">
+                  #{ticketId.substring(0, 8)}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -207,8 +233,15 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
                             }`}
                           >
                             {showSenderLabel && (
-                              <p className={`text-xs font-medium mb-1 ${isOwn ? 'text-primary-foreground/80' : 'text-primary'}`}>
-                                {msg.is_admin_reply ? '👨‍💼 Поддержка' : '👤 Пользователь'}
+                              <p 
+                                className={`text-xs font-medium mb-1 ${isOwn ? 'text-primary-foreground/80' : 'text-primary'} ${isAdmin && !msg.is_admin_reply ? 'cursor-pointer hover:underline' : ''}`}
+                                onClick={() => {
+                                  if (isAdmin && !msg.is_admin_reply && ticket?.user_id) {
+                                    setShowUserProfile(true);
+                                  }
+                                }}
+                              >
+                                {msg.is_admin_reply ? '👨‍💼 Поддержка' : `👤 ${isAdmin ? getUserDisplayName() : 'Вы'}`}
                               </p>
                             )}
                             {renderMessageContent(msg)}
@@ -299,6 +332,16 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
           </div>
         )}
       </CardContent>
+
+      {/* User Profile Popup for Admin */}
+      {isAdmin && ticket?.user_id && (
+        <UserProfilePopup
+          userId={ticket.user_id}
+          isOpen={showUserProfile}
+          onClose={() => setShowUserProfile(false)}
+          userName={getUserDisplayName()}
+        />
+      )}
     </Card>
   );
 };
