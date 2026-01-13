@@ -227,7 +227,7 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
 
         {/* Input area */}
         {!isClosed ? (
-          <div className="border-t bg-card/50 backdrop-blur-sm p-3">
+          <div className="border-t bg-card/50 backdrop-blur-sm p-3 space-y-3">
             {(() => {
               const userCanReply = isAdmin || canUserReply(ticketId);
               if (!userCanReply && !isAdmin) {
@@ -239,48 +239,50 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
                 );
               }
               return (
-                <div className="flex gap-2">
-                  <Textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder={isAdmin ? "Напишите ответ..." : "Напишите сообщение..."}
-                    className="flex-1 resize-none min-h-[44px] max-h-[120px] rounded-xl bg-background"
-                    rows={1}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSubmit(e);
-                      }
-                    }}
-                  />
-                  <Button 
-                    type="submit" 
-                    size="icon"
-                    className="h-11 w-11 rounded-xl shrink-0"
-                    disabled={isSending || !message.trim()}
-                  >
-                    {isSending ? (
-                      <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin"></div>
-                    ) : (
-                      <Send className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleTicketClose}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <X className="w-4 h-4 mr-1" />
-                    Закрыть тикет
-                  </Button>
-                </div>
-              </form>
-            )}
+                <>
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder={isAdmin ? "Напишите ответ..." : "Напишите сообщение..."}
+                      className="flex-1 resize-none min-h-[44px] max-h-[120px] rounded-xl bg-background"
+                      rows={1}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSubmit(e);
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button" 
+                      size="icon"
+                      className="h-11 w-11 rounded-xl shrink-0"
+                      disabled={isSending || !message.trim()}
+                      onClick={handleSubmit}
+                    >
+                      {isSending ? (
+                        <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin"></div>
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <div className="flex justify-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleTicketClose}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Закрыть тикет
+                    </Button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         ) : (
           <div className="border-t bg-muted/30 p-4">
