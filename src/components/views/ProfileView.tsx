@@ -64,8 +64,10 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
   // Проверяем, есть ли активные тикеты
   useEffect(() => {
     if (tickets && tickets.length > 0) {
-      // Находим первый незакрытый тикет
-      const openTicket = tickets.find(ticket => ticket.status !== 'closed');
+      // Находим первый незакрытый тикет (не closed и не resolved)
+      const openTicket = tickets.find(ticket => 
+        ticket.status !== 'closed' && ticket.status !== 'resolved'
+      );
       if (openTicket) {
         setActiveTicket(openTicket);
       } else {
@@ -126,9 +128,11 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
     setActiveTicket(ticket);
   };
 
-  const handleCloseChat = () => {
-    // Просто сбрасываем активный тикет, обновление статуса происходит в SupportChatView
-    setActiveTicket(null);
+  const handleCloseChat = async () => {
+    // После закрытия тикета, обновляем список тикетов чтобы найти активный
+    if (profile?.id) {
+      await fetchTickets(profile.id);
+    }
   };
 
   return (
