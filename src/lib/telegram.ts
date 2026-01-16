@@ -27,15 +27,14 @@ export const isTelegramWebApp = (): boolean => {
   try {
     // Проверяем наличие initData - это надежный способ определить,
     // работает ли приложение в настоящем Telegram WebApp
-    const hasInitData = tg.initData && tg.initData !== '';
-
-    // Также проверим, есть ли пользователь в initData
-    const hasUser = tg.initDataUnsafe?.user;
-
-    return hasInitData && hasUser;
+    return tg.initData !== '';
   } catch {
-    // В режиме разработки или на мобильных устройствах, если нет initData,
-    // возвращаем false, чтобы использовать фиктивные данные
+    // В режиме разработки может не быть initData, но мы всё равно хотим,
+    // чтобы приложение работало, поэтому проверим другие признаки
+    if (process.env.NODE_ENV === 'development') {
+      // В разработке считаем, что мы в Telegram, если у нас есть mock или SDK загружен
+      return true;
+    }
     return false;
   }
 };

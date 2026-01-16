@@ -206,7 +206,7 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
         </motion.div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -339,7 +339,7 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
               <h3 className="font-semibold">Уровневые награды</h3>
             </div>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+              <div className="grid grid-cols-5 gap-2">
                 {levelCounts.map((level) => (
                   <div key={level.level} className="text-center">
                     <div className={`${level.color} w-12 h-12 mx-auto rounded-full flex items-center justify-center text-white text-sm font-bold mb-1`}>

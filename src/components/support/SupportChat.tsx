@@ -14,7 +14,6 @@ interface SupportChatProps {
   ticketId: string;
   ticket?: Ticket;
   onClose: () => void;
-  onStatusChange?: (status: 'open' | 'in_progress' | 'closed' | 'resolved') => void;
   isAdmin?: boolean;
 }
 
@@ -88,11 +87,7 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
 
   const handleTicketClose = async () => {
     try {
-      const updatedTicket = await updateTicketStatus(ticketId, 'closed');
-      if (updatedTicket) {
-        // Уведомляем родительский компонент об изменении статуса
-        onStatusChange?.(updatedTicket.status);
-      }
+      await updateTicketStatus(ticketId, 'closed');
       onClose();
     } catch (error) {
       console.error('Error closing ticket:', error);

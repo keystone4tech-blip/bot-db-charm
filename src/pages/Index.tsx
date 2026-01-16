@@ -4,8 +4,6 @@ import { TelegramProvider } from '@/components/TelegramProvider';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { AdminBottomNav } from '@/components/admin/AdminBottomNav';
-import { SidebarNav } from '@/components/ui/SidebarNav';
-import { AdminSidebarNav } from '@/components/admin/AdminSidebarNav';
 import { InfoView } from '@/components/views/InfoView';
 import { ChannelsView } from '@/components/views/ChannelsView';
 import { SubscriptionView } from '@/components/views/SubscriptionView';
@@ -30,21 +28,6 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('info');
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [adminTab, setAdminTab] = useState('admin-stats');
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  // Определяем, является ли устройство десктопом
-  useEffect(() => {
-    const checkIfDesktop = () => {
-      setIsDesktop(window.innerWidth >= 1024); // lg breakpoint
-    };
-
-    checkIfDesktop();
-    window.addEventListener('resize', checkIfDesktop);
-
-    return () => {
-      window.removeEventListener('resize', checkIfDesktop);
-    };
-  }, []);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -122,58 +105,34 @@ const Index = () => {
 
   return (
     <TelegramProvider>
-      <div className={`min-h-screen bg-background ${isDesktop ? 'max-w-none mx-0' : 'max-w-md mx-auto'} overflow-x-hidden pt-14`}>
+      <div className="min-h-screen bg-background max-w-md mx-auto overflow-x-hidden pt-14">
         {/* App header */}
         <AppHeader isAdminMode={isAdminMode} />
 
-        <div className="flex">
-          {/* Desktop sidebar */}
-          {isDesktop && !isAdminMode && (
-            <aside className="hidden lg:block w-64 flex-shrink-0 border-r bg-card/50 backdrop-blur-sm fixed left-0 top-14 h-[calc(100vh-3.5rem)] z-10 overflow-y-auto">
-              <SidebarNav
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                onEnterAdminMode={handleEnterAdminMode}
-              />
-            </aside>
-          )}
+        {/* Main content */}
+        <main className="min-h-[calc(100vh-3.5rem-4rem)]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={isAdminMode ? adminTab : activeTab}
+              variants={viewVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              {renderView()}
+            </motion.div>
+          </AnimatePresence>
+        </main>
 
-          {/* Desktop admin sidebar */}
-          {isDesktop && isAdminMode && (
-            <aside className="hidden lg:block w-64 flex-shrink-0 border-r bg-card/50 backdrop-blur-sm fixed left-0 top-14 h-[calc(100vh-3.5rem)] z-10 overflow-y-auto">
-              <AdminSidebarNav
-                activeTab={adminTab}
-                onTabChange={handleAdminTabChange}
-                onExitAdmin={handleExitAdminMode}
-              />
-            </aside>
-          )}
-
-          {/* Main content */}
-          <main className={`${isDesktop ? 'ml-64 flex-1' : 'min-h-[calc(100vh-3.5rem-4rem)]'}`}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={isAdminMode ? adminTab : activeTab}
-                variants={viewVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={{ duration: 0.2 }}
-              >
-                {renderView()}
-              </motion.div>
-            </AnimatePresence>
-          </main>
-        </div>
-
-        {/* Mobile bottom navigation */}
-        {!isDesktop && isAdminMode ? (
+        {/* Bottom navigation */}
+        {isAdminMode ? (
           <AdminBottomNav
             activeTab={adminTab}
             onTabChange={handleAdminTabChange}
             onExitAdmin={handleExitAdminMode}
           />
-        ) : !isDesktop && (
+        ) : (
           <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
         )}
       </div>
