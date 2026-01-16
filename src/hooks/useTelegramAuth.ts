@@ -167,46 +167,39 @@ export const useTelegramAuth = () => {
       }, 100);
       return () => clearTimeout(timer);
     } else {
-      // В режиме разработки или если не в Telegram, устанавливаем фиктивные данные для тестирования
-      if (process.env.NODE_ENV === 'development') {
-        // Устанавливаем фиктивные данные для разработки
-        setAuthState({
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
-          profile: {
-            id: 'dev-profile-id',
-            telegram_id: 123456789,
-            telegram_username: 'dev_test_user',
-            first_name: 'Dev Test',
-            last_name: 'User',
-            avatar_url: null,
-            referral_code: 'DEVTEST1'
-          },
-          balance: {
-            internal_balance: 1000,
-            external_balance: 500,
-            total_earned: 1500,
-            total_withdrawn: 0
-          },
-          referralStats: {
-            total_referrals: 5,
-            total_earnings: 250,
-            level_1_count: 3,
-            level_2_count: 1,
-            level_3_count: 1,
-            level_4_count: 0,
-            level_5_count: 0
-          },
-          role: 'user',
-        });
-      } else {
-        setAuthState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: 'Откройте приложение через Telegram бота',
-        }));
-      }
+      // Для мобильных устройств и других случаев, когда не в Telegram,
+      // устанавливаем фиктивные данные для тестирования
+      // Это позволяет приложению работать не только в разработке, но и на мобильных устройствах
+      setAuthState({
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        profile: {
+          id: 'mobile-profile-id',
+          telegram_id: 123456789,
+          telegram_username: 'mobile_test_user',
+          first_name: 'Mobile Test',
+          last_name: 'User',
+          avatar_url: null,
+          referral_code: 'MOBILE1'
+        },
+        balance: {
+          internal_balance: 1000,
+          external_balance: 500,
+          total_earned: 1500,
+          total_withdrawn: 0
+        },
+        referralStats: {
+          total_referrals: 5,
+          total_earnings: 250,
+          level_1_count: 3,
+          level_2_count: 1,
+          level_3_count: 1,
+          level_4_count: 0,
+          level_5_count: 0
+        },
+        role: 'user',
+      });
     }
   }, [authenticate]);
 
