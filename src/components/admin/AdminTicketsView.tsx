@@ -27,7 +27,12 @@ const AdminTicketsView = () => {
 
   const handleTicketStatusChange = async (ticketId: string, status: 'open' | 'in_progress' | 'closed') => {
     try {
-      await updateTicketStatus(ticketId, status);
+      const updated = await updateTicketStatus(ticketId, status);
+
+      if (selectedTicket?.id === ticketId) {
+        setSelectedTicket({ ...selectedTicket, status: updated.status });
+      }
+
       if (selectedTicket?.id === ticketId && status === 'closed') {
         closeChat();
       }

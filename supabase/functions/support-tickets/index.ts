@@ -44,6 +44,28 @@ serve(async (req) => {
         )
       }
 
+      // For admin view, fetch user profiles for each ticket
+      if (isAdmin && tickets && tickets.length > 0) {
+        const userIds = [...new Set(tickets.map(t => t.user_id))]
+        
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, telegram_id, telegram_username, first_name, last_name, avatar_url, email, phone')
+          .in('id', userIds)
+
+        const profilesMap = new Map(profiles?.map(p => [p.id, p]) || [])
+
+        const ticketsWithProfiles = tickets.map(ticket => ({
+          ...ticket,
+          user_profile: profilesMap.get(ticket.user_id) || null
+        }))
+
+        return new Response(
+          JSON.stringify({ tickets: ticketsWithProfiles }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
       return new Response(
         JSON.stringify({ tickets }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

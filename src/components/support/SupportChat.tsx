@@ -8,6 +8,7 @@ import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 import { useSupportTickets, ChatMessage, Ticket } from '@/hooks/useSupportTickets';
 import { Send, X, Lock, CheckCircle, Clock, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { UserProfilePopup } from '@/components/admin/UserProfilePopup';
 
 interface SupportChatProps {
   ticketId: string;
@@ -19,15 +20,17 @@ interface SupportChatProps {
 const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChatProps) => {
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [showUserProfile, setShowUserProfile] = useState(false);
   const { profile } = useTelegramAuth();
   const {
     messages,
     messagesLoading,
+    messagesFetched,
     sendMessage,
     fetchMessages,
     updateTicketStatus,
     subscribeToChat,
-    canUserReply
+    canUserReply,
   } = useSupportTickets();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -39,7 +42,7 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
     }
   }, [ticketId, fetchMessages]);
 
-  // Подписываемся на realtime обновления
+  // Подписываемся на обновления
   useEffect(() => {
     if (ticketId) {
       const unsubscribe = subscribeToChat(ticketId);
@@ -50,14 +53,15 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
   // Прокручиваем к последнему сообщению
   useEffect(() => {
     scrollToBottom();
-  }, [messages[ticketId]]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages[ticketId]?.length]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.SyntheticEvent) => {
+    e.preventDefault?.();
 
     if (!message.trim() || !profile || isSending) {
       return;
@@ -71,12 +75,7 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
     try {
       setIsSending(true);
 
-      await sendMessage(
-        ticketId,
-        profile.id,
-        isAdmin ? 'admin' : 'user',
-        message
-      );
+      await sendMessage(ticketId, profile.id, isAdmin ? 'admin' : 'user', message);
 
       setMessage('');
     } catch (error) {
@@ -96,7 +95,7 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
   };
 
   const renderMessageContent = (msg: ChatMessage) => {
-    if (msg.message_type === 'system') {
+    if ((msg.message_type ?? 'text') === 'system') {
       return (
         <div className="text-center py-4">
           <div className="inline-block bg-muted/50 rounded-xl px-4 py-3 max-w-md">
@@ -109,10 +108,26 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
     return <p className="whitespace-pre-wrap break-words">{msg.message}</p>;
   };
 
-  const fetchedMessages = messages[ticketId] || [];
-  const isMessagesLoading = messagesLoading[ticketId] ?? (fetchedMessages.length === 0);
+  const fetchedMessages = (messages[ticketId] || []).map((m) => ({
+    ...m,
+    message_type: m.message_type ?? 'text',
+  }));
+
+  const hasFetched = Boolean(messagesFetched?.[ticketId]);
+  const isMessagesLoading = Boolean(messagesLoading[ticketId]) && !hasFetched;
+
   const ticketStatus = ticket?.status || 'open';
   const isClosed = ticketStatus === 'closed' || ticketStatus === 'resolved';
+
+  // Get user display name for admin view
+  const getUserDisplayName = () => {
+    if (!ticket?.user_profile) return 'Пользователь';
+    const { first_name, last_name, telegram_username } = ticket.user_profile;
+    if (first_name || last_name) {
+      return [first_name, last_name].filter(Boolean).join(' ');
+    }
+    return telegram_username ? `@${telegram_username}` : 'Пользователь';
+  };
 
   return (
     <Card className="w-full h-full flex flex-col bg-background border-0 rounded-none sm:rounded-2xl sm:border">
@@ -124,7 +139,16 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
           </div>
           <div>
             <CardTitle className="text-base font-semibold">
-              {isAdmin ? `Тикет #${ticketId.substring(0, 8)}` : 'Чат поддержки'}
+              {isAdmin ? (
+                <span 
+                  className="cursor-pointer hover:text-primary transition-colors"
+                  onClick={() => ticket?.user_id && setShowUserProfile(true)}
+                >
+                  💬 {getUserDisplayName()}
+                </span>
+              ) : (
+                'Чат поддержки'
+              )}
             </CardTitle>
             <div className="flex items-center gap-2 mt-0.5">
               <Badge 
@@ -140,6 +164,11 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
                 {ticketStatus === 'closed' && 'Закрыт'}
                 {ticketStatus === 'resolved' && 'Решен'}
               </Badge>
+              {isAdmin && (
+                <span className="text-xs text-muted-foreground">
+                  #{ticketId.substring(0, 8)}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -180,45 +209,55 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
                   </div>
                 </motion.div>
               ) : (
-                fetchedMessages.map((msg, index) => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    {msg.message_type === 'system' ? (
-                      renderMessageContent(msg)
-                    ) : (
-                      <div className={`flex ${msg.is_admin_reply ? 'justify-start' : 'justify-end'}`}>
-                        <div
-                          className={`max-w-[85%] sm:max-w-[70%] px-4 py-2.5 rounded-2xl shadow-sm ${
-                            msg.is_admin_reply
-                              ? 'bg-secondary text-secondary-foreground rounded-tl-md'
-                              : 'bg-primary text-primary-foreground rounded-tr-md'
-                          }`}
-                        >
-                          {/* Sender label for admin view */}
-                          {isAdmin && (
-                            <p className={`text-xs font-medium mb-1 ${msg.is_admin_reply ? 'text-primary' : 'text-primary-foreground/80'}`}>
-                              {msg.is_admin_reply ? '👨‍💼 Поддержка' : '👤 Пользователь'}
-                            </p>
-                          )}
-                          {renderMessageContent(msg)}
-                          <div className={`text-xs mt-1.5 flex items-center gap-1 ${msg.is_admin_reply ? 'text-muted-foreground' : 'text-primary-foreground/70'}`}>
-                            {new Date(msg.created_at).toLocaleTimeString('ru-RU', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                            {!msg.is_admin_reply && (
-                              <CheckCircle className="w-3 h-3" />
+                fetchedMessages.map((msg, index) => {
+                  const isSystem = (msg.message_type ?? 'text') === 'system';
+                  const isOwn = isAdmin ? msg.is_admin_reply : !msg.is_admin_reply;
+                  const showSenderLabel = isAdmin || msg.is_admin_reply; // пользователю показываем хотя бы "Поддержка" для ответов
+
+                  return (
+                    <motion.div
+                      key={msg.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      {isSystem ? (
+                        renderMessageContent(msg)
+                      ) : (
+                        <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                          <div
+                            className={`max-w-[85%] sm:max-w-[70%] px-4 py-2.5 rounded-2xl shadow-sm ${
+                              isOwn
+                                ? 'bg-primary text-primary-foreground rounded-tr-md'
+                                : 'bg-secondary text-secondary-foreground rounded-tl-md'
+                            }`}
+                          >
+                            {showSenderLabel && (
+                              <p 
+                                className={`text-xs font-medium mb-1 ${isOwn ? 'text-primary-foreground/80' : 'text-primary'} ${isAdmin && !msg.is_admin_reply ? 'cursor-pointer hover:underline' : ''}`}
+                                onClick={() => {
+                                  if (isAdmin && !msg.is_admin_reply && ticket?.user_id) {
+                                    setShowUserProfile(true);
+                                  }
+                                }}
+                              >
+                                {msg.is_admin_reply ? '👨‍💼 Поддержка' : `👤 ${isAdmin ? getUserDisplayName() : 'Вы'}`}
+                              </p>
                             )}
+                            {renderMessageContent(msg)}
+                            <div className={`text-xs mt-1.5 flex items-center gap-1 ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                              {new Date(msg.created_at).toLocaleTimeString('ru-RU', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                              {!msg.is_admin_reply && <CheckCircle className="w-3 h-3" />}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-                  </motion.div>
-                ))
+                      )}
+                    </motion.div>
+                  );
+                })
               )}
             </AnimatePresence>
             <div ref={messagesEndRef} />
@@ -227,7 +266,7 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
 
         {/* Input area */}
         {!isClosed ? (
-          <div className="border-t bg-card/50 backdrop-blur-sm p-3">
+          <div className="border-t bg-card/50 backdrop-blur-sm p-3 space-y-3">
             {(() => {
               const userCanReply = isAdmin || canUserReply(ticketId);
               if (!userCanReply && !isAdmin) {
@@ -266,11 +305,11 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
                     )}
                   </Button>
                 </form>
-              )}
-            )}
+              );
+            })()}
 
             {(!isClosed && (isAdmin || canUserReply(ticketId))) && (
-              <div className="flex justify-between items-center pt-3">
+              <div className="flex justify-center pt-3">
                 <Button
                   type="button"
                   variant="ghost"
@@ -293,6 +332,16 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
           </div>
         )}
       </CardContent>
+
+      {/* User Profile Popup for Admin */}
+      {isAdmin && ticket?.user_id && (
+        <UserProfilePopup
+          userId={ticket.user_id}
+          isOpen={showUserProfile}
+          onClose={() => setShowUserProfile(false)}
+          userName={getUserDisplayName()}
+        />
+      )}
     </Card>
   );
 };
