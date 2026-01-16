@@ -239,7 +239,7 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
                 );
               }
               return (
-                <div className="flex gap-2">
+                <form onSubmit={handleSubmit} className="flex gap-2">
                   <Textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
@@ -253,8 +253,8 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
                       }
                     }}
                   />
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     size="icon"
                     className="h-11 w-11 rounded-xl shrink-0"
                     disabled={isSending || !message.trim()}
@@ -265,21 +265,23 @@ const SupportChat = ({ ticketId, ticket, onClose, isAdmin = false }: SupportChat
                       <Send className="w-4 h-4" />
                     )}
                   </Button>
-                </div>
+                </form>
+              )}
+            )}
 
-                <div className="flex justify-between items-center">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleTicketClose}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <X className="w-4 h-4 mr-1" />
-                    Закрыть тикет
-                  </Button>
-                </div>
-              </form>
+            {(!isClosed && (isAdmin || canUserReply(ticketId))) && (
+              <div className="flex justify-between items-center pt-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleTicketClose}
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Закрыть тикет
+                </Button>
+              </div>
             )}
           </div>
         ) : (
