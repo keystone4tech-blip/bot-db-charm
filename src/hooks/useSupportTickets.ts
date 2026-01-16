@@ -284,7 +284,7 @@ export const useSupportTickets = () => {
   };
 
   // Обновление статуса тикета
-  const updateTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'closed' | 'resolved') => {
+  const updateTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'closed' | 'resolved'): Promise<Ticket> => {
     try {
       const response = await fetch(`${SUPABASE_URL}/functions/v1/support-tickets`, {
         method: 'PUT',

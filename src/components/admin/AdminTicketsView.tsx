@@ -36,6 +36,9 @@ const AdminTicketsView = () => {
       if (selectedTicket?.id === ticketId && status === 'closed') {
         closeChat();
       }
+
+      // Обновляем список тикетов для синхронизации состояния
+      fetchAllTickets();
     } catch (error) {
       console.error('Error updating ticket status:', error);
     }
@@ -89,6 +92,17 @@ const AdminTicketsView = () => {
             ticket={selectedTicket}
             isAdmin
             onClose={closeChat}
+            onStatusChange={(status) => {
+              // Обновляем выбранный тикет с новым статусом
+              setSelectedTicket(prevTicket => {
+                if (prevTicket) {
+                  return { ...prevTicket, status };
+                }
+                return prevTicket;
+              });
+              // Перезагружаем все тикеты для обновления списка
+              fetchAllTickets();
+            }}
           />
         </div>
       </div>
