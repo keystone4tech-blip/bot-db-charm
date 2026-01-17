@@ -144,58 +144,107 @@ export interface AuthResponse {
  */
 export const authenticateUser = async (initData: string, referralCode?: string): Promise<AuthResponse> => {
   try {
-    // В проде у нас нет локального Node.js сервера — вызываем backend-функцию Lovable Cloud
-    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    // Сначала пробуем использовать локальный сервер, если он настроен
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL;
 
-    if (!baseUrl || !anonKey) {
-      throw new Error('Не настроен backend (отсутствуют переменные окружения)');
-    }
+    if (serverBaseUrl) {
+      // Используем локальный Node.js сервер
+      const response = await fetch(`${serverBaseUrl}/api/telegram-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          initData,
+          referralCode: referralCode || getReferralCode() || null,
+        }),
+      });
 
-    const response = await fetch(`${baseUrl}/functions/v1/telegram-auth`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`,
-      },
-      body: JSON.stringify({
-        initData,
-        referralCode: referralCode || getReferralCode() || null,
-      }),
-    });
+      // Проверяем, является ли ответ валидным JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.error('Non-JSON response received:', responseText);
+        throw new Error('Сервер вернул некорректный ответ. Пожалуйста, проверьте конфигурацию сервера.');
+      }
 
-    // Проверяем, является ли ответ валидным JSON
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const responseText = await response.text();
-      console.error('Non-JSON response received:', responseText);
-      throw new Error('Сервер вернул некорректный ответ. Пожалуйста, проверьте конфигурацию сервера.');
-    }
+      const data = await response.json();
 
-    const data = await response.json();
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || 'Ошибка аутентификации'
+        };
+      }
 
-    if (!response.ok) {
+      if (!data.success) {
+        return {
+          success: false,
+          error: data.error || 'Ошибка аутентификации'
+        };
+      }
+
       return {
-        success: false,
-        error: data.error || 'Ошибка аутентификации'
+        success: true,
+        profile: data.profile as UserProfile,
+        balance: data.balance as UserBalance,
+        referralStats: data.referralStats as ReferralStats,
+        role: data.role || 'user',
+      };
+    } else {
+      // Если локальный сервер не настроен, используем Supabase Edge Functions
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      if (!baseUrl || !anonKey) {
+        throw new Error('Не настроен backend (отсутствуют переменные окружения)');
+      }
+
+      const response = await fetch(`${baseUrl}/functions/v1/telegram-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({
+          initData,
+          referralCode: referralCode || getReferralCode() || null,
+        }),
+      });
+
+      // Проверяем, является ли ответ валидным JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.error('Non-JSON response received:', responseText);
+        throw new Error('Сервер вернул некорректный ответ. Пожалуйста, проверьте конфигурацию сервера.');
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || 'Ошибка аутентификации'
+        };
+      }
+
+      if (!data.success) {
+        return {
+          success: false,
+          error: data.error || 'Ошибка аутентификации'
+        };
+      }
+
+      return {
+        success: true,
+        profile: data.profile as UserProfile,
+        balance: data.balance as UserBalance,
+        referralStats: data.referralStats as ReferralStats,
+        role: data.role || 'user',
       };
     }
-
-    if (!data.success) {
-      return {
-        success: false,
-        error: data.error || 'Ошибка аутентификации'
-      };
-    }
-
-    return {
-      success: true,
-      profile: data.profile as UserProfile,
-      balance: data.balance as UserBalance,
-      referralStats: data.referralStats as ReferralStats,
-      role: data.role || 'user',
-    };
   } catch (error) {
     console.error('Ошибка аутентификации:', error);
     return {

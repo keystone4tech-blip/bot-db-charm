@@ -1,19 +1,6 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15
-    container_name: keystone_postgres
-    environment:
-      POSTGRES_DB: keystone
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-your_secure_password_here}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
-
   backend:
     build:
       context: .
@@ -22,15 +9,12 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=2046
-      - DB_NAME=keystone
+      - USE_SQLITE=true
+      - SQLITE_DB_PATH=./data/local_database.db
       - TELEGRAM_BOT_TOKEN=8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA
       - BOT_API_URL=http://bot:3001/send-auth-code
-    depends_on:
-      - postgres
+    volumes:
+      - ./data:/app/data  # Монтируем директорию для хранения SQLite базы данных
     restart: unless-stopped
     env_file:
       - .env
@@ -43,20 +27,18 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=2046
-      - DB_NAME=keystone
+      - USE_SQLITE=true
+      - SQLITE_DB_PATH=./data/local_database.db
       - BOT_TOKEN=8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA
       - USE_API_CLIENT=true
       - API_BASE_URL=http://backend:3000
+    volumes:
+      - ./data:/app/data  # Монтируем директорию для хранения SQLite базы данных
     depends_on:
-      - postgres
       - backend
     restart: unless-stopped
     env_file:
       - .env
 
 volumes:
-  postgres_data:
+  # Убрали postgres_data, так как используем SQLite
