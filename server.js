@@ -815,7 +815,12 @@ app.post('/api/initiate-auth', async (req, res) => {
     const result = await pool.query(query, queryParams);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+        userNotFound: true,
+        message: 'Пользователь не найден в системе. Пожалуйста, зарегистрируйтесь через бота.'
+      });
     }
 
     const user = result.rows[0];

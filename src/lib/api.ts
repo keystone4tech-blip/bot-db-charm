@@ -445,12 +445,14 @@ export const initiateAuth = async (telegramId?: number, telegramUsername?: strin
       }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Не удалось инициировать аутентификацию');
+      // Возвращаем данные даже если статус не OK, чтобы обработать userNotFound
+      return data;
     }
 
-    return await response.json();
+    return data;
   } catch (error) {
     console.error('Ошибка инициации аутентификации:', error);
     throw error;

@@ -19,6 +19,7 @@ interface TelegramContextType {
   authReferralStats: AuthReferralStats | null;
   authRole: string;
   refetchAuth: () => void;
+  setAuthenticatedState: (profile: AuthProfile, balance: AuthBalance, referralStats: AuthReferralStats, role?: string) => void;
 }
 
 const TelegramContext = createContext<TelegramContextType>({
@@ -34,6 +35,7 @@ const TelegramContext = createContext<TelegramContextType>({
   authReferralStats: null,
   authRole: 'user',
   refetchAuth: () => {},
+  setAuthenticatedState: () => {},
 });
 
 export const useTelegramContext = () => useContext(TelegramContext);
@@ -67,6 +69,18 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
     }
   }, [telegram.isTelegram, isAuthenticated, isAuthLoading]);
 
+  const {
+    isAuthenticated,
+    isLoading: isAuthLoading,
+    error: authError,
+    profile: authProfile,
+    balance: authBalance,
+    referralStats: authReferralStats,
+    role: authRole,
+    refetch: refetchAuth,
+    setAuthenticatedState,
+  } = useTelegramAuth();
+
   const contextValue: TelegramContextType = {
     ...telegram,
     isAuthenticated,
@@ -77,6 +91,7 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
     authReferralStats,
     authRole,
     refetchAuth,
+    setAuthenticatedState,
   };
 
   // Don't show loading screen here since SplashScreen handles it

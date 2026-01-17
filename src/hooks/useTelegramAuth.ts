@@ -246,9 +246,23 @@ export const useTelegramAuth = () => {
     }
   }, [authenticate]);
 
+  // Функция для установки аутентифицированного состояния извне
+  const setAuthenticatedState = useCallback((profile: AuthProfile, balance: AuthBalance, referralStats: AuthReferralStats, role: string = 'user') => {
+    setAuthState({
+      isAuthenticated: true,
+      isLoading: false,
+      error: null,
+      profile,
+      balance,
+      referralStats,
+      role,
+    });
+  }, []);
+
   return {
     ...authState,
     refetch: authenticate,
     authenticateWithCode,
+    setAuthenticatedState,
   };
 };

@@ -20,28 +20,38 @@ interface AuthModalProps {
 
 const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [step, setStep] = useState<'login' | 'verify'>('login');
-  const [telegramId, setTelegramId] = useState('');
-  const [telegramUsername, setTelegramUsername] = useState('');
+  const [telegramIdentifier, setTelegramIdentifier] = useState('');
   const [authCode, setAuthCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { refetchAuth } = useTelegramContext();
+  const { refetchAuth, setAuthenticatedState } = useTelegramContext();
 
   const handleInitiateAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
+    // Проверяем, является ли введённое значение числом (ID) или никнеймом
+    let telegramId: number | undefined;
+    let telegramUsername: string | undefined;
+
+    // Проверяем, является ли введённое значение числом
+    if (/^\d+$/.test(telegramIdentifier.trim())) {
+      telegramId = Number(telegramIdentifier.trim());
+    } else {
+      // Убираем @ из начала, если он есть
+      telegramUsername = telegramIdentifier.trim().replace(/^@/, '');
+    }
+
     try {
-      const result = await initiateAuth(
-        telegramId ? Number(telegramId) : undefined,
-        telegramUsername || undefined
-      );
+      const result = await initiateAuth(telegramId, telegramUsername);
 
       if (result.success) {
         toast.success('Код аутентификации отправлен в ваш Telegram');
         setStep('verify');
+      } else if (result.userNotFound) {
+        setError(result.message || 'Пользователь не найден в системе. Пожалуйста, зарегистрируйтесь через бота.');
       } else {
         setError(result.error || 'Не удалось инициировать аутентификацию');
       }
@@ -62,7 +72,15 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
       if (result.success) {
         toast.success('Аутентификация успешна!');
-        refetchAuth(); // Обновляем состояние аутентификации
+        // Устанавливаем состояние аутентификации напрямую
+        if (result.profile && result.balance && result.referralStats) {
+          setAuthenticatedState(
+            result.profile as AuthProfile,
+            result.balance as AuthBalance,
+            result.referralStats as AuthReferralStats,
+            result.role || 'user'
+          );
+        }
         onClose();
       } else {
         setError(result.error || 'Неверный код');
@@ -75,12 +93,12 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   };
 
   const handleTryRegister = () => {
-    window.open('https://t.me/keystone_tech_bot', '_blank');
+    window.open('https://t.me/Keystone_Tech_Robot', '_blank');
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white backdrop:bg-white">
         <DialogHeader>
           <DialogTitle>Вход в аккаунт</DialogTitle>
           <DialogDescription>
@@ -91,28 +109,31 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         {step === 'login' ? (
           <form onSubmit={handleInitiateAuth} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="telegramId">Telegram ID</Label>
+              <Label htmlFor="telegramIdentifier">Telegram ID или Никнейм</Label>
               <Input
-                id="telegramId"
-                type="number"
-                placeholder="Введите ваш Telegram ID"
-                value={telegramId}
-                onChange={(e) => setTelegramId(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="telegramUsername">Telegram Никнейм</Label>
-              <Input
-                id="telegramUsername"
+                id="telegramIdentifier"
                 type="text"
-                placeholder="Введите ваш Telegram никнейм (без @)"
-                value={telegramUsername}
-                onChange={(e) => setTelegramUsername(e.target.value)}
+                placeholder="Введите ID или @никнейм"
+                value={telegramIdentifier}
+                onChange={(e) => setTelegramIdentifier(e.target.value)}
               />
             </div>
 
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && (
+              <div className="space-y-2">
+                <p className="text-red-500 text-sm">{error}</p>
+                {error.includes('Пользователь не найден') && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleTryRegister}
+                    className="w-full"
+                  >
+                    Перейти к регистрации
+                  </Button>
+                )}
+              </div>
+            )}
 
             <div className="flex gap-2 pt-2">
               <Button type="submit" disabled={isLoading} className="flex-1">
@@ -158,17 +179,19 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           </form>
         )}
 
-        <div className="pt-4 border-t">
-          <p className="text-sm text-center text-muted-foreground">
-            Не можете войти?{' '}
-            <button
-              onClick={handleTryRegister}
-              className="text-primary underline hover:no-underline"
-            >
-              Пройдите регистрацию через бота
-            </button>
-          </p>
-        </div>
+        {!(error && error.includes('Пользователь не найден')) && (
+          <div className="pt-4 border-t">
+            <p className="text-sm text-center text-muted-foreground">
+              Не можете войти?{' '}
+              <button
+                onClick={handleTryRegister}
+                className="text-primary underline hover:no-underline"
+              >
+                Пройдите регистрацию через бота
+              </button>
+            </p>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
