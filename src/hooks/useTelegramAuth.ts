@@ -54,16 +54,17 @@ export const useTelegramAuth = () => {
   const authenticate = useCallback(async () => {
     if (!isTelegramWebApp()) {
       console.log('Not in Telegram WebApp environment');
+      // Вместо ошибки, просто устанавливаем загруженное состояние без аутентификации
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
-        error: 'Приложение доступно только через Telegram',
+        error: null, // Убираем ошибку, чтобы показать возможность альтернативного входа
       }));
       return;
     }
 
     const initData = tg.initData;
-    
+
     if (!initData) {
       console.error('No initData available');
       setAuthState(prev => ({
@@ -157,6 +158,40 @@ export const useTelegramAuth = () => {
     }
   }, []);
 
+  // Функция для аутентификации с помощью кода
+  const authenticateWithCode = useCallback(async (authCode: string) => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const result = await verifyAuthCode(authCode);
+
+      if (result.success) {
+        setAuthState({
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+          profile: result.profile as AuthProfile,
+          balance: result.balance as AuthBalance,
+          referralStats: result.referralStats as AuthReferralStats,
+          role: result.role || 'user',
+        });
+        toast.success('Успешный вход!');
+        return true;
+      } else {
+        setError(result.error || 'Неверный код');
+        return false;
+      }
+    } catch (err: any) {
+      const errorMessage = err instanceof Error ? err.message : 'Ошибка при проверке кода';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     // Wait for Telegram WebApp to be ready
     if (isTelegramWebApp()) {
@@ -201,10 +236,11 @@ export const useTelegramAuth = () => {
           role: 'user',
         });
       } else {
+        // В production режиме, но не в Telegram, просто устанавливаем состояние загрузки
         setAuthState(prev => ({
           ...prev,
           isLoading: false,
-          error: 'Откройте приложение через Telegram бота',
+          error: null,
         }));
       }
     }
@@ -213,5 +249,6 @@ export const useTelegramAuth = () => {
   return {
     ...authState,
     refetch: authenticate,
+    authenticateWithCode,
   };
 };

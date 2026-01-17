@@ -28,6 +28,7 @@ services:
       - DB_PASSWORD=2046
       - DB_NAME=keystone
       - TELEGRAM_BOT_TOKEN=8210195855:AAFLA9kzCUScWrS5tOPBi7nGstbwW9dC1XE
+      - BOT_API_URL=http://bot:3001/send-auth-code
     depends_on:
       - postgres
     restart: unless-stopped
@@ -39,6 +40,8 @@ services:
       context: .
       dockerfile: Dockerfile.bot
     container_name: keystone_bot
+    ports:
+      - "3001:3001"
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432

@@ -427,3 +427,58 @@ export const updateUserProfile = async (userId: string, updates: Partial<Extende
     throw error;
   }
 };
+
+/**
+ * Инициация аутентификации по Telegram ID или никнейму
+ */
+export const initiateAuth = async (telegramId?: number, telegramUsername?: string) => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/initiate-auth`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        telegramId,
+        telegramUsername
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Не удалось инициировать аутентификацию');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Ошибка инициации аутентификации:', error);
+    throw error;
+  }
+};
+
+/**
+ * Проверка аутентификационного кода
+ */
+export const verifyAuthCode = async (authCode: string) => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/verify-auth-code`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ authCode }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Неверный или просроченный код');
+    }
+
+    return await response.json() as AuthResponse;
+  } catch (error) {
+    console.error('Ошибка проверки аутентификационного кода:', error);
+    throw error;
+  }
+};
