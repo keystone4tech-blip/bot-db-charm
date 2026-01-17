@@ -27,7 +27,7 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=2046
       - DB_NAME=keystone
-      - TELEGRAM_BOT_TOKEN=8210195855:AAFLA9kzCUScWrS5tOPBi7nGstbwW9dC1XE
+      - TELEGRAM_BOT_TOKEN=8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA
       - BOT_API_URL=http://bot:3001/send-auth-code
     depends_on:
       - postgres
@@ -48,7 +48,7 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=2046
       - DB_NAME=keystone
-      - BOT_TOKEN=8210195855:AAFLA9kzCUScWrS5tOPBi7nGstbwW9dC1XE
+      - BOT_TOKEN=8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA
       - USE_API_CLIENT=true
       - API_BASE_URL=http://backend:3000
     depends_on:
