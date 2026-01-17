@@ -92,3 +92,7 @@ This project is built with:
 - PostgreSQL (local database)
 - Docker
 - Docker Compose
+
+## Last Update
+
+This project was last updated on January 17, 2026 to synchronize with the latest changes.
