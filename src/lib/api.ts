@@ -144,13 +144,20 @@ export interface AuthResponse {
  */
 export const authenticateUser = async (initData: string, referralCode?: string): Promise<AuthResponse> => {
   try {
-    // Используем локальный сервер
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    // В проде у нас нет локального Node.js сервера — вызываем backend-функцию Lovable Cloud
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-    const response = await fetch(`${serverBaseUrl}/api/telegram-auth`, {
+    if (!baseUrl || !anonKey) {
+      throw new Error('Не настроен backend (отсутствуют переменные окружения)');
+    }
+
+    const response = await fetch(`${baseUrl}/functions/v1/telegram-auth`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
       },
       body: JSON.stringify({
         initData,
@@ -203,10 +210,8 @@ export const authenticateUser = async (initData: string, referralCode?: string):
  */
 export const getUserProfile = async (telegramId: number) => {
   try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || '/';
-    const apiUrl = serverBaseUrl === '/' ? `/api/profiles/${telegramId}` : `${serverBaseUrl}/api/profiles/${telegramId}`;
-
-    const response = await fetch(apiUrl, {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/profiles/${telegramId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -229,10 +234,8 @@ export const getUserProfile = async (telegramId: number) => {
  */
 export const getUserBalance = async (userId: string) => {
   try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || '/';
-    const apiUrl = serverBaseUrl === '/' ? `/api/balances/${userId}` : `${serverBaseUrl}/api/balances/${userId}`;
-
-    const response = await fetch(apiUrl, {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/balances/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -255,10 +258,8 @@ export const getUserBalance = async (userId: string) => {
  */
 export const getUserReferralStats = async (userId: string) => {
   try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || '/';
-    const apiUrl = serverBaseUrl === '/' ? `/api/referral-stats/${userId}` : `${serverBaseUrl}/api/referral-stats/${userId}`;
-
-    const response = await fetch(apiUrl, {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/referral-stats/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -281,10 +282,8 @@ export const getUserReferralStats = async (userId: string) => {
  */
 export const createVPNKey = async (keyData: any) => {
   try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || '/';
-    const apiUrl = serverBaseUrl === '/' ? `/api/vpn-keys` : `${serverBaseUrl}/api/vpn-keys`;
-
-    const response = await fetch(apiUrl, {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/vpn-keys`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -309,10 +308,8 @@ export const createVPNKey = async (keyData: any) => {
  */
 export const getUserVPNKeys = async (userId: string) => {
   try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || '/';
-    const apiUrl = serverBaseUrl === '/' ? `/api/vpn-keys/${userId}` : `${serverBaseUrl}/api/vpn-keys/${userId}`;
-
-    const response = await fetch(apiUrl, {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/vpn-keys/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -336,10 +333,8 @@ export const getUserVPNKeys = async (userId: string) => {
  */
 export const getUserChannels = async (userId: string) => {
   try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || '/';
-    const apiUrl = serverBaseUrl === '/' ? `/api/telegram-channels/${userId}` : `${serverBaseUrl}/api/telegram-channels/${userId}`;
-
-    const response = await fetch(apiUrl, {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/telegram-channels/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -363,10 +358,8 @@ export const getUserChannels = async (userId: string) => {
  */
 export const getUserBots = async (userId: string) => {
   try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || '/';
-    const apiUrl = serverBaseUrl === '/' ? `/api/user-bots/${userId}` : `${serverBaseUrl}/api/user-bots/${userId}`;
-
-    const response = await fetch(apiUrl, {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/user-bots/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -390,10 +383,8 @@ export const getUserBots = async (userId: string) => {
  */
 export const getUserSubscriptions = async (userId: string) => {
   try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || '/';
-    const apiUrl = serverBaseUrl === '/' ? `/api/subscriptions/${userId}` : `${serverBaseUrl}/api/subscriptions/${userId}`;
-
-    const response = await fetch(apiUrl, {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/subscriptions/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -417,10 +408,8 @@ export const getUserSubscriptions = async (userId: string) => {
  */
 export const updateUserProfile = async (userId: string, updates: Partial<ExtendedUserProfile>) => {
   try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || '/';
-    const apiUrl = serverBaseUrl === '/' ? `/api/profiles/${userId}` : `${serverBaseUrl}/api/profiles/${userId}`;
-
-    const response = await fetch(apiUrl, {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${serverBaseUrl}/api/profiles/${userId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -435,67 +424,6 @@ export const updateUserProfile = async (userId: string, updates: Partial<Extende
     return await response.json() as ExtendedUserProfile;
   } catch (error) {
     console.error('Ошибка обновления профиля:', error);
-    throw error;
-  }
-};
-
-/**
- * Инициация аутентификации по Telegram ID или никнейму
- */
-export const initiateAuth = async (telegramId?: number, telegramUsername?: string) => {
-  try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || '/';
-    const apiUrl = serverBaseUrl === '/' ? `/api/initiate-auth` : `${serverBaseUrl}/api/initiate-auth`;
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        telegramId,
-        telegramUsername
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      // Возвращаем данные даже если статус не OK, чтобы обработать userNotFound
-      return data;
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Ошибка инициации аутентификации:', error);
-    throw error;
-  }
-};
-
-/**
- * Проверка аутентификационного кода
- */
-export const verifyAuthCode = async (authCode: string) => {
-  try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || '/';
-    const apiUrl = serverBaseUrl === '/' ? `/api/verify-auth-code` : `${serverBaseUrl}/api/verify-auth-code`;
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ authCode }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Неверный или просроченный код');
-    }
-
-    return await response.json() as AuthResponse;
-  } catch (error) {
-    console.error('Ошибка проверки аутентификационного кода:', error);
     throw error;
   }
 };

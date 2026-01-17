@@ -1,5 +1,4 @@
 // Backend сервер для работы с PostgreSQL базой данных напрямую
-require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
 const crypto = require('crypto');
@@ -30,55 +29,57 @@ function validateTelegramInitData(initData, botToken) {
   try {
     const params = new URLSearchParams(initData);
     const hash = params.get('hash');
-
+    
     if (!hash) {
       console.error('No hash in initData');
       return null;
     }
-
+    
     // Remove hash from params for validation
     params.delete('hash');
-
-    // Sort parameters in lexicographical order and create data check string
-    const dataCheckString = [...params.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, value]) => `${key}=${value}`)
-      .join('\n');
-
+    
+    // Sort parameters and create data check string
+    const dataCheckArr = [];
+    params.sort();
+    params.forEach((value, key) => {
+      dataCheckArr.push(`${key}=${value}`);
+    });
+    const dataCheckString = dataCheckArr.join('\n');
+    
     // Create secret key using HMAC-SHA256
     const secretKey = crypto
       .createHmac('sha256', crypto.createHash('sha256').update('WebAppData').digest())
       .update(botToken)
       .digest();
-
+    
     // Calculate hash
     const calculatedHash = crypto
       .createHmac('sha256', secretKey)
       .update(dataCheckString)
       .digest('hex');
-
+    
     if (calculatedHash !== hash.toLowerCase()) {
       console.error('Hash mismatch:', { calculated: calculatedHash, received: hash.toLowerCase() });
       return null;
     }
-
-    // Check auth_date (allow 1 hour - more secure than 24 hours)
+    
+    // Check auth_date (allow 24 hours)
     const authDate = parseInt(params.get('auth_date') || '0');
     const now = Math.floor(Date.now() / 1000);
-    if (now - authDate > 3600) { // 1 hour in seconds
+    if (now - authDate > 86400) {
       console.error('Auth data expired');
       return null;
     }
-
+    
     // Parse user data
     const userStr = params.get('user');
     if (!userStr) {
       console.error('No user in initData');
       return null;
     }
-
-    const user = JSON.parse(decodeURIComponent(userStr));
-
+    
+    const user = JSON.parse(userStr);
+    
     return {
       user,
       auth_date: authDate || 0,
@@ -778,161 +779,6 @@ app.get('/api/support-tickets', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching all support tickets:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
-  }
-});
-
-// Глобальный объект для хранения временных кодов аутентификации
-const authCodes = {};
-
-// Генерация случайного 6-значного кода
-function generateAuthCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// Маршрут для инициации аутентификации по Telegram ID или никнейму
-app.post('/api/initiate-auth', async (req, res) => {
-  try {
-    const { telegramId, telegramUsername } = req.body;
-
-    if (!telegramId && !telegramUsername) {
-      return res.status(400).json({ error: 'Either telegramId or telegramUsername is required' });
-    }
-
-    // Поиск пользователя в базе данных
-    let query;
-    let queryParams;
-
-    if (telegramId) {
-      query = 'SELECT * FROM profiles WHERE telegram_id = $1';
-      queryParams = [telegramId];
-    } else {
-      query = 'SELECT * FROM profiles WHERE telegram_username = $1';
-      queryParams = [telegramUsername];
-    }
-
-    const result = await pool.query(query, queryParams);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found',
-        userNotFound: true,
-        message: 'Пользователь не найден в системе. Пожалуйста, зарегистрируйтесь через бота.'
-      });
-    }
-
-    const user = result.rows[0];
-
-    // Генерация уникального кода аутентификации
-    const authCode = generateAuthCode();
-
-    // Сохраняем код с временной меткой истечения (5 минут)
-    authCodes[authCode] = {
-      userId: user.id,
-      telegramId: user.telegram_id,
-      expiresAt: Date.now() + 5 * 60 * 1000 // 5 минут
-    };
-
-    // Отправляем код пользователю через Telegram бота
-    try {
-      // Выполняем HTTP запрос к нашему боту для отправки кода
-      const botApiUrl = process.env.BOT_API_URL || 'http://localhost:3000/bot-api/send-auth-code'; // URL для API бота
-
-      const response = await fetch(botApiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          telegramId: user.telegram_id,
-          authCode: authCode
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send auth code via bot');
-      }
-
-      console.log(`Auth code ${authCode} sent to user ${user.telegram_id}`);
-    } catch (error) {
-      console.error('Error sending auth code to user:', error);
-      // Возвращаем ошибку, если не можем отправить код
-      return res.status(500).json({ error: 'Failed to send auth code to user' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Authentication code sent to your Telegram account',
-      authCodeGenerated: true // Только для тестирования, в продакшене этого не должно быть
-    });
-  } catch (error) {
-    console.error('Error initiating auth:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
-  }
-});
-
-// Маршрут для проверки аутентификационного кода
-app.post('/api/verify-auth-code', async (req, res) => {
-  try {
-    const { authCode } = req.body;
-
-    if (!authCode) {
-      return res.status(400).json({ error: 'Auth code is required' });
-    }
-
-    // Проверяем, существует ли код и не истек ли срок его действия
-    const storedData = authCodes[authCode];
-
-    if (!storedData || storedData.expiresAt < Date.now()) {
-      // Удаляем истекший код
-      if (authCode in authCodes) {
-        delete authCodes[authCode];
-      }
-      return res.status(400).json({ error: 'Invalid or expired auth code' });
-    }
-
-    // Получаем данные пользователя
-    const { userId, telegramId } = storedData;
-
-    // Получаем полные данные пользователя
-    const userQuery = 'SELECT * FROM profiles WHERE id = $1';
-    const userResult = await pool.query(userQuery, [userId]);
-
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const user = userResult.rows[0];
-
-    // Получаем баланс пользователя
-    const balanceQuery = 'SELECT * FROM balances WHERE user_id = $1';
-    const balanceResult = await pool.query(balanceQuery, [userId]);
-    const balance = balanceResult.rows[0];
-
-    // Получаем статистику по рефералам
-    const referralStatsQuery = 'SELECT * FROM referral_stats WHERE user_id = $1';
-    const referralStatsResult = await pool.query(referralStatsQuery, [userId]);
-    const referralStats = referralStatsResult.rows[0];
-
-    // Получаем роль пользователя
-    const userRoleQuery = 'SELECT role FROM user_roles WHERE user_id = $1';
-    const userRoleResult = await pool.query(userRoleQuery, [userId]);
-    const userRole = userRoleResult.rows[0];
-
-    // Удаляем использованный код
-    delete authCodes[authCode];
-
-    res.json({
-      success: true,
-      profile: user,
-      balance,
-      referralStats,
-      role: userRole?.role || 'user',
-    });
-  } catch (error) {
-    console.error('Error verifying auth code:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });

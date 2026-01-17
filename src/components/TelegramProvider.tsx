@@ -1,9 +1,8 @@
-import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useTelegram, TelegramUser } from '@/hooks/useTelegram';
 import { useTelegramAuth, AuthProfile, AuthBalance, AuthReferralStats } from '@/hooks/useTelegramAuth';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import AuthModal from './AuthModal';
 
 interface TelegramContextType {
   user: TelegramUser | null;
@@ -19,7 +18,6 @@ interface TelegramContextType {
   authReferralStats: AuthReferralStats | null;
   authRole: string;
   refetchAuth: () => void;
-  setAuthenticatedState: (profile: AuthProfile, balance: AuthBalance, referralStats: AuthReferralStats, role?: string) => void;
 }
 
 const TelegramContext = createContext<TelegramContextType>({
@@ -35,7 +33,6 @@ const TelegramContext = createContext<TelegramContextType>({
   authReferralStats: null,
   authRole: 'user',
   refetchAuth: () => {},
-  setAuthenticatedState: () => {},
 });
 
 export const useTelegramContext = () => useContext(TelegramContext);
@@ -55,20 +52,7 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
     referralStats: authReferralStats,
     role: authRole,
     refetch: refetchAuth,
-    setAuthenticatedState,
   } = useTelegramAuth();
-
-  const [showAuthModal, setShowAuthModal] = useState(false);
-
-  // Показываем модальное окно аутентификации, если:
-  // 1. Пользователь не в Telegram Web App
-  // 2. Пользователь не аутентифицирован
-  // 3. Приложение полностью загружено
-  useEffect(() => {
-    if (!telegram.isTelegram && !isAuthenticated && !isAuthLoading) {
-      setShowAuthModal(true);
-    }
-  }, [telegram.isTelegram, isAuthenticated, isAuthLoading]);
 
   const contextValue: TelegramContextType = {
     ...telegram,
@@ -80,7 +64,6 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
     authReferralStats,
     authRole,
     refetchAuth,
-    setAuthenticatedState,
   };
 
   // Don't show loading screen here since SplashScreen handles it
@@ -114,12 +97,6 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
   return (
     <TelegramContext.Provider value={contextValue}>
       {children}
-      {!telegram.isTelegram && (
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-        />
-      )}
     </TelegramContext.Provider>
   );
 };

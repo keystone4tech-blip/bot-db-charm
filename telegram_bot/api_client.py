@@ -104,25 +104,5 @@ class ApiClient:
                 print(f"Exception during getting user: {e}")
                 return None
 
-    async def send_auth_code(self, telegram_id: int, auth_code: str) -> bool:
-        """
-        Отправка аутентификационного кода пользователю через Telegram
-        """
-        from aiogram import Bot
-        import os
-        from dotenv import load_dotenv
-
-        load_dotenv()
-        bot_token = os.getenv("BOT_TOKEN", os.getenv("TELEGRAM_BOT_TOKEN"))
-        bot = Bot(token=bot_token)
-
-        try:
-            message_text = f"Ваш код для входа в приложение: <b>{auth_code}</b>\n\nВведите этот код на сайте для входа в аккаунт."
-            await bot.send_message(chat_id=telegram_id, text=message_text)
-            return True
-        except Exception as e:
-            print(f"Exception during sending auth code: {e}")
-            return False
-
 # Global API client instance
 api_client = ApiClient()

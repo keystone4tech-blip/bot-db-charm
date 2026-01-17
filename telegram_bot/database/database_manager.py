@@ -1,8 +1,5 @@
 import asyncpg
-import sqlite3
 import os
-import uuid
-from datetime import datetime
 from typing import Optional
 from dotenv import load_dotenv
 
@@ -13,7 +10,7 @@ load_dotenv()
 USE_API_CLIENT = os.getenv("USE_API_CLIENT", "false").lower() == "true"
 USE_DB_API = os.getenv("USE_DB_API", "false").lower() == "true"
 USE_SUPABASE = os.getenv("USE_SUPABASE", "false").lower() == "true"
-USE_SQLITE = os.getenv("USE_SQLITE", "false").lower() == "true"
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 if USE_API_CLIENT:
     # Используем API клиент для взаимодействия с Node.js сервером
@@ -23,39 +20,46 @@ elif USE_SUPABASE:
     from supabase import create_client, Client
     from ..supabase_client import supabase_client
 else:
-    # Для SQLite
-    SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "./data/local_database.db")
+    # Используем прямое подключение к базе данных
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PORT = os.getenv("DB_PORT", "5432")
+    DB_USER = os.getenv("DB_USER", "postgres")
+    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    DB_NAME = os.getenv("DB_NAME")
+
+    # Формируем строку подключения
+    if DB_HOST and DB_USER and DB_PASSWORD and DB_NAME:
+        DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    else:
+        # Резервный вариант - старые переменные
+        DATABASE_URL = os.getenv("POSTGRES_DATABASE_URL", os.getenv("DATABASE_URL"))
 
 class Database:
     def __init__(self):
         self.pool: Optional[asyncpg.Pool] = None
-        self.sqlite_conn = None
         self.use_supabase = USE_SUPABASE
         self.use_api_client = USE_API_CLIENT
         self.use_db_api = USE_DB_API
-        self.use_sqlite = USE_SQLITE
+        self.supabase_service_role_key = SUPABASE_SERVICE_ROLE_KEY
 
     async def connect(self):
-        """Создает подключение к базе данных"""
+        """Создает подключение к базе данных или инициализирует API клиент"""
         if self.use_api_client:
             print("Используется API клиент для взаимодействия с Node.js сервером")
+            # При использовании API клиента не нужно подключаться к БД напрямую
         elif self.use_db_api:
             print("Используется DB API для безопасного доступа к базе данных")
+            # Импортируем DB API клиент
+            from ..db_api_client import db_api_client
+            self.db_api_client = db_api_client
+        elif self.use_db_api:
+            print("Используется DB API для безопасного доступа к базе данных")
+            # Импортируем DB API клиент
             from ..db_api_client import db_api_client
             self.db_api_client = db_api_client
         elif self.use_supabase:
             print("Используется Supabase для хранения данных")
-        elif self.use_sqlite:
-            # Создаем директорию для базы данных, если её нет
-            os.makedirs(os.path.dirname(SQLITE_DB_PATH), exist_ok=True)
-
-            # Подключение к SQLite
-            self.sqlite_conn = sqlite3.connect(SQLITE_DB_PATH, check_same_thread=False)
-            self.sqlite_conn.row_factory = sqlite3.Row  # Для доступа к колонкам по имени
-            print(f"Подключение к SQLite установлено: {SQLITE_DB_PATH}")
-
-            # Создаем таблицы
-            await self._create_tables_sqlite()
+            # Подключение к Supabase уже инициализировано в supabase_client
         else:
             if not DATABASE_URL:
                 raise ValueError("Не найдена строка подключения к базе данных. Установите переменную окружения SUPABASE_DATABASE_URL")
@@ -67,181 +71,6 @@ class Database:
                 command_timeout=60
             )
             print("Подключение к базе данных установлено")
-
-    async def _create_tables_sqlite(self):
-        """Создает таблицы в SQLite"""
-        cursor = self.sqlite_conn.cursor()
-
-        # Создаем таблицы
-        cursor.executescript("""
-            -- Таблица пользователей
-            CREATE TABLE IF NOT EXISTS profiles (
-                id TEXT PRIMARY KEY,
-                telegram_id INTEGER UNIQUE NOT NULL,
-                telegram_username TEXT,
-                first_name TEXT NOT NULL,
-                last_name TEXT,
-                avatar_url TEXT,
-                referral_code TEXT UNIQUE,
-                referred_by TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Индекс для быстрого поиска по Telegram ID
-            CREATE INDEX IF NOT EXISTS idx_profiles_telegram_id ON profiles(telegram_id);
-
-            -- Индекс для быстрого поиска по реферальному коду
-            CREATE INDEX IF NOT EXISTS idx_profiles_referral_code ON profiles(referral_code);
-
-            -- Таблица рефералов
-            CREATE TABLE IF NOT EXISTS referrals (
-                id TEXT PRIMARY KEY,
-                referrer_id TEXT NOT NULL,
-                referred_id TEXT NOT NULL,
-                level INTEGER DEFAULT 1,
-                is_active BOOLEAN DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-
-                -- Один пользователь не может быть рефералом одного и того же пригласившего несколько раз
-                UNIQUE (referrer_id, referred_id)
-            );
-
-            -- Индексы для быстрого поиска рефералов
-            CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id);
-            CREATE INDEX IF NOT EXISTS idx_referrals_referred ON referrals(referred_id);
-
-            -- Таблица балансов пользователей
-            CREATE TABLE IF NOT EXISTS balances (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                internal_balance REAL DEFAULT 0.00,
-                external_balance REAL DEFAULT 0.00,
-                total_earned REAL DEFAULT 0.00,
-                total_withdrawn REAL DEFAULT 0.00,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Индекс для быстрого поиска баланса по пользователю
-            CREATE INDEX IF NOT EXISTS idx_balances_user_id ON balances(user_id);
-
-            -- Таблица статистики пользователей
-            CREATE TABLE IF NOT EXISTS user_stats (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                total_logins INTEGER DEFAULT 0,
-                last_login_at DATETIME,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Индекс для быстрого поиска статистики по пользователю
-            CREATE INDEX IF NOT EXISTS idx_user_stats_user_id ON user_stats(user_id);
-
-            -- Таблица статистики по рефералам
-            CREATE TABLE IF NOT EXISTS referral_stats (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                total_referrals INTEGER DEFAULT 0,
-                total_earnings REAL DEFAULT 0.00,
-                level_1_count INTEGER DEFAULT 0,
-                level_2_count INTEGER DEFAULT 0,
-                level_3_count INTEGER DEFAULT 0,
-                level_4_count INTEGER DEFAULT 0,
-                level_5_count INTEGER DEFAULT 0,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Индекс для быстрого поиска статистики по пользователю
-            CREATE INDEX IF NOT EXISTS idx_referral_stats_user_id ON referral_stats(user_id);
-
-            -- Таблица подписок
-            CREATE TABLE IF NOT EXISTS subscriptions (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                plan_name TEXT NOT NULL,
-                plan_type TEXT NOT NULL,
-                status TEXT DEFAULT 'inactive',
-                expires_at DATETIME,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Индекс для быстрого поиска активных подписок
-            CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id_status ON subscriptions(user_id, status);
-            CREATE INDEX IF NOT EXISTS idx_subscriptions_expires_at ON subscriptions(expires_at);
-
-            -- Таблица ключей VPN
-            CREATE TABLE IF NOT EXISTS vpn_keys (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                status TEXT DEFAULT 'inactive',
-                expires_at DATETIME,
-                server_location TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Индекс для быстрого поиска VPN ключей по пользователю
-            CREATE INDEX IF NOT EXISTS idx_vpn_keys_user_id ON vpn_keys(user_id);
-
-            -- Таблица телеграм каналов
-            CREATE TABLE IF NOT EXISTS telegram_channels (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                channel_title TEXT NOT NULL,
-                channel_username TEXT,
-                subscribers_count INTEGER,
-                is_verified BOOLEAN DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Индекс для быстрого поиска каналов по пользоватю
-            CREATE INDEX IF NOT EXISTS idx_channels_user_id ON telegram_channels(user_id);
-
-            -- Таблица ботов пользователя
-            CREATE TABLE IF NOT EXISTS user_bots (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                bot_name TEXT NOT NULL,
-                bot_username TEXT,
-                bot_type TEXT DEFAULT 'unknown',
-                is_active BOOLEAN DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Индекс для быстрого поиска ботов по пользователю
-            CREATE INDEX IF NOT EXISTS idx_bots_user_id ON user_bots(user_id);
-
-            -- Таблица ролей пользователей
-            CREATE TABLE IF NOT EXISTS user_roles (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                role TEXT DEFAULT 'user',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Индекс для быстрого поиска роли по пользователю
-            CREATE INDEX IF NOT EXISTS idx_roles_user_id ON user_roles(user_id);
-
-            -- Таблица заявок в поддержку
-            CREATE TABLE IF NOT EXISTS support_tickets (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                category TEXT NOT NULL,
-                subject TEXT,
-                message TEXT NOT NULL,
-                status TEXT DEFAULT 'open',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Индекс для быстрого поиска заявок по пользователю
-            CREATE INDEX IF NOT EXISTS idx_tickets_user_id ON support_tickets(user_id);
-        """)
-
-        self.sqlite_conn.commit()
 
     async def get_user_by_telegram_id(self, telegram_id: int):
         """Получает пользователя по telegram_id"""
@@ -257,19 +86,6 @@ class Database:
             # Используем Supabase клиент для получения пользователя
             from ..supabase_client import supabase_client
             return await supabase_client.get_user_by_telegram_id(telegram_id)
-        elif self.use_sqlite:
-            # Для SQLite
-            cursor = self.sqlite_conn.cursor()
-            cursor.execute("""
-                SELECT id, telegram_id, telegram_username, first_name, last_name,
-                       avatar_url, referral_code, referred_by, created_at
-                FROM profiles
-                WHERE telegram_id = ?
-            """, (telegram_id,))
-            row = cursor.fetchone()
-            if row:
-                return dict(row)
-            return None
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
@@ -318,31 +134,9 @@ class Database:
                 telegram_id, first_name, last_name, username,
                 avatar_url, referral_code, referred_by
             )
-        elif self.use_sqlite:
-            # Для SQLite
-            user_id = str(uuid.uuid4())
-
-            cursor = self.sqlite_conn.cursor()
-            cursor.execute("""
-                INSERT INTO profiles (
-                    id, telegram_id, telegram_username, first_name, last_name,
-                    avatar_url, referral_code, referred_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (user_id, telegram_id, username, first_name, last_name,
-                  avatar_url, referral_code, referred_by))
-
-            self.sqlite_conn.commit()
-
-            # Создаем связанные записи
-            await self._create_user_related_records(user_id, referred_by)
-
-            return {"id": user_id, "telegram_id": telegram_id, "created_at": datetime.now()}
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
-
-            # Проверяем и создаем таблицы при подключении
-            await self.check_and_create_tables()
 
             async with self.pool.acquire() as connection:
                 query = """
@@ -358,64 +152,14 @@ class Database:
                     avatar_url, referral_code, referred_by
                 )
 
-    async def _create_user_related_records(self, user_id: str, referred_by: str = None):
-        """Создает связанные записи для нового пользователя"""
-        cursor = self.sqlite_conn.cursor()
-
-        # Создаем запись баланса
-        balance_id = str(uuid.uuid4())
-        cursor.execute("""
-            INSERT INTO balances (id, user_id, internal_balance, external_balance, total_earned, total_withdrawn)
-            VALUES (?, ?, 0, 0, 0, 0)
-        """, (balance_id, user_id))
-
-        # Создаем запись статистики пользователя
-        stats_id = str(uuid.uuid4())
-        cursor.execute("""
-            INSERT INTO user_stats (id, user_id, total_logins, last_login_at)
-            VALUES (?, ?, 1, ?)
-        """, (stats_id, user_id, datetime.now()))
-
-        # Создаем запись статистики по рефералам
-        referral_stats_id = str(uuid.uuid4())
-        cursor.execute("""
-            INSERT INTO referral_stats (id, user_id, total_referrals, total_earnings)
-            VALUES (?, ?, 0, 0)
-        """, (referral_stats_id, user_id))
-
-        # Создаем запись роли пользователя
-        role_id = str(uuid.uuid4())
-        cursor.execute("""
-            INSERT INTO user_roles (id, user_id, role)
-            VALUES (?, ?, 'user')
-        """, (role_id, user_id))
-
-        # Если пользователь был приглашен, создаем запись о реферале
-        if referred_by:
-            # Создаем прямую реферальную связь (уровень 1)
-            referral_id = str(uuid.uuid4())
-            cursor.execute("""
-                INSERT INTO referrals (id, referrer_id, referred_id, level, is_active)
-                VALUES (?, ?, ?, 1, 1)
-            """, (referral_id, referred_by, user_id))
-
-            # Обновляем статистику реферала у пригласившего
-            cursor.execute("""
-                UPDATE referral_stats
-                SET total_referrals = total_referrals + 1, level_1_count = level_1_count + 1
-                WHERE user_id = ?
-            """, (referred_by,))
-
-        self.sqlite_conn.commit()
+            # Проверяем и создаем таблицы при подключении
+            await self.check_and_create_tables()
 
     async def disconnect(self):
-        """Закрывает соединение с базой данных"""
+        """Закрывает пул соединений или завершает работу с API клиентом"""
         if not self.use_api_client and not self.use_supabase and self.pool:
             await self.pool.close()
-            print("Подключение к PostgreSQL закрыто")
-        elif self.use_sqlite and self.sqlite_conn:
-            self.sqlite_conn.close()
-            print("Подключение к SQLite закрыто")
+            print("Подключение к базе данных закрыто")
         elif self.use_api_client:
             print("Отключение от API клиента завершено")
         elif self.use_supabase:
@@ -1109,19 +853,6 @@ class Database:
             # Используем Supabase клиент для получения пользователя
             from ..supabase_client import supabase_client
             return await supabase_client.get_user_by_telegram_id(telegram_id)
-        elif self.use_sqlite:
-            # Для SQLite
-            cursor = self.sqlite_conn.cursor()
-            cursor.execute("""
-                SELECT id, telegram_id, telegram_username, first_name, last_name,
-                       avatar_url, referral_code, referred_by, created_at
-                FROM profiles
-                WHERE telegram_id = ?
-            """, (telegram_id,))
-            row = cursor.fetchone()
-            if row:
-                return dict(row)
-            return None
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
@@ -1170,25 +901,6 @@ class Database:
                 telegram_id, first_name, last_name, username,
                 avatar_url, referral_code, referred_by
             )
-        elif self.use_sqlite:
-            # Для SQLite
-            user_id = str(uuid.uuid4())
-
-            cursor = self.sqlite_conn.cursor()
-            cursor.execute("""
-                INSERT INTO profiles (
-                    id, telegram_id, telegram_username, first_name, last_name,
-                    avatar_url, referral_code, referred_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (user_id, telegram_id, username, first_name, last_name,
-                  avatar_url, referral_code, referred_by))
-
-            self.sqlite_conn.commit()
-
-            # Создаем связанные записи
-            await self._create_user_related_records(user_id, referred_by)
-
-            return {"id": user_id, "telegram_id": telegram_id, "created_at": datetime.now()}
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
@@ -1223,34 +935,6 @@ class Database:
         elif self.use_supabase:
             # Используем Supabase клиент для получения статистики рефералов
             return await supabase_client.get_referral_stats(user_id)
-        elif self.use_sqlite:
-            # Для SQLite - простая реализация (без рекурсивного поиска по уровням)
-            cursor = self.sqlite_conn.cursor()
-
-            # Получаем количество рефералов первого уровня
-            cursor.execute("""
-                SELECT COUNT(*) as count
-                FROM referrals
-                WHERE referrer_id = ? AND level = 1 AND is_active = 1
-            """, (user_id,))
-            level_1_count = cursor.fetchone()['count']
-
-            # Общее количество рефералов
-            cursor.execute("""
-                SELECT COUNT(*) as count
-                FROM referrals
-                WHERE referrer_id = ? AND is_active = 1
-            """, (user_id,))
-            total_referrals = cursor.fetchone()['count']
-
-            return {
-                'level_1_count': level_1_count,
-                'level_2_count': 0,  # SQLite не поддерживает рекурсивные CTE
-                'level_3_count': 0,
-                'level_4_count': 0,
-                'level_5_count': 0,
-                'total_referrals': total_referrals
-            }
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
@@ -1283,7 +967,7 @@ class Database:
                 """
                 return await connection.fetchrow(query, user_id)
 
-    async def get_user_by_referral_code(self, referral_code: str):
+    async def get_user_referral_code(self, referral_code: str):
         """Получает пользователя по реферальному коду"""
         if self.use_api_client:
             # При использовании API клиента, поиск по реферальному коду требует дополнительного API эндпоинта
@@ -1301,14 +985,6 @@ class Database:
         elif self.use_supabase:
             # Используем Supabase клиент для получения пользователя по реферальному коду
             return await supabase_client.get_user_by_referral_code(referral_code)
-        elif self.use_sqlite:
-            # Для SQLite
-            cursor = self.sqlite_conn.cursor()
-            cursor.execute("SELECT id, telegram_id, first_name, last_name, telegram_username FROM profiles WHERE referral_code = ?", (referral_code.upper(),))
-            row = cursor.fetchone()
-            if row:
-                return dict(row)
-            return None
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
@@ -1339,15 +1015,6 @@ class Database:
         elif self.use_supabase:
             # Используем Supabase клиент для создания реферальной записи
             await supabase_client.create_referral_record(referrer_id, referred_id, level)
-        elif self.use_sqlite:
-            # Для SQLite
-            cursor = self.sqlite_conn.cursor()
-            referral_id = str(uuid.uuid4())
-            cursor.execute("""
-                INSERT OR REPLACE INTO referrals (id, referrer_id, referred_id, level, is_active)
-                VALUES (?, ?, ?, ?, 1)
-            """, (referral_id, referrer_id, referred_id, level))
-            self.sqlite_conn.commit()
         else:
             if not self.pool:
                 raise Exception("База данных не подключена")
