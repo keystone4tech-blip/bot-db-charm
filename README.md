@@ -74,7 +74,21 @@ curl -sSL https://raw.githubusercontent.com/keystone4tech-blip/bot-db-charm/main
 ## Configuration
 
 Before running the project, make sure to configure your `.env` file with the following settings:
-- `BOT_TOKEN`: Your Telegram bot token from @BotFather
+
+### Getting Your Telegram Bot Token
+
+To get your Telegram bot token:
+
+1. Open Telegram and search for `@BotFather`
+2. Start a chat with BotFather and use the `/newbot` command
+3. Follow the instructions to create your bot
+4. After creation, BotFather will provide you with an HTTP API access token
+5. Copy this token and use it as `TELEGRAM_BOT_TOKEN` in your `.env` file
+
+**Important**: Never share your bot token publicly or commit it to version control systems.
+
+Configuration settings:
+- `TELEGRAM_BOT_TOKEN`: Your Telegram bot token from @BotFather (required for authentication)
 - `DB_PASSWORD`: Password for PostgreSQL database (default is 2046)
 - `WEBAPP_URL`: Your domain URL (e.g., https://keystone-tech.ru)
 

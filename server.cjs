@@ -30,57 +30,55 @@ function validateTelegramInitData(initData, botToken) {
   try {
     const params = new URLSearchParams(initData);
     const hash = params.get('hash');
-    
+
     if (!hash) {
       console.error('No hash in initData');
       return null;
     }
-    
+
     // Remove hash from params for validation
     params.delete('hash');
-    
-    // Sort parameters and create data check string
-    const dataCheckArr = [];
-    params.sort();
-    params.forEach((value, key) => {
-      dataCheckArr.push(`${key}=${value}`);
-    });
-    const dataCheckString = dataCheckArr.join('\n');
-    
+
+    // Sort parameters in lexicographical order and create data check string
+    const dataCheckString = [...params.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => `${key}=${value}`)
+      .join('\n');
+
     // Create secret key using HMAC-SHA256
     const secretKey = crypto
       .createHmac('sha256', crypto.createHash('sha256').update('WebAppData').digest())
       .update(botToken)
       .digest();
-    
+
     // Calculate hash
     const calculatedHash = crypto
       .createHmac('sha256', secretKey)
       .update(dataCheckString)
       .digest('hex');
-    
+
     if (calculatedHash !== hash.toLowerCase()) {
       console.error('Hash mismatch:', { calculated: calculatedHash, received: hash.toLowerCase() });
       return null;
     }
-    
-    // Check auth_date (allow 24 hours)
+
+    // Check auth_date (allow 1 hour - more secure than 24 hours)
     const authDate = parseInt(params.get('auth_date') || '0');
     const now = Math.floor(Date.now() / 1000);
-    if (now - authDate > 86400) {
+    if (now - authDate > 3600) { // 1 hour in seconds
       console.error('Auth data expired');
       return null;
     }
-    
+
     // Parse user data
     const userStr = params.get('user');
     if (!userStr) {
       console.error('No user in initData');
       return null;
     }
-    
-    const user = JSON.parse(userStr);
-    
+
+    const user = JSON.parse(decodeURIComponent(userStr));
+
     return {
       user,
       auth_date: authDate || 0,

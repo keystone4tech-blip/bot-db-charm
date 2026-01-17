@@ -160,10 +160,10 @@ export const useTelegramAuth = () => {
 
   // Функция для аутентификации с помощью кода
   const authenticateWithCode = useCallback(async (authCode: string) => {
-    setIsLoading(true);
-    setError('');
+    setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
+      const { verifyAuthCode } = await import('@/lib/api'); // Динамический импорт для избежания циклических зависимостей
       const result = await verifyAuthCode(authCode);
 
       if (result.success) {
@@ -179,16 +179,14 @@ export const useTelegramAuth = () => {
         toast.success('Успешный вход!');
         return true;
       } else {
-        setError(result.error || 'Неверный код');
+        setAuthState(prev => ({ ...prev, isLoading: false, error: result.error || 'Неверный код' }));
         return false;
       }
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : 'Ошибка при проверке кода';
-      setError(errorMessage);
+      setAuthState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
       toast.error(errorMessage);
       return false;
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
