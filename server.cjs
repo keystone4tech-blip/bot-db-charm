@@ -1,4 +1,5 @@
 // Backend сервер для работы с PostgreSQL базой данных напрямую
+require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
 const crypto = require('crypto');

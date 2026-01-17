@@ -55,6 +55,7 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
     referralStats: authReferralStats,
     role: authRole,
     refetch: refetchAuth,
+    setAuthenticatedState,
   } = useTelegramAuth();
 
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -68,18 +69,6 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
       setShowAuthModal(true);
     }
   }, [telegram.isTelegram, isAuthenticated, isAuthLoading]);
-
-  const {
-    isAuthenticated,
-    isLoading: isAuthLoading,
-    error: authError,
-    profile: authProfile,
-    balance: authBalance,
-    referralStats: authReferralStats,
-    role: authRole,
-    refetch: refetchAuth,
-    setAuthenticatedState,
-  } = useTelegramAuth();
 
   const contextValue: TelegramContextType = {
     ...telegram,
