@@ -1,7 +1,7 @@
 const { validateTelegramInitData, validateBotToken } = require('../services/telegramService.cjs');;
 const { getUserByTelegramId, createProfile, updateExistingUserProfile, getUserRole } = require('../services/userService.cjs');;
 const { getBalance } = require('../services/balanceService.cjs');;
-const { getReferralStats } = require('../services/referralService.cjs');;
+const { getReferralStats, verifyReferralCode, getReferrerInfo } = require('../services/referralService.cjs');;
 const { ValidationError, UnauthorizedError } = require('../utils/errors.cjs');;
 const log = require('../utils/logger.cjs');;
 
@@ -125,8 +125,48 @@ async function handleGetUserByTelegramId(req, res, next) {
   }
 }
 
+async function handleVerifyReferralCode(req, res, next) {
+  try {
+    const { referral_code, telegram_id } = req.body;
+
+    if (!referral_code) {
+      throw new ValidationError('referral_code is required');
+    }
+
+    const referrerInfo = await getReferrerInfo(referral_code.toUpperCase());
+
+    if (!referrerInfo) {
+      return res.json({
+        valid: false,
+        message: 'Реферальный код не найден'
+      });
+    }
+
+    // Check if user is trying to use their own code
+    if (telegram_id && referrerInfo.telegram_id === telegram_id) {
+      return res.json({
+        valid: false,
+        message: 'Нельзя использовать свой собственный реферальный код'
+      });
+    }
+
+    res.json({
+      valid: true,
+      user: {
+        id: referrerInfo.id,
+        first_name: referrerInfo.first_name,
+        username: referrerInfo.telegram_username,
+        referrals_count: referrerInfo.referrals_count || 0
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   handleTelegramAuth,
   handleUserRegister,
   handleGetUserByTelegramId,
+  handleVerifyReferralCode,
 };

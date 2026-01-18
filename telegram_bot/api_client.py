@@ -104,5 +104,32 @@ class ApiClient:
                 print(f"Exception during getting user: {e}")
                 return None
 
+    async def verify_referral_code(self, referral_code: str, telegram_id: int = None) -> Optional[Dict[Any, Any]]:
+        """
+        Проверка реферального кода через API
+        """
+        async with aiohttp.ClientSession() as session:
+            try:
+                payload = {
+                    'referral_code': referral_code
+                }
+                if telegram_id:
+                    payload['telegram_id'] = telegram_id
+
+                async with session.post(
+                    f"{self.base_url}/api/referral-code/verify",
+                    json=payload
+                ) as response:
+                    if response.status == 200:
+                        return await response.json()
+                    else:
+                        print(f"Error verifying referral code: {response.status}")
+                        error_text = await response.text()
+                        print(f"Error details: {error_text}")
+                        return None
+            except Exception as e:
+                print(f"Exception during verifying referral code: {e}")
+                return None
+
 # Global API client instance
 api_client = ApiClient()

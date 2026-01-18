@@ -51,9 +51,57 @@ async function getReferralStats(userId) {
   return result.rows[0] || null;
 }
 
+async function getReferrerInfo(referralCode) {
+  if (!referralCode) {
+    return null;
+  }
+
+  const query = `
+    SELECT 
+      p.id,
+      p.telegram_id,
+      p.telegram_username,
+      p.first_name,
+      p.last_name,
+      COALESCE(rs.total_referrals, 0) as referrals_count
+    FROM profiles p
+    LEFT JOIN referral_stats rs ON p.id = rs.user_id
+    WHERE p.referral_code = $1
+  `;
+  const result = await pool.query(query, [referralCode.toUpperCase()]);
+
+  if (result.rows.length > 0) {
+    log.info('Found referrer info:', result.rows[0].id);
+    return result.rows[0];
+  }
+
+  return null;
+}
+
+async function verifyReferralCode(referralCode, telegramId = null) {
+  if (!referralCode) {
+    return { valid: false, message: 'Реферальный код не указан' };
+  }
+
+  const referrer = await getReferrerInfo(referralCode);
+
+  if (!referrer) {
+    return { valid: false, message: 'Реферальный код не найден' };
+  }
+
+  // Check if user is trying to use their own code
+  if (telegramId && referrer.telegram_id === telegramId) {
+    return { valid: false, message: 'Нельзя использовать свой собственный реферальный код' };
+  }
+
+  return { valid: true, referrer };
+}
+
 module.exports = {
   generateReferralCode,
   findReferrerByCode,
   createReferralRelationship,
   getReferralStats,
+  getReferrerInfo,
+  verifyReferralCode,
 };
