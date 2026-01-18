@@ -95,7 +95,7 @@ async function updateTicketStatus(ticketId, status) {
 
 async function getChatMessages(ticketId) {
   const query = `
-    SELECT * FROM support_chat_messages
+    SELECT * FROM support_messages
     WHERE ticket_id = $1
     ORDER BY created_at ASC
   `;
@@ -107,7 +107,7 @@ async function sendChatMessage(messageData) {
   const { ticket_id, sender_id, sender_type, message, file_url, file_type, file_name } = messageData;
 
   const query = `
-    INSERT INTO support_chat_messages (
+    INSERT INTO support_messages (
       ticket_id, sender_id, sender_type, message, file_url, file_type, file_name
     )
     VALUES ($1, $2, $3, $4, $5, $6, $7)

@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
 
 export interface Ticket {
   id: string;
@@ -54,10 +53,9 @@ export const useSupportTickets = () => {
       setError(null);
 
       const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/support-tickets?user_id=${userId}`,
+        `${SERVER_BASE_URL}/api/support-tickets/${userId}`,
         {
           headers: {
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json',
           },
         }
@@ -84,9 +82,8 @@ export const useSupportTickets = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/support-tickets?admin=true`, {
+      const response = await fetch(`${SERVER_BASE_URL}/api/support-tickets`, {
         headers: {
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json',
         },
       });
@@ -117,9 +114,8 @@ export const useSupportTickets = () => {
       }
       setError(null);
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/support-chat?ticket_id=${ticketId}`, {
+      const response = await fetch(`${SERVER_BASE_URL}/api/support-chat/${ticketId}`, {
         headers: {
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json',
         },
       });
@@ -173,10 +169,9 @@ export const useSupportTickets = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/support-tickets`, {
+      const response = await fetch(`${SERVER_BASE_URL}/api/support-tickets`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ user_id: userId, category, subject, message }),
@@ -234,10 +229,9 @@ export const useSupportTickets = () => {
         (m) => m.is_admin_reply && (m.message_type ?? 'text') !== 'system'
       );
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/support-chat`, {
+      const response = await fetch(`${SERVER_BASE_URL}/api/support-chat`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -286,10 +280,9 @@ export const useSupportTickets = () => {
   // Обновление статуса тикета
   const updateTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'closed' | 'resolved') => {
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/support-tickets`, {
+      const response = await fetch(`${SERVER_BASE_URL}/api/support-tickets/${ticketId}`, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ ticket_id: ticketId, status }),

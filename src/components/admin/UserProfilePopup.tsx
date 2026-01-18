@@ -26,9 +26,6 @@ import {
   Loader2,
 } from 'lucide-react';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
 interface UserProfileData {
   profile: {
     id: string;
@@ -101,11 +98,11 @@ export const UserProfilePopup = ({ userId, isOpen, onClose, userName }: UserProf
       setLoading(true);
       setError(null);
 
+      const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
       const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/admin-user-profile?user_id=${userId}`,
+        `${serverBaseUrl}/api/admin-user-profile?user_id=${userId}`,
         {
           headers: {
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json',
           },
         }
