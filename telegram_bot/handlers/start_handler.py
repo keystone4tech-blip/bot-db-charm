@@ -221,17 +221,3 @@ async def handle_referral_code_input(message: Message, state: FSMContext):
     except Exception as e:
         logger.error(f"Error handling referral code input: {e}")
         await message.answer("❌ Ошибка обработки кода. Попробуйте позже.")
-        
-@start_router.message(Command("start"))
-async def command_start_with_params(message: Message, state: FSMContext):
-    """
-    Дублирующий обработчик для /start с параметрами
-    """
-    await command_start_handler(message, state)
-
-@start_router.message(F.text == "/start")
-async def command_start_text(message: Message, state: FSMContext):
-    """
-    Обработчик текстовой команды /start
-    """
-    await command_start_handler(message, state)
