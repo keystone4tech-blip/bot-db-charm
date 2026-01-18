@@ -81,6 +81,51 @@ async function ensureTablesExist() {
   }
 }
 
+async function getPlatformStats() {
+  try {
+    const stats = {};
+    
+    const usersCount = await pool.query('SELECT COUNT(*) FROM profiles');
+    stats.totalUsers = parseInt(usersCount.rows[0].count);
+    
+    const botsCount = await pool.query('SELECT COUNT(*) FROM bots WHERE is_active = true');
+    stats.activeBots = parseInt(botsCount.rows[0].count);
+    
+    const subsCount = await pool.query("SELECT COUNT(*) FROM subscriptions WHERE is_active = true");
+    stats.activeSubscriptions = parseInt(subsCount.rows[0].count);
+    
+    const vpnCount = await pool.query('SELECT COUNT(*) FROM vpn_keys WHERE is_active = true');
+    stats.activeVpnKeys = parseInt(vpnCount.rows[0].count);
+    
+    const channelsCount = await pool.query('SELECT COUNT(*) FROM channels');
+    stats.activeChannels = parseInt(channelsCount.rows[0].count);
+    
+    const revenue = await pool.query('SELECT SUM(price) as total FROM subscriptions');
+    stats.monthlyRevenue = parseFloat(revenue.rows[0].total || 0);
+    
+    const balancesCount = await pool.query('SELECT COUNT(*) FROM balances');
+    stats.totalTransactions = parseInt(balancesCount.rows[0].count);
+
+    const recentActivityQuery = `
+      (SELECT id::text, 'Зарегистрирован' as action, COALESCE(first_name, telegram_id::text) as "user", created_at, 'user' as type FROM profiles ORDER BY created_at DESC LIMIT 5)
+      UNION ALL
+      (SELECT id::text, 'Создан бот' as action, bot_name as "user", created_at, 'bot' as type FROM bots ORDER BY created_at DESC LIMIT 5)
+      ORDER BY created_at DESC
+      LIMIT 10
+    `;
+    const recentActivity = await pool.query(recentActivityQuery);
+
+    return {
+      stats,
+      recentActivity: recentActivity.rows
+    };
+  } catch (error) {
+    log.error('Error getting platform stats:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   ensureTablesExist,
+  getPlatformStats,
 };

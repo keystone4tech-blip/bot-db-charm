@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useUserActivity } from '@/hooks/useUserActivity';
@@ -45,16 +44,12 @@ export const usePlatformStats = (autoRefresh: boolean = false, refreshInterval: 
       setIsLoading(true);
       setError(null);
 
-      // Call edge function that uses service role to bypass RLS
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/platform-stats`, {
-        method: 'POST',
+      const response = await fetch(`${serverBaseUrl}/api/platform-stats`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${anonKey}`,
-          'apikey': anonKey,
         },
       });
 

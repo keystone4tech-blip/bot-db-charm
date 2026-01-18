@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS vpn_keys (
 CREATE INDEX IF NOT EXISTS idx_vpn_keys_user_id ON vpn_keys(user_id);
 
 -- Таблица телеграм каналов
-CREATE TABLE IF NOT EXISTS telegram_channels (
+CREATE TABLE IF NOT EXISTS channels (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     channel_title VARCHAR(255) NOT NULL,
@@ -123,10 +123,10 @@ CREATE TABLE IF NOT EXISTS telegram_channels (
 );
 
 -- Индекс для быстрого поиска каналов по пользователю
-CREATE INDEX IF NOT EXISTS idx_channels_user_id ON telegram_channels(user_id);
+CREATE INDEX IF NOT EXISTS idx_channels_user_id ON channels(user_id);
 
 -- Таблица ботов пользователя
-CREATE TABLE IF NOT EXISTS user_bots (
+CREATE TABLE IF NOT EXISTS bots (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     bot_name VARCHAR(255) NOT NULL,
@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS user_bots (
 );
 
 -- Индекс для быстрого поиска ботов по пользователю
-CREATE INDEX IF NOT EXISTS idx_bots_user_id ON user_bots(user_id);
+CREATE INDEX IF NOT EXISTS idx_bots_user_id ON bots(user_id);
 
 -- Таблица ролей пользователей
 CREATE TABLE IF NOT EXISTS user_roles (

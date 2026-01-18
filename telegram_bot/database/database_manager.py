@@ -184,8 +184,8 @@ class Database:
             await self.ensure_referral_stats_table(connection)
             await self.ensure_subscriptions_table(connection)
             await self.ensure_vpn_keys_table(connection)
-            await self.ensure_telegram_channels_table(connection)
-            await self.ensure_user_bots_table(connection)
+            await self.ensure_channels_table(connection)
+            await self.ensure_bots_table(connection)
             await self.ensure_user_roles_table(connection)
             await self.ensure_support_tickets_table(connection)
 
@@ -611,21 +611,21 @@ class Database:
                     else:
                         await connection.execute(f"ALTER TABLE vpn_keys ADD COLUMN {col_name} {col_def.replace('PRIMARY KEY', '')}")
 
-    async def ensure_telegram_channels_table(self, connection):
-        """Проверяет и создает/обновляет таблицу telegram_channels"""
+    async def ensure_channels_table(self, connection):
+        """Проверяет и создает/обновляет таблицу channels"""
         table_exists = await connection.fetchval("""
             SELECT EXISTS (
                 SELECT FROM information_schema.tables
                 WHERE table_schema = 'public'
-                AND table_name = 'telegram_channels'
+                AND table_name = 'channels'
             );
         """)
         
         if not table_exists:
-            print("Создаем таблицу telegram_channels...")
+            print("Создаем таблицу channels...")
             await connection.execute("""
                 -- Таблица телеграм каналов
-                CREATE TABLE telegram_channels (
+                CREATE TABLE channels (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
                     channel_title VARCHAR(255) NOT NULL,
@@ -637,7 +637,7 @@ class Database:
                 );
 
                 -- Индекс для быстрого поиска каналов по пользователю
-                CREATE INDEX idx_channels_user_id ON telegram_channels(user_id);
+                CREATE INDEX idx_channels_user_id ON channels(user_id);
             """)
         else:
             columns_to_check = {
@@ -655,36 +655,36 @@ class Database:
                 column_exists = await connection.fetchval(f"""
                     SELECT EXISTS (
                         SELECT FROM information_schema.columns
-                        WHERE table_name = 'telegram_channels' AND column_name = '{col_name}'
+                        WHERE table_name = 'channels' AND column_name = '{col_name}'
                     );
                 """)
                 if not column_exists:
-                    print(f"Добавляем столбец {col_name} в таблицу telegram_channels...")
+                    print(f"Добавляем столбец {col_name} в таблицу channels...")
                     if col_name == 'id':
-                        await connection.execute(f"ALTER TABLE telegram_channels ADD COLUMN {col_name} {col_def.split('PRIMARY')[0]}")
-                        await connection.execute("ALTER TABLE telegram_channels ADD CONSTRAINT pk_telegram_channels_id PRIMARY KEY (id)")
+                        await connection.execute(f"ALTER TABLE channels ADD COLUMN {col_name} {col_def.split('PRIMARY')[0]}")
+                        await connection.execute("ALTER TABLE channels ADD CONSTRAINT pk_channels_id PRIMARY KEY (id)")
                     elif 'REFERENCES' in col_def:
                         ref_part = col_def.split('REFERENCES')[1].split('ON')[0].strip()
-                        await connection.execute(f"ALTER TABLE telegram_channels ADD COLUMN {col_name} UUID NOT NULL")
-                        await connection.execute(f"ALTER TABLE telegram_channels ADD FOREIGN KEY ({col_name}) REFERENCES {ref_part}")
+                        await connection.execute(f"ALTER TABLE channels ADD COLUMN {col_name} UUID NOT NULL")
+                        await connection.execute(f"ALTER TABLE channels ADD FOREIGN KEY ({col_name}) REFERENCES {ref_part}")
                     else:
-                        await connection.execute(f"ALTER TABLE telegram_channels ADD COLUMN {col_name} {col_def.replace('PRIMARY KEY', '')}")
+                        await connection.execute(f"ALTER TABLE channels ADD COLUMN {col_name} {col_def.replace('PRIMARY KEY', '')}")
 
-    async def ensure_user_bots_table(self, connection):
-        """Проверяет и создает/обновляет таблицу user_bots"""
+    async def ensure_bots_table(self, connection):
+        """Проверяет и создает/обновляет таблицу bots"""
         table_exists = await connection.fetchval("""
             SELECT EXISTS (
                 SELECT FROM information_schema.tables
                 WHERE table_schema = 'public'
-                AND table_name = 'user_bots'
+                AND table_name = 'bots'
             );
         """)
         
         if not table_exists:
-            print("Создаем таблицу user_bots...")
+            print("Создаем таблицу bots...")
             await connection.execute("""
                 -- Таблица ботов пользователя
-                CREATE TABLE user_bots (
+                CREATE TABLE bots (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
                     bot_name VARCHAR(255) NOT NULL,
@@ -696,7 +696,7 @@ class Database:
                 );
 
                 -- Индекс для быстрого поиска ботов по пользователю
-                CREATE INDEX idx_bots_user_id ON user_bots(user_id);
+                CREATE INDEX idx_bots_user_id ON bots(user_id);
             """)
         else:
             columns_to_check = {
@@ -714,20 +714,20 @@ class Database:
                 column_exists = await connection.fetchval(f"""
                     SELECT EXISTS (
                         SELECT FROM information_schema.columns
-                        WHERE table_name = 'user_bots' AND column_name = '{col_name}'
+                        WHERE table_name = 'bots' AND column_name = '{col_name}'
                     );
                 """)
                 if not column_exists:
-                    print(f"Добавляем столбец {col_name} в таблицу user_bots...")
+                    print(f"Добавляем столбец {col_name} в таблицу bots...")
                     if col_name == 'id':
-                        await connection.execute(f"ALTER TABLE user_bots ADD COLUMN {col_name} {col_def.split('PRIMARY')[0]}")
-                        await connection.execute("ALTER TABLE user_bots ADD CONSTRAINT pk_user_bots_id PRIMARY KEY (id)")
+                        await connection.execute(f"ALTER TABLE bots ADD COLUMN {col_name} {col_def.split('PRIMARY')[0]}")
+                        await connection.execute("ALTER TABLE bots ADD CONSTRAINT pk_bots_id PRIMARY KEY (id)")
                     elif 'REFERENCES' in col_def:
                         ref_part = col_def.split('REFERENCES')[1].split('ON')[0].strip()
-                        await connection.execute(f"ALTER TABLE user_bots ADD COLUMN {col_name} UUID NOT NULL")
-                        await connection.execute(f"ALTER TABLE user_bots ADD FOREIGN KEY ({col_name}) REFERENCES {ref_part}")
+                        await connection.execute(f"ALTER TABLE bots ADD COLUMN {col_name} UUID NOT NULL")
+                        await connection.execute(f"ALTER TABLE bots ADD FOREIGN KEY ({col_name}) REFERENCES {ref_part}")
                     else:
-                        await connection.execute(f"ALTER TABLE user_bots ADD COLUMN {col_name} {col_def.replace('PRIMARY KEY', '')}")
+                        await connection.execute(f"ALTER TABLE bots ADD COLUMN {col_name} {col_def.replace('PRIMARY KEY', '')}")
 
     async def ensure_user_roles_table(self, connection):
         """Проверяет и создает/обновляет таблицу user_roles"""

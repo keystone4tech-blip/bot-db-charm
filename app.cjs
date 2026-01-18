@@ -12,6 +12,7 @@ const botRoutes = require('./routes/bots.cjs');
 const vpnRoutes = require('./routes/vpn.cjs');
 const subscriptionRoutes = require('./routes/subscriptions.cjs');
 const supportRoutes = require('./routes/support.cjs');
+const adminRoutes = require('./routes/admin.cjs');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/api', botRoutes);
 app.use('/api', vpnRoutes);
 app.use('/api', subscriptionRoutes);
 app.use('/api', supportRoutes);
+app.use('/api', adminRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

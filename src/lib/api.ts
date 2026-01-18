@@ -144,20 +144,12 @@ export interface AuthResponse {
  */
 export const authenticateUser = async (initData: string, referralCode?: string): Promise<AuthResponse> => {
   try {
-    // В проде у нас нет локального Node.js сервера — вызываем backend-функцию Lovable Cloud
-    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
 
-    if (!baseUrl || !anonKey) {
-      throw new Error('Не настроен backend (отсутствуют переменные окружения)');
-    }
-
-    const response = await fetch(`${baseUrl}/functions/v1/telegram-auth`, {
+    const response = await fetch(`${serverBaseUrl}/api/telegram-auth`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`,
       },
       body: JSON.stringify({
         initData,
