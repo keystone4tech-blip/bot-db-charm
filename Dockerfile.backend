@@ -7,9 +7,16 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Копируем server.js
-COPY server.js ./
+# Копируем backend файлы
+COPY server.cjs ./
+COPY app.cjs ./
+COPY config ./config
+COPY middleware ./middleware
+COPY services ./services
+COPY controllers ./controllers
+COPY routes ./routes
+COPY utils ./utils
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["node", "server.cjs"]
