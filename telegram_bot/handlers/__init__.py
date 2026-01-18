@@ -1,5 +1,4 @@
-from .komanda_start import komanda_start_router
-from .callback_handlers import callback_router
 from .start_handler import start_router
+from .error_handler import error_router
 
-__all__ = ["komanda_start_router", "callback_router", "start_router"]
+__all__ = ["start_router", "error_router"]

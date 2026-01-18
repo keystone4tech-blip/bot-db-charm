@@ -30,40 +30,22 @@ from telegram_bot.bot_instance import bot
 from telegram_bot.dispatcher import dp
 
 # Импортируем роутеры
-from telegram_bot.handlers import komanda_start_router, callback_router
+from telegram_bot.handlers import start_router, error_router
 
-# Регистрируем роутеры
-dp.include_router(komanda_start_router)
-dp.include_router(callback_router)
-
-# Импортируем базу данных
-from telegram_bot.database import database
+# Регистрируем роутеры (error_router должен быть первым)
+dp.include_router(error_router)
+dp.include_router(start_router)
 
 async def main():
     """
     Основная функция запуска бота
     """
     try:
-        # Подключаемся к базе данных
-        await database.connect()
-        logger.info("Подключение к базе данных установлено")
-    except Exception as e:
-        logger.error(f"Ошибка подключения к базе данных: {e}")
-        return
-
-    try:
         logger.info("Запуск бота...")
         # Запускаем бота
         await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
     except Exception as e:
         logger.error(f"Ошибка при работе бота: {e}")
-    finally:
-        # Закрываем соединение с базой данных при завершении
-        try:
-            await database.disconnect()
-            logger.info("Соединение с базой данных закрыто")
-        except Exception as e:
-            logger.error(f"Ошибка при закрытии соединения с базой данных: {e}")
 
 if __name__ == "__main__":
     try:
