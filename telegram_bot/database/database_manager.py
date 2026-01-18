@@ -99,6 +99,36 @@ class Database:
                 """
                 return await connection.fetchrow(query, telegram_id)
 
+    async def get_user_by_referral_code(self, referral_code: str):
+        """Получает пользователя по реферальному коду"""
+        if self.use_api_client:
+            # API клиент не имеет прямого метода для этого, используем verify
+            from ..api_client import api_client
+            result = await api_client.verify_referral_code(referral_code)
+            if result and result.get('valid'):
+                return result.get('user')
+            return None
+        elif self.use_db_api:
+            # Используем DB API клиент для получения пользователя
+            from ..db_api_client import db_api_client
+            return db_api_client.get_user_by_referral_code(referral_code)
+        elif self.use_supabase:
+            # Используем Supabase клиент для получения пользователя
+            from ..supabase_client import supabase_client
+            return await supabase_client.get_user_by_referral_code(referral_code)
+        else:
+            if not self.pool:
+                raise Exception("База данных не подключена")
+
+            async with self.pool.acquire() as connection:
+                query = """
+                    SELECT id, telegram_id, telegram_username, first_name, last_name,
+                           avatar_url, referral_code, referred_by, created_at
+                    FROM profiles
+                    WHERE referral_code = $1
+                """
+                return await connection.fetchrow(query, referral_code.upper())
+
     async def create_user(self, telegram_id: int, first_name: str, last_name: str = None,
                           username: str = None, avatar_url: str = None, referral_code: str = None,
                           referred_by: str = None):

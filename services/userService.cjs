@@ -1,7 +1,7 @@
 const pool = require('../config/database.cjs');;
 const log = require('../utils/logger.cjs');;
 const { NotFoundError } = require('../utils/errors.cjs');;
-const { DEFAULT_USER_ROLE, DEFAULT_BALANCE, DEFAULT_REFERRAL_STATS } = require('../config/constants.cjs');;
+const { DEFAULT_USER_ROLE, DEFAULT_BALANCE, DEFAULT_REFERRAL_STATS, ADMIN_ID } = require('../config/constants.cjs');;
 const { generateReferralCode, findReferrerByCode, createReferralRelationship } = require('./referralService.cjs');
 
 async function getUserByTelegramId(telegramId) {
@@ -21,10 +21,26 @@ async function getUserById(userId) {
   return result.rows[0];
 }
 
-async function createProfile(telegramUser, referralCode = null) {
+async function createProfile(telegramUser, referralCode = null, referredBy = null) {
   log.info('Creating new profile for Telegram user:', telegramUser.id);
   
-  const referrerId = await findReferrerByCode(referralCode);
+  // Determine referrer: explicit referral code, explicit referredBy, or null (will be admin or none)
+  let referrerId = null;
+  
+  if (referralCode) {
+    // Try to find referrer by code
+    referrerId = await findReferrerByCode(referralCode);
+    if (referrerId) {
+      log.info('Found referrer by code:', referrerId);
+    }
+  } else if (referredBy) {
+    // Use explicit referredBy
+    referrerId = referredBy;
+  } else {
+    // No referral - will be handled as admin case in the bot
+    log.info('No referral code provided, user will be attached to admin or none');
+  }
+  
   const newReferralCode = generateReferralCode(telegramUser.id);
 
   const createProfileQuery = `

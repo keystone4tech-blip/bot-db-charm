@@ -56,6 +56,17 @@ class SupabaseClient:
             print(f"Ошибка при получении пользователя: {e}")
             return None
 
+    async def get_user_by_referral_code(self, referral_code: str) -> Optional[Dict[str, Any]]:
+        """Получает пользователя по реферальному коду"""
+        try:
+            response = self.client.table('profiles').select('*').eq('referral_code', referral_code.upper()).execute()
+            if response.data:
+                return response.data[0]
+            return None
+        except Exception as e:
+            print(f"Ошибка при получении пользователя по реф. коду: {e}")
+            return None
+
     async def create_user(self, telegram_id: int, first_name: str, last_name: str = None,
                          username: str = None, avatar_url: str = None, referral_code: str = None,
                          referred_by: str = None) -> Optional[Dict[str, Any]]:

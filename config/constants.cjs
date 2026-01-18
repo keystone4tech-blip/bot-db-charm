@@ -1,6 +1,7 @@
 module.exports = {
   AUTH_DATA_MAX_AGE: 86400,
   DEFAULT_USER_ROLE: 'user',
+  ADMIN_ID: process.env.ADMIN_ID || process.env.ADMIN_IDS || null,
   DEFAULT_BALANCE: {
     internal_balance: 0,
     external_balance: 0,
