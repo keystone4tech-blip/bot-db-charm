@@ -62,14 +62,32 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## Deployment
+## 🚀 Deployment
 
-For deployment instructions, see [DEPLOY.md](DEPLOY.md)
+### Автоматизированный деплой на Ubuntu сервер
 
-Quick installation:
+Мы создали полную автоматизацию деплоя с Docker, CI/CD и SSL!
+
+**📖 Документация по деплою:**
+
+- **[DEPLOY_README.md](DEPLOY_README.md)** - 🎯 НАЧНИТЕ ЗДЕСЬ - Навигация по всем инструкциям
+- **[QUICK_DEPLOY.md](QUICK_DEPLOY.md)** - ⚡ Быстрый старт (5 минут)
+- **[DEPLOY_FULL_GUIDE.md](DEPLOY_FULL_GUIDE.md)** - 📚 Полное руководство
+- **[GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md)** - ⚙️ Настройка GitHub Actions
+- **[DEPLOY_FAQ.md](DEPLOY_FAQ.md)** - ❓ Часто задаваемые вопросы
+
+**⚡ Быстрый деплой (один скрипт):**
 ```bash
-curl -sSL https://raw.githubusercontent.com/keystone4tech-blip/bot-db-charm/main/install.sh | bash
+# На Ubuntu сервере:
+curl -fsSL https://raw.githubusercontent.com/keystone4tech-blip/bot-db-charm/main/deploy/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
 ```
+
+**Что устанавливается автоматически:**
+- ✅ Docker & Docker Compose
+- ✅ Node.js, Python, PostgreSQL
+- ✅ Nginx с SSL (Let's Encrypt)
+- ✅ Автоматический деплой через GitHub Actions
+- ✅ Все зависимости проекта
 
 ## Configuration
 

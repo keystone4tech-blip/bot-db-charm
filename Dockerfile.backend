@@ -1,22 +1,20 @@
-# Dockerfile для Node.js backend
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Копируем package.json и устанавливаем зависимости
+# Копируем package файлы
 COPY package*.json ./
+
+# Устанавливаем зависимости
 RUN npm ci --only=production
 
-# Копируем backend файлы
-COPY server.cjs ./
-COPY app.cjs ./
-COPY config ./config
-COPY middleware ./middleware
-COPY services ./services
-COPY controllers ./controllers
-COPY routes ./routes
-COPY utils ./utils
+# Копируем весь код
+COPY . .
+
+# Даем права на выполнение
+RUN chmod +x server.cjs app.cjs || true
 
 EXPOSE 3000
 
+# Запускаем сервер
 CMD ["node", "server.cjs"]
