@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # URL для WebApp
-WEBAPP_URL = os.getenv("WEBAPP_URL", "https://bot-db-charm.lovable.app/")
+WEBAPP_URL = os.getenv("WEBAPP_URL", "https://your-domain.com/")
 logger.info(f"Загружено значение WEBAPP_URL из переменных окружения: {WEBAPP_URL}")
 
 def get_webapp_keyboard(start_param: str | None = None) -> InlineKeyboardMarkup:

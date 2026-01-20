@@ -1,4 +1,4 @@
-# Welcome to your Lovable project
+# Bot DB Charm
 
 ## Project info
 
