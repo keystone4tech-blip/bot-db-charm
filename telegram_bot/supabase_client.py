@@ -11,7 +11,7 @@ class SupabaseClient:
         self.url = os.getenv("SUPABASE_URL")
         self.anon_key = os.getenv("SUPABASE_KEY")
 
-        # В Edge Functions Lovable Cloud сервисный ключ доступен через Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+        # В Edge Functions сервисный ключ доступен через Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
         # В локальной разработке используем os.getenv("SUPABASE_SERVICE_ROLE_KEY")
         # Попробуем получить ключ через Deno (в Edge Functions), если не получится - используем os.getenv (в локальной разработке)
         try:
