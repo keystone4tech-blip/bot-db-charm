@@ -1,59 +1,100 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: keystone_postgres
     environment:
-      POSTGRES_DB: keystone
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-your_secure_password_here}
+      POSTGRES_DB: ${DB_NAME:-keystone}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - keystone_network
 
+  # Node.js Backend
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
     container_name: keystone_backend
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-keystone}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-changeme}@postgres:5432/${DB_NAME:-keystone}
+      POSTGRES_DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-changeme}@postgres:5432/${DB_NAME:-keystone}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-this}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      BOT_TOKEN: ${BOT_TOKEN}
+      ADMIN_ID: ${ADMIN_ID}
+      ADMIN_IDS: ${ADMIN_IDS}
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:3000/api}
+      VITE_SERVER_BASE_URL: ${VITE_SERVER_BASE_URL:-http://localhost:3000}
     ports:
       - "3000:3000"
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=2046
-      - DB_NAME=keystone
-      - TELEGRAM_BOT_TOKEN=8210195855:AAFLA9kzCUScWrS5tOPBi7nGstbwW9dC1XE
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
-    env_file:
-      - .env
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    networks:
+      - keystone_network
 
+  # Python Telegram Bot
   bot:
     build:
       context: .
       dockerfile: Dockerfile.bot
     container_name: keystone_bot
     environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=2046
-      - DB_NAME=keystone
-      - BOT_TOKEN=8210195855:AAFLA9kzCUScWrS5tOPBi7nGstbwW9dC1XE
-      - USE_API_CLIENT=true
-      - API_BASE_URL=http://backend:3000
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      BOT_TOKEN: ${BOT_TOKEN}
+      API_BASE_URL: http://backend:3000/api
+      BOT_USERNAME: ${BOT_USERNAME}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-keystone}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+      ADMIN_ID: ${ADMIN_ID}
+      ADMIN_IDS: ${ADMIN_IDS}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      USE_API_CLIENT: true
+      USE_DB_API: false
+      USE_SUPABASE: false
     depends_on:
-      - postgres
       - backend
+      - postgres
     restart: unless-stopped
-    env_file:
-      - .env
+    volumes:
+      - ./telegram_bot:/app/telegram_bot
+      - ./run_bot.py:/app/run_bot.py
+    networks:
+      - keystone_network
 
 volumes:
   postgres_data:
+    driver: local
+
+networks:
+  keystone_network:
+    driver: bridge
