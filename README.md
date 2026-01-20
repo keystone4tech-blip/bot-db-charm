@@ -110,3 +110,34 @@ This project is built with:
 - PostgreSQL (local database)
 - Docker
 - Docker Compose
+
+## 📱 Mobile App
+
+Полнофункциональное мобильное приложение для Android и iOS на базе React Native и Expo.
+
+**📖 Документация по мобильному приложению:**
+
+- **[mobile-app/README.md](mobile-app/README.md)** - 🎯 Обзор и быстрый старт
+- **[mobile-app/SETUP.md](mobile-app/SETUP.md)** - ⚙️ Полная инструкция по настройке
+- **[mobile-app/BUILD.md](mobile-app/BUILD.md)** - 📦 Инструкция по сборке APK/AAB/IPA
+
+**🚀 Возможности:**
+- 🔐 Аутентификация через Telegram ID
+- 🔑 Управление VPN ключами
+- 💬 Управление Telegram каналами
+- 👥 Реферальная программа
+- 🔔 Push уведомления через Firebase
+- 🔄 OTA обновления через Expo Updates
+- 📊 Админ панель
+
+**⚡ Быстрый запуск:**
+```bash
+cd mobile-app
+npm install
+npm start
+```
+
+**📦 Сборка для Android:**
+```bash
+npm run build:apk
+```
