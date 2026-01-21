@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1284" height="2778" viewBox="0 0 1284 2778" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1284" height="2778" fill="white"/>
+  <circle cx="642" cy="1200" r="150" fill="#007AFF"/>
+  <text x="642" y="1230" font-family="Arial" font-size="120" font-weight="bold" fill="white" text-anchor="middle">K</text>
+  <text x="642" y="1450" font-family="Arial" font-size="60" fill="#333" text-anchor="middle">Keystone</text>
+</svg>

@@ -2,6 +2,19 @@
 
 Полнофункциональное мобильное приложение для Android и iOS на базе React Native и Expo.
 
+## ✅ Firebase интегрирован и готов к сборке APK!
+
+**Быстрый старт сборки APK:**
+```bash
+cd mobile-app
+./quick-build.sh
+```
+
+📖 **Документация:**
+- 📦 [BUILD_APK_INSTRUCTIONS.md](./BUILD_APK_INSTRUCTIONS.md) - Подробная инструкция сборки APK
+- ✅ [FIREBASE_SETUP_COMPLETE.md](./FIREBASE_SETUP_COMPLETE.md) - Информация о Firebase конфигурации
+- 🔧 [SETUP.md](./SETUP.md) - Полная настройка проекта
+
 ## 📱 Возможности
 
 - 🔐 Аутентификация через Telegram ID
@@ -62,13 +75,18 @@ cp .env.example .env
 
 ### 2. Firebase настройка
 
-1. Создайте проект в [Firebase Console](https://console.firebase.google.com/)
-2. Включите Cloud Messaging
-3. Добавьте приложения Android и iOS
-4. Скачайте конфигурационные файлы:
-   - `google-services.json` для Android
-   - `GoogleService-Info.plist` для iOS
-5. Поместите файлы в папку `firebase/`
+✅ **Firebase УЖЕ НАСТРОЕН!**
+
+Firebase конфигурация завершена:
+- `firebase/google-services.json` ✅ Создан
+- `firebase/config.ts` ✅ Создан
+- `.env` ✅ Firebase переменные настроены
+- `app.json` ✅ Package name обновлён
+
+**Project ID:** `keystone-app-95683`  
+**Package Name:** `com.keystone_app`
+
+Подробности в [FIREBASE_SETUP_COMPLETE.md](./FIREBASE_SETUP_COMPLETE.md)
 
 ### 3. EAS настройка
 
