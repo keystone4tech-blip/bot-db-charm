@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Loader2, User, Coins, Shield, MessageSquare, Bot, Settings, Crown } from 'lucide-react';
+import { Loader2, User, Coins, Settings, Crown } from 'lucide-react';
 import { useTelegramContext } from '@/components/TelegramProvider';
 import { useProfile, ExtendedUserProfile } from '@/hooks/useProfile';
 import { useSupportTickets, Ticket } from '@/hooks/useSupportTickets';
+import { InteractiveBackground } from '@/components/3d/InteractiveBackground';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { BalanceCards } from '@/components/profile/BalanceCards';
-import { ReferralSection } from '@/components/profile/ReferralSection';
+
 import { EditProfileModal } from '@/components/profile/EditProfileModal';
 import { SupportTicketButton } from '@/components/profile/SupportTicketButton';
 import { VPNStatusCard } from '@/components/profile/VPNStatusCard';
@@ -28,17 +29,15 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
   const {
     profile,
     balance,
-    referralStats,
     vpnKey,
     channel,
     userBot,
     subscription,
-    referralLink,
     isLoading,
     error,
     updateProfile
   } = useProfile();
-  const { tickets, fetchTickets, updateTicketStatus } = useSupportTickets();
+  const { tickets, fetchTickets } = useSupportTickets();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
   const [newlyCreatedTicket, setNewlyCreatedTicket] = useState<Ticket | null>(null);
@@ -136,12 +135,12 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
   };
 
   return (
-    <div className="px-4 pb-24">
+    <InteractiveBackground className="px-4 pb-24" intensity={0.9}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="mt-6 space-y-6"
+        className="mt-6 space-y-6 page-enter"
       >
         {/* Header */}
         <PageHeader
@@ -165,27 +164,37 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-3">
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="bg-card rounded-2xl p-4 border border-border text-center cursor-pointer hover:bg-accent transition-colors"
+          <Button
+            variant="glass"
+            className="h-20 w-full justify-start px-4"
             onClick={() => setIsEditModalOpen(true)}
           >
-            <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-primary/10 flex items-center justify-center">
-              <User className="w-5 h-5 text-primary" />
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-primary/15 flex items-center justify-center">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div className="text-left">
+                <div className="text-sm font-semibold">О себе</div>
+                <div className="text-xs text-muted-foreground">Профиль и контакты</div>
+              </div>
             </div>
-            <p className="text-xs font-medium">О себе</p>
-          </motion.div>
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="bg-card rounded-2xl p-4 border border-border text-center cursor-pointer hover:bg-accent transition-colors"
+          </Button>
+
+          <Button
+            variant="gradient"
+            className="h-20 w-full justify-start px-4"
+            onClick={() => hapticFeedback('medium')}
           >
-            <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-green-500/10 flex items-center justify-center">
-              <Coins className="w-5 h-5 text-green-500" />
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-white/15 flex items-center justify-center">
+                <Coins className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <div className="text-sm font-semibold">Пополнить</div>
+                <div className="text-xs text-white/80">Баланс и подписки</div>
+              </div>
             </div>
-            <p className="text-xs font-medium">Пополнить</p>
-          </motion.div>
+          </Button>
         </div>
 
         {/* Services Status Section */}
@@ -223,7 +232,8 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
           >
             <Button
               onClick={handleEnterAdminMode}
-              className="w-full gold-gradient text-primary-foreground font-medium py-6"
+              variant="gradient"
+              className="w-full py-6"
             >
               <Crown className="w-5 h-5 mr-2" />
               Админ-панель
@@ -265,6 +275,6 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
         profile={displayProfile as ExtendedUserProfile}
         onSave={updateProfile}
       />
-    </div>
+    </InteractiveBackground>
   );
 };

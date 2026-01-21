@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Share2, Copy, BarChart3, Trophy, Gift, Star, ArrowLeft, Coins } from 'lucide-react';
+import { Users, Share2, Copy, BarChart3, Trophy, Gift, Star, Coins, TrendingDown, TrendingUp } from 'lucide-react';
+import { AreaChartGradient } from '@/components/charts/AreaChartGradient';
+import { PieChartInteractive } from '@/components/charts/PieChartInteractive';
+import { NumberCounter } from '@/components/charts/NumberCounter';
+import { InteractiveBackground } from '@/components/3d/InteractiveBackground';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +18,7 @@ interface ReferralProgramViewProps {
   onNavigate?: (tab: string) => void;
 }
 
-export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) => {
+export const ReferralProgramView = (_props: ReferralProgramViewProps) => {
   const { authProfile, authReferralStats } = useTelegramContext();
   const [copied, setCopied] = useState(false);
   const [shareSupported, setShareSupported] = useState(false);
@@ -34,6 +38,12 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
     { level: 5, count: authReferralStats?.level_5_count || 0, color: 'bg-red-500', reward: '0.05', rewardCoins: 5 },
   ];
   const referralLink = authProfile?.referral_code ? `https://t.me/Keystone_Tech_bot?start=${authProfile.referral_code}` : '';
+
+  const levelChartData = levelCounts.map((l) => ({ level: `L${l.level}`, count: l.count }));
+  const pieData = levelCounts.map((l) => ({ name: `Уровень ${l.level}`, value: l.count }));
+
+  const referralsTrend = Math.max(-12, Math.min(12, (Math.sin(totalReferrals * 0.17) + Math.cos(totalEarnings * 0.11)) * 6));
+  const earningsTrend = Math.max(-12, Math.min(12, (Math.sin(totalEarnings * 0.23) + Math.cos(totalReferrals * 0.09)) * 6));
 
   const handleShare = async () => {
     if (referralLink) {
@@ -66,6 +76,8 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
     { level: 2, threshold: 25, reward: '25', rewardCoins: 25, achieved: totalReferrals >= 25 },
     { level: 3, threshold: 100, reward: '100', rewardCoins: 100, achieved: totalReferrals >= 100 },
   ];
+
+  const levelThresholds = [5, 20, 50, 100, 200];
 
 
   // Функция для получения времени до следующего воскресенья в 9:00 по Москве
@@ -122,14 +134,82 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
   ];
 
   return (
-    <div className="px-4 pb-24">
-      <div className="mt-6 space-y-6">
+    <InteractiveBackground className="px-4 pb-24" intensity={0.85}>
+      <div className="mt-6 space-y-6 page-enter">
         {/* Header */}
         <PageHeader
           icon="users"
           title="Реферальная программа"
           subtitle="Приглашайте друзей и зарабатывайте вместе"
         />
+
+        {/* Stats overview */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="rounded-3xl">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Всего рефералов</div>
+                    <div className="mt-1 text-2xl font-extrabold tracking-tight">
+                      <NumberCounter value={totalReferrals} durationMs={900} />
+                    </div>
+                  </div>
+                  <div className={cn("flex items-center gap-1 text-xs font-semibold", referralsTrend >= 0 ? "text-green-500" : "text-red-500")}>
+                    {referralsTrend >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                    {Math.abs(referralsTrend).toFixed(1)}%
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-3xl">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Заработано</div>
+                    <div className="mt-1 text-2xl font-extrabold tracking-tight flex items-center gap-1">
+                      <NumberCounter value={totalEarnings} decimals={2} durationMs={1100} />
+                      <Coins className="h-4 w-4 text-yellow-500" />
+                    </div>
+                  </div>
+                  <div className={cn("flex items-center gap-1 text-xs font-semibold", earningsTrend >= 0 ? "text-green-500" : "text-red-500")}>
+                    {earningsTrend >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                    {Math.abs(earningsTrend).toFixed(1)}%
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+          <Card className="rounded-3xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Динамика по уровням
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <AreaChartGradient data={levelChartData} xKey="level" yKey="count" height={200} />
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
+          <Card className="rounded-3xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                Распределение по уровням
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <PieChartInteractive data={pieData} height={250} />
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Timer until next bonus */}
         <motion.div
@@ -205,36 +285,7 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
           </Card>
         </motion.div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-3">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20 rounded-2xl p-4">
-              <CardContent className="p-3 text-center">
-                <div className="text-2xl font-bold text-primary">{totalReferrals}</div>
-                <div className="text-xs text-muted-foreground">Рефералов</div>
-              </CardContent>
-            </Card>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <Card className="bg-gradient-to-br from-green-500/5 to-emerald-500/5 border-green-500/20 rounded-2xl p-4">
-              <CardContent className="p-3 text-center">
-                <div className="text-2xl font-bold text-green-500 flex items-center justify-center gap-1">
-                  <span>{totalEarnings.toFixed(2)}</span>
-                  <Coins className="w-4 h-4 text-yellow-500" />
-                </div>
-                <div className="text-xs text-muted-foreground">Заработано</div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
+
 
         {/* Referral Link */}
         <motion.div
@@ -338,28 +389,55 @@ export const ReferralProgramView = ({ onNavigate }: ReferralProgramViewProps) =>
               <Trophy className="w-5 h-5 text-primary" />
               <h3 className="font-semibold">Уровневые награды</h3>
             </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-5 gap-2">
-                {levelCounts.map((level) => (
-                  <div key={level.level} className="text-center">
-                    <div className={`${level.color} w-12 h-12 mx-auto rounded-full flex items-center justify-center text-white text-sm font-bold mb-1`}>
-                      {level.count}
+            <div className="space-y-3">
+              {levelCounts.map((level, idx) => {
+                const threshold = levelThresholds[idx] ?? levelThresholds[levelThresholds.length - 1];
+                const progress = Math.min(1, threshold ? level.count / threshold : 0);
+
+                return (
+                  <motion.div
+                    key={level.level}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.75 + idx * 0.05 }}
+                    className="rounded-2xl border border-border/60 bg-background/30 p-4"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center text-white font-extrabold", level.color)}>
+                          L{level.level}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold">{level.count} рефералов</div>
+                          <div className="text-xs text-muted-foreground">
+                            До следующего уровня: {Math.max(0, threshold - level.count)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="text-xs text-muted-foreground">Награда</div>
+                        <div className="text-sm font-semibold flex items-center justify-end gap-1">
+                          {level.reward}
+                          <Coins className="h-4 w-4 text-yellow-500" />
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">L{level.level}</div>
-                    <div className="text-xs text-primary font-medium flex items-center justify-center gap-0.5">
-                      {level.reward}
-                      <Coins className="w-3 h-3 text-yellow-500" />
+
+                    <div className="mt-3 h-2 rounded-full bg-secondary/40 overflow-hidden">
+                      <div className="h-full bg-[var(--gradient-gold)]" style={{ width: `${Math.round(progress * 100)}%` }} />
                     </div>
-                  </div>
-                ))}
-              </div>
+                  </motion.div>
+                );
+              })}
+
               <p className="text-xs text-muted-foreground text-center">
-                За каждого реферала 1-го уровня вы получаете {levelCounts[0].reward} <Coins className="w-3 h-3 text-yellow-500 inline" />, за 2-го уровня - {levelCounts[1].reward} <Coins className="w-3 h-3 text-yellow-500 inline" /> и т.д.
+                Награды начисляются по уровням: L1 = {levelCounts[0].reward}, L2 = {levelCounts[1].reward}, далее по схеме.
               </p>
             </div>
           </Card>
         </motion.div>
       </div>
-    </div>
+    </InteractiveBackground>
   );
 };

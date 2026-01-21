@@ -1,22 +1,34 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "button-press inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-lg shadow-destructive/20 hover:shadow-destructive/30 active:scale-95",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground shadow-sm hover:shadow-md active:scale-95",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm hover:shadow-md active:scale-95",
-        ghost: "hover:bg-accent hover:text-accent-foreground active:scale-95",
+        primary:
+          "bg-primary text-primary-foreground shadow-card-gold hover:-translate-y-0.5 hover:shadow-3d active:translate-y-0",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-card hover:-translate-y-0.5 hover:shadow-3d active:translate-y-0",
+        outline:
+          "border border-input bg-background/50 backdrop-blur-sm hover:bg-accent/20 hover:text-foreground hover:-translate-y-0.5 hover:shadow-3d",
+        ghost: "hover:bg-accent/20 hover:text-foreground",
+        gradient:
+          "text-white shadow-card-gold hover:-translate-y-0.5 hover:shadow-3d active:translate-y-0 bg-[var(--gradient-gold)]",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/20 hover:-translate-y-0.5 hover:shadow-3d",
         link: "text-primary underline-offset-4 hover:underline",
-        gold: "bg-gradient-to-br from-yellow-500 to-yellow-600 text-white hover:from-yellow-600 hover:to-yellow-700 shadow-lg shadow-yellow-500/30 hover:shadow-yellow-500/40 active:scale-95",
-        glass: "bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 shadow-lg shadow-black/10 active:scale-95",
+
+        default:
+          "bg-primary text-primary-foreground shadow-card-gold hover:-translate-y-0.5 hover:shadow-3d active:translate-y-0",
+        gold:
+          "text-white shadow-card-gold hover:-translate-y-0.5 hover:shadow-3d active:translate-y-0 bg-[var(--gradient-gold)]",
+        glass:
+          "glass glass-border text-foreground shadow-card hover:-translate-y-0.5 hover:shadow-3d active:translate-y-0",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -29,7 +41,7 @@ const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "primary",
       size: "default",
     },
   },
@@ -39,12 +51,25 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  isLoading?: boolean;
+  loadingText?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, isLoading, loadingText, disabled, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        disabled={disabled || isLoading}
+        {...props}
+      >
+        {isLoading ? <Loader2 className="animate-spin" /> : null}
+        {isLoading && loadingText ? loadingText : children}
+      </Comp>
+    );
   },
 );
 Button.displayName = "Button";

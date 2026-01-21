@@ -1,171 +1,127 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Copy, Mail, MapPin, Phone, Link as LinkIcon, User, AtSign } from 'lucide-react';
-import { ExtendedUserProfile } from '@/hooks/useProfile';
+import React from "react";
+import { AtSign, Copy, Link as LinkIcon, Mail, MapPin, Phone, User } from "lucide-react";
+
+import { ExtendedUserProfile } from "@/hooks/useProfile";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface UserInfoCardProps {
   profile: ExtendedUserProfile;
 }
 
-export const UserInfoCard = ({ profile }: UserInfoCardProps) => {
-  const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    // Можно добавить уведомление о копировании
+function InfoRow({
+  icon,
+  label,
+  value,
+  copyValue,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  copyValue?: string;
+}) {
+  const onCopy = () => {
+    if (!copyValue) return;
+    navigator.clipboard.writeText(copyValue);
   };
 
   return (
-    <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
-      <CardHeader>
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/50 bg-background/30 p-3">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="h-9 w-9 rounded-xl bg-secondary/40 flex items-center justify-center shrink-0">{icon}</div>
+        <div className="min-w-0">
+          <div className="text-xs text-muted-foreground">{label}</div>
+          <div className="text-sm font-semibold truncate">{value}</div>
+        </div>
+      </div>
+      {copyValue ? (
+        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={onCopy}>
+          <Copy className="h-4 w-4" />
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+export const UserInfoCard = ({ profile }: UserInfoCardProps) => {
+  const referralLink = profile.referral_code ? `https://t.me/Keystone_Tech_bot?start=${profile.referral_code}` : null;
+
+  return (
+    <Card className="rounded-3xl">
+      <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2">
-          <User className="w-5 h-5" />
+          <User className="h-5 w-5 text-primary" />
           Информация о пользователе
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-3">
-          {/* Имя и фамилия */}
-          <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl">
-            <span className="text-sm text-muted-foreground">Имя:</span>
-            <div className="flex items-center gap-2">
-              <span className="font-medium">{profile.first_name}</span>
-              {profile.last_name && (
-                <span className="font-medium">{profile.last_name}</span>
-              )}
-            </div>
-          </div>
+      <CardContent className="pt-0">
+        <Tabs defaultValue="main">
+          <TabsList className="w-full grid grid-cols-3 rounded-2xl bg-secondary/40 p-1">
+            <TabsTrigger value="main" className={cn("rounded-xl text-xs", "data-[state=active]:bg-background/50")}>Основное</TabsTrigger>
+            <TabsTrigger value="contacts" className={cn("rounded-xl text-xs", "data-[state=active]:bg-background/50")}>Контакты</TabsTrigger>
+            <TabsTrigger value="social" className={cn("rounded-xl text-xs", "data-[state=active]:bg-background/50")}>Соцсети</TabsTrigger>
+          </TabsList>
 
-          {/* Никнейм */}
-          <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl">
-            <span className="text-sm text-muted-foreground">Никнейм:</span>
-            <div className="flex items-center gap-2">
-              <span className="font-medium">@{profile.telegram_username || 'не указан'}</span>
-              {profile.telegram_username && (
-                <button 
-                  onClick={() => handleCopy(profile.telegram_username!, 'никнейм')}
-                  className="p-1 rounded hover:bg-primary/10 transition-colors"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Реферальная ссылка */}
-          <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl">
-            <span className="text-sm text-muted-foreground">Реферальная ссылка:</span>
-            <div className="flex items-center gap-2 max-w-[60%]">
-              <span className="font-medium truncate">
-                {profile.referral_code 
-                  ? `https://t.me/Keystone_Tech_bot?start=${profile.referral_code}` 
-                  : 'не создана'}
-              </span>
-              {profile.referral_code && (
-                <button 
-                  onClick={() => handleCopy(`https://t.me/Keystone_Tech_bot?start=${profile.referral_code}`, 'реферальная ссылка')}
-                  className="p-1 rounded hover:bg-primary/10 transition-colors"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Реферальный код */}
-          <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl">
-            <span className="text-sm text-muted-foreground">Реферальный код:</span>
-            <div className="flex items-center gap-2">
-              <span className="font-medium">{profile.referral_code || 'не создан'}</span>
-              {profile.referral_code && (
-                <button 
-                  onClick={() => handleCopy(profile.referral_code, 'реферальный код')}
-                  className="p-1 rounded hover:bg-primary/10 transition-colors"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Город */}
-          {profile.city && (
-            <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl">
-              <span className="text-sm text-muted-foreground">Город:</span>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{profile.city}</span>
-                <button 
-                  onClick={() => handleCopy(profile.city, 'город')}
-                  className="p-1 rounded hover:bg-primary/10 transition-colors"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
+          <TabsContent value="main" className="mt-4 space-y-3">
+            <InfoRow icon={<User className="h-4 w-4" />} label="Имя" value={`${profile.first_name || "—"}${profile.last_name ? ` ${profile.last_name}` : ""}`} />
+            <InfoRow
+              icon={<AtSign className="h-4 w-4" />}
+              label="Никнейм"
+              value={profile.telegram_username ? `@${profile.telegram_username}` : "не указан"}
+              copyValue={profile.telegram_username ?? undefined}
+            />
+            <InfoRow
+              icon={<Copy className="h-4 w-4" />}
+              label="Реферальный код"
+              value={profile.referral_code ?? "не создан"}
+              copyValue={profile.referral_code ?? undefined}
+            />
+            <InfoRow
+              icon={<LinkIcon className="h-4 w-4" />}
+              label="Реферальная ссылка"
+              value={referralLink ? <span className="font-mono text-xs">{referralLink}</span> : "не создана"}
+              copyValue={referralLink ?? undefined}
+            />
+            {profile.bio ? (
+              <div className="rounded-2xl border border-border/50 bg-background/30 p-3">
+                <div className="text-xs text-muted-foreground">О себе</div>
+                <div className="mt-1 text-sm leading-relaxed whitespace-pre-wrap">{profile.bio}</div>
               </div>
-            </div>
-          )}
+            ) : null}
+          </TabsContent>
 
-          {/* Телефон */}
-          {profile.phone && (
-            <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl">
-              <span className="text-sm text-muted-foreground">Телефон:</span>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{profile.phone}</span>
-                <button 
-                  onClick={() => handleCopy(profile.phone, 'телефон')}
-                  className="p-1 rounded hover:bg-primary/10 transition-colors"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
+          <TabsContent value="contacts" className="mt-4 space-y-3">
+            <InfoRow
+              icon={<MapPin className="h-4 w-4" />}
+              label="Город"
+              value={profile.city ?? "—"}
+              copyValue={profile.city ?? undefined}
+            />
+            <InfoRow
+              icon={<Phone className="h-4 w-4" />}
+              label="Телефон"
+              value={profile.phone ?? "—"}
+              copyValue={profile.phone ?? undefined}
+            />
+            <InfoRow
+              icon={<Mail className="h-4 w-4" />}
+              label="Email"
+              value={profile.email ?? "—"}
+              copyValue={profile.email ?? undefined}
+            />
+          </TabsContent>
 
-          {/* Email */}
-          {profile.email && (
-            <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl">
-              <span className="text-sm text-muted-foreground">Email:</span>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{profile.email}</span>
-                <button 
-                  onClick={() => handleCopy(profile.email, 'email')}
-                  className="p-1 rounded hover:bg-primary/10 transition-colors"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* О себе */}
-          {profile.bio && (
-            <div className="flex flex-col p-3 bg-primary/5 rounded-xl">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-muted-foreground">О себе:</span>
-                <button 
-                  onClick={() => handleCopy(profile.bio, 'информация о себе')}
-                  className="p-1 rounded hover:bg-primary/10 transition-colors"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-              </div>
-              <p className="text-sm">{profile.bio}</p>
-            </div>
-          )}
-
-          {/* Ссылка */}
-          {profile.link && (
-            <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl">
-              <span className="text-sm text-muted-foreground">Ссылка:</span>
-              <div className="flex items-center gap-2 max-w-[60%]">
-                <span className="font-medium truncate">{profile.link}</span>
-                <button 
-                  onClick={() => handleCopy(profile.link, 'ссылка')}
-                  className="p-1 rounded hover:bg-primary/10 transition-colors"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+          <TabsContent value="social" className="mt-4 space-y-3">
+            <InfoRow
+              icon={<LinkIcon className="h-4 w-4" />}
+              label="Ссылка"
+              value={profile.link ?? "—"}
+              copyValue={profile.link ?? undefined}
+            />
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
