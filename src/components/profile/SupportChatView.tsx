@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -139,30 +140,33 @@ const SupportChatView = ({ activeTicket, onCloseChat, newlyCreatedTicket }: Supp
                   Начните переписку с поддержкой
                 </div>
               ) : (
-                ticketMessages.map((msg) => (
-                  <div
+                ticketMessages.map((msg, idx) => (
+                  <motion.div
                     key={msg.id}
+                    initial={{ opacity: 0, y: 6, scale: 0.99 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.25, delay: Math.min(idx * 0.02, 0.2), ease: [0.22, 1, 0.36, 1] }}
                     className={`flex ${msg.is_admin_reply ? 'justify-start' : 'justify-end'}`}
                   >
                     <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                      className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
                         msg.is_admin_reply
-                          ? 'bg-secondary text-secondary-foreground rounded-tl-none'
-                          : 'bg-primary text-primary-foreground rounded-tr-none'
+                          ? 'glass glass-border text-foreground'
+                          : 'text-white bg-[var(--gradient-gold)] shadow-card-gold'
                       }`}
                     >
-                      <div className="text-xs opacity-70 mb-1">
+                      <div className="text-[11px] opacity-70 mb-1">
                         {msg.is_admin_reply ? 'Техподдержка' : 'Вы'}
                       </div>
                       {renderMessageContent(msg)}
-                      <div className="text-xs opacity-70 mt-1 text-right">
+                      <div className="text-[11px] opacity-70 mt-1 text-right">
                         {new Date(msg.created_at).toLocaleTimeString('ru-RU', {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               )}
               <div ref={messagesEndRef} />

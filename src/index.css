@@ -7,27 +7,30 @@
 /* Keystone Tech Dark Premium Design System */
 @layer base {
   :root {
-    --background: 0 0% 7%;
+    /* Dark theme (default): premium deep navy + gold */
+    --background: 222 47% 11%; /* #0F172A */
     --foreground: 0 0% 95%;
 
-    --card: 0 0% 12%;
+    --card: 217 33% 17%; /* #1E293B */
     --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 12%;
+    --popover: 217 33% 17%;
     --popover-foreground: 0 0% 95%;
 
-    /* Gold/Amber accent */
-    --primary: 45 93% 47%;
-    --primary-foreground: 0 0% 7%;
+    /* Primary (gold with 3D glow): #D4A574 */
+    --primary: 31 53% 64%;
+    --primary-foreground: 222 47% 11%;
 
-    --secondary: 0 0% 16%;
+    /* Secondary: #1F2937 */
+    --secondary: 215 28% 17%;
     --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 215 28% 17%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 45 93% 47%;
-    --accent-foreground: 0 0% 7%;
+    /* Accent: #F59E0B */
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -36,60 +39,67 @@
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 7%;
+    --warning-foreground: 222 47% 11%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 16%;
-    --ring: 45 93% 47%;
+    --border: 215 28% 22%;
+    --input: 215 28% 17%;
+    --ring: 31 53% 64%;
 
     --radius: 1rem;
 
-    /* Custom Keystone tokens */
-    --gold: 45 93% 47%;
-    --gold-dark: 45 93% 35%;
-    --gold-glow: 45 93% 55%;
-    --surface-elevated: 0 0% 14%;
-    --surface-overlay: 0 0% 18%;
-    
-    --gradient-gold: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(38 90% 40%) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(0 0% 12%) 0%, hsl(0 0% 8%) 100%);
-    
-    --card-shadow: 0 4px 20px -4px hsl(0 0% 0% / 0.5);
-    --card-shadow-gold: 0 4px 30px -4px hsl(45 93% 47% / 0.2);
-    --glow-gold: 0 0 40px hsl(45 93% 47% / 0.3);
+    /* 3D / premium UI tokens */
+    --gold: 31 53% 64%;
+    --gold-dark: 31 53% 52%;
+    --gold-glow: 38 92% 58%;
 
-    --sidebar-background: 0 0% 7%;
+    --surface-elevated: 217 33% 19%;
+    --surface-overlay: 215 28% 20%;
+
+    --gradient-gold: linear-gradient(135deg, #D4A574 0%, #F59E0B 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(222 47% 11%) 0%, hsl(222 47% 8%) 100%);
+
+    --blur-effect: blur(18px);
+    --shadow-3d: 0 18px 50px -24px hsl(222 47% 5% / 0.9), 0 10px 30px -18px hsl(var(--gold) / 0.25);
+
+    --card-shadow: 0 10px 32px -18px hsl(222 47% 5% / 0.85);
+    --card-shadow-gold: 0 14px 45px -20px hsl(var(--gold) / 0.25);
+    --glow-gold: 0 0 40px hsl(var(--gold) / 0.28);
+
+    --sidebar-background: 222 47% 11%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 45 93% 47%;
-    --sidebar-primary-foreground: 0 0% 7%;
-    --sidebar-accent: 0 0% 16%;
+    --sidebar-primary: 31 53% 64%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 215 28% 17%;
     --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 45 93% 47%;
+    --sidebar-border: 215 28% 22%;
+    --sidebar-ring: 31 53% 64%;
   }
 
   /* Light theme variables */
   .light {
-    --background: 45 20% 97%;
-    --foreground: 0 0% 15%;
+    --background: 44 100% 97%; /* #FFFBF0 */
+    --foreground: 222 47% 11%;
 
-    --card: 45 30% 98%;
-    --card-foreground: 0 0% 15%;
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 15%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 38 85% 42%;
+    /* Primary (gold): #B8860B */
+    --primary: 43 89% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 45 15% 92%;
-    --secondary-foreground: 0 0% 15%;
+    /* Secondary: #F3F4F6 */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 45 10% 90%;
-    --muted-foreground: 0 0% 35%;
+    --muted: 220 14% 92%;
+    --muted-foreground: 215 18% 34%;
 
-    --accent: 38 85% 42%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent: #F59E0B */
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
@@ -100,57 +110,64 @@
     --warning: 38 92% 45%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 45 20% 85%;
-    --input: 45 15% 88%;
-    --ring: 38 85% 42%;
+    --border: 220 14% 88%;
+    --input: 220 14% 92%;
+    --ring: 43 89% 38%;
 
-    /* Custom Keystone tokens for light theme - darker gold for readability */
-    --gold: 38 85% 42%;
-    --gold-dark: 35 90% 32%;
-    --gold-glow: 42 90% 48%;
-    --surface-elevated: 45 25% 96%;
-    --surface-overlay: 45 20% 93%;
+    /* 3D / premium UI tokens (light) */
+    --gold: 43 89% 38%;
+    --gold-dark: 40 95% 28%;
+    --gold-glow: 38 92% 50%;
 
-    --gradient-gold: linear-gradient(135deg, hsl(38 85% 42%) 0%, hsl(32 90% 35%) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(45 30% 98%) 0%, hsl(45 25% 94%) 100%);
+    --surface-elevated: 44 100% 98%;
+    --surface-overlay: 220 14% 96%;
 
-    /* Gradient for cards in light theme */
-    --card-gradient: linear-gradient(145deg, hsl(45 30% 99%) 0%, hsl(45 25% 94%) 100%);
-    --card-gradient-accent: linear-gradient(145deg, hsl(45 40% 97%) 0%, hsl(40 35% 92%) 100%);
+    --gradient-gold: linear-gradient(135deg, #B8860B 0%, #F59E0B 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(44 100% 98%) 0%, hsl(220 14% 96%) 100%);
 
-    --card-shadow: 0 4px 20px -4px hsl(35 30% 50% / 0.15);
-    --card-shadow-gold: 0 4px 30px -4px hsl(38 85% 42% / 0.25);
-    --glow-gold: 0 0 40px hsl(38 85% 42% / 0.2);
+    --blur-effect: blur(16px);
+    --shadow-3d: 0 18px 50px -28px hsl(30 40% 35% / 0.25), 0 10px 30px -18px hsl(var(--gold) / 0.2);
 
-    --sidebar-background: 45 25% 96%;
-    --sidebar-foreground: 0 0% 15%;
-    --sidebar-primary: 38 85% 42%;
+    --card-shadow: 0 10px 26px -18px hsl(30 40% 35% / 0.18);
+    --card-shadow-gold: 0 14px 36px -20px hsl(var(--gold) / 0.25);
+    --glow-gold: 0 0 40px hsl(var(--gold) / 0.18);
+
+    --sidebar-background: 44 100% 97%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 43 89% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 45 20% 90%;
-    --sidebar-accent-foreground: 0 0% 15%;
-    --sidebar-border: 45 20% 85%;
-    --sidebar-ring: 38 85% 42%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 14% 88%;
+    --sidebar-ring: 43 89% 38%;
   }
 
   /* Dark theme variables */
   .dark {
-    --background: 0 0% 7%;
+    --background: 222 47% 11%;
     --foreground: 0 0% 95%;
-    --card: 0 0% 12%;
+
+    --card: 217 33% 17%;
     --card-foreground: 0 0% 95%;
-    --popover: 0 0% 12%;
+
+    --popover: 217 33% 17%;
     --popover-foreground: 0 0% 95%;
-    --primary: 45 93% 47%;
-    --primary-foreground: 0 0% 7%;
-    --secondary: 0 0% 16%;
+
+    --primary: 31 53% 64%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 215 28% 17%;
     --secondary-foreground: 0 0% 95%;
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 45 93% 47%;
-    --accent-foreground: 0 0% 7%;
-    --border: 0 0% 20%;
-    --input: 0 0% 16%;
-    --ring: 45 93% 47%;
+
+    --muted: 215 28% 17%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 11%;
+
+    --border: 215 28% 22%;
+    --input: 215 28% 17%;
+    --ring: 31 53% 64%;
   }
 }
 
@@ -159,8 +176,12 @@
     @apply border-border;
   }
 
-  html {
+  html.dark {
     color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
   }
 
   body {
@@ -243,15 +264,15 @@
   }
 
   .glass-card {
-    background: hsl(var(--card) / 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: hsl(var(--card) / 0.72);
+    backdrop-filter: var(--blur-effect);
+    -webkit-backdrop-filter: var(--blur-effect);
   }
 
   .glass-card-elevated {
-    background: hsl(var(--surface-elevated) / 0.9);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: hsl(var(--surface-elevated) / 0.85);
+    backdrop-filter: var(--blur-effect);
+    -webkit-backdrop-filter: var(--blur-effect);
   }
 
   .gold-border {

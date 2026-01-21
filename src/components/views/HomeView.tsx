@@ -1,5 +1,9 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, Clock, TrendingUp, Zap, BarChart3 } from 'lucide-react';
+import { FloatingObject } from '@/components/3d/FloatingObject';
+import { InteractiveBackground } from '@/components/3d/InteractiveBackground';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { StatsCard } from '@/components/StatsCard';
 import { TaskCard } from '@/components/TaskCard';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -31,12 +35,38 @@ export const HomeView = ({ tasks, onToggleTask }: HomeViewProps) => {
   ];
 
   return (
-    <div className="px-4 pb-24">
+    <InteractiveBackground className="px-4 pb-24" intensity={0.8}>
       <PageHeader
         icon="chart"
         title="Главная"
         subtitle="Ваша персональная статистика и задачи"
       />
+
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mt-4">
+        <Card className="rounded-3xl overflow-hidden">
+          <CardContent className="relative p-5">
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 h-24 w-24 opacity-90">
+              <FloatingObject className="h-full w-full" />
+            </div>
+            <div className="relative z-10 pr-24">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <BarChart3 className="h-4 w-4 text-primary" />
+                Дашборд
+              </div>
+              <div className="mt-2 text-lg font-extrabold tracking-tight">Премиум-статистика в реальном времени</div>
+              <div className="mt-1 text-sm text-muted-foreground">Проверьте прогресс, задачи и ключевые метрики.</div>
+              <div className="mt-4 flex gap-2">
+                <Button variant="gradient" size="sm">
+                  Быстрый старт
+                </Button>
+                <Button variant="outline" size="sm">
+                  Подробнее
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -86,6 +116,6 @@ export const HomeView = ({ tasks, onToggleTask }: HomeViewProps) => {
           </motion.div>
         )}
       </motion.div>
-    </div>
+    </InteractiveBackground>
   );
 };

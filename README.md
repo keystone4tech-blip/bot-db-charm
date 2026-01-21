@@ -62,6 +62,35 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## 🎨 Premium UI + 3D + Charts
+
+### Theme & effects
+- Color tokens live in `src/index.css` (light/dark + 3D tokens: `--glow-gold`, `--gradient-gold`, `--blur-effect`, `--shadow-3d`).
+- Extra utility classes:
+  - `src/styles/effects.css` (glassmorphism, 3D hover, gradients)
+  - `src/styles/animations.css` (page enter, card lift, pulse, spinners)
+
+### 3D components (`src/components/3d/`)
+- `FloatingObject` – decorative rotating 3D object
+- `VPNServer3D` – 3D server with connections + online/offline pulse
+- `ParticleField` – animated particles background
+- `MorphingShape` – GSAP-powered morphing shape
+- `InteractiveBackground` – interactive gradient background reacting to pointer
+- `LightRays` – animated light rays overlay
+
+### Charts (`src/components/charts/`)
+- `LiveLineChart`, `AreaChartGradient`, `BarChartAnimated`, `PieChartInteractive`, `RadarChart`
+- `NumberCounter` – animated numbers
+
+### Quick usage examples
+```tsx
+import { FloatingObject } from "@/components/3d/FloatingObject";
+import { LiveLineChart } from "@/components/charts/LiveLineChart";
+
+<FloatingObject className="h-24 w-24" />
+<LiveLineChart data={[{ t: "1", v: 10 }]} xKey="t" yKey="v" />
+```
+
 ## 🚀 Deployment
 
 ### Автоматизированный деплой на Ubuntu сервер

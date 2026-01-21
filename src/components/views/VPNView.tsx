@@ -1,28 +1,85 @@
 import { motion } from 'framer-motion';
-import { Shield, Globe, Wifi, Lock, Server, CheckCircle, XCircle, Download, Copy } from 'lucide-react';
+import { useMemo } from 'react';
+import { Shield, Globe, Wifi, Lock, Server, CheckCircle, XCircle, Download, Copy, Activity } from 'lucide-react';
+import { VPNServer3D } from '@/components/3d/VPNServer3D';
+import { LiveLineChart } from '@/components/charts/LiveLineChart';
+import { NumberCounter } from '@/components/charts/NumberCounter';
+import { InteractiveBackground } from '@/components/3d/InteractiveBackground';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useTelegramContext } from '@/components/TelegramProvider';
+
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export const VPNView = () => {
-  const { authProfile } = useTelegramContext();
 
   // Заглушка для VPN ключа - в реальной реализации загружать из useProfile
   const vpnKey = null as { key: string; serverLocation: string; expiresAt: Date; status: string; isTrial: boolean } | null;
 
   const hasSubscription = !!vpnKey && vpnKey.status === 'active';
 
+  const trafficData = useMemo(() => {
+    const pts: { t: string; v: number }[] = [];
+    const base = hasSubscription ? 120 : 40;
+    for (let i = 0; i < 18; i++) {
+      const v = Math.max(0, base + Math.sin(i * 0.45) * base * 0.22 + Math.cos(i * 0.2) * base * 0.12);
+      pts.push({ t: `${i + 1}`, v: Math.round(v) });
+    }
+    return pts;
+  }, [hasSubscription]);
+
+  const currentSpeedMbps = useMemo(() => {
+    const last = trafficData[trafficData.length - 1]?.v ?? 0;
+    return Math.max(0, last / 4);
+  }, [trafficData]);
+
   return (
-    <div className="px-4 py-6 pb-24 space-y-6">
+    <InteractiveBackground className="px-4 py-6 pb-24 space-y-6 page-enter" intensity={0.8}>
       {/* Header - объединенный значок и название */}
       <PageHeader
         icon="shield"
         title="VPN Сервис"
         subtitle="Безопасное и анонимное соединение"
       />
+
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+        <Card className="rounded-3xl overflow-hidden">
+          <div className="flex items-center gap-4 p-5">
+            <div className="h-24 w-24 shrink-0">
+              <VPNServer3D className="h-full w-full" status={hasSubscription ? 'online' : 'offline'} />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-xs text-muted-foreground">Текущая скорость</div>
+                  <div className="mt-1 text-xl font-extrabold tracking-tight flex items-center gap-2">
+                    <NumberCounter value={currentSpeedMbps} decimals={0} />
+                    <span className="text-xs text-muted-foreground">Mbps</span>
+                  </div>
+                </div>
+                <div className={cn(
+                  'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold',
+                  hasSubscription ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive',
+                )}>
+                  <span className={cn('h-2 w-2 rounded-full', hasSubscription ? 'bg-success pulse-soft' : 'bg-destructive')} />
+                  {hasSubscription ? 'Онлайн' : 'Оффлайн'}
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                <Activity className="h-4 w-4" />
+                Живой мониторинг трафика
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 pb-5">
+            <LiveLineChart data={trafficData} xKey="t" yKey="v" height={140} />
+          </div>
+        </Card>
+      </motion.div>
 
       {/* Статус подписки */}
       <motion.div
@@ -245,6 +302,6 @@ export const VPNView = () => {
           </div>
         </Card>
       </motion.div>
-    </div>
+    </InteractiveBackground>
   );
 };

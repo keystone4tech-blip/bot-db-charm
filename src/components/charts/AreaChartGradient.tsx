@@ -1,0 +1,67 @@
+import React, { useMemo } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  TooltipProps,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { cn } from "@/lib/utils";
+
+type Datum = Record<string, number | string>;
+
+interface AreaChartGradientProps<T extends Datum> {
+  className?: string;
+  data: T[];
+  xKey: keyof T;
+  yKey: keyof T;
+  height?: number;
+}
+
+function PremiumTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  if (!active || !payload?.length) return null;
+  const v = payload[0]?.value;
+
+  return (
+    <div className="glass glass-border rounded-xl px-3 py-2 shadow-3d">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-sm font-semibold text-foreground">{typeof v === "number" ? v.toLocaleString("ru-RU") : v}</div>
+    </div>
+  );
+}
+
+export function AreaChartGradient<T extends Datum>({ className, data, xKey, yKey, height = 220 }: AreaChartGradientProps<T>) {
+  const id = useMemo(() => `areaGrad-${String(xKey)}-${String(yKey)}`, [xKey, yKey]);
+
+  return (
+    <div className={cn("w-full", className)} style={{ height }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 6, right: 6, left: -18, bottom: 0 }}>
+          <defs>
+            <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="hsl(var(--gold))" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="hsl(var(--gold))" stopOpacity={0.02} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="4 8" stroke="hsl(var(--border) / 0.4)" vertical={false} />
+          <XAxis dataKey={String(xKey)} axisLine={false} tickLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+          <YAxis axisLine={false} tickLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} width={40} />
+          <Tooltip content={<PremiumTooltip />} cursor={{ stroke: "hsl(var(--gold) / 0.25)", strokeWidth: 1 }} />
+          <Area
+            type="monotone"
+            dataKey={String(yKey)}
+            stroke="hsl(var(--gold))"
+            strokeWidth={2}
+            fill={`url(#${id})`}
+            animationDuration={650}
+            dot={false}
+            activeDot={{ r: 4, fill: "hsl(var(--gold))" }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
