@@ -59,6 +59,20 @@ services:
     networks:
       - keystone_network
 
+  # Frontend Application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: keystone_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - keystone_network
+
   # Python Telegram Bot
   bot:
     build:
