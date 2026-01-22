@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const app = require('./app.cjs');
 const { ensureTablesExist } = require('./services/databaseService.cjs');
 const log = require('./utils/logger.cjs');
