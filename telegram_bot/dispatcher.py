@@ -4,6 +4,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 # Импортируем роутеры
 from telegram_bot.handlers.start_handler import start_router
 from telegram_bot.handlers.otp_handler import otp_router
+from telegram_bot.handlers.error_handler import error_router
 
 # Создаем хранилище состояний
 storage = MemoryStorage()
@@ -12,5 +13,6 @@ storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 
 # Регистрируем роутеры
+dp.include_router(error_router)
 dp.include_router(start_router)
 dp.include_router(otp_router)

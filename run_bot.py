@@ -29,12 +29,8 @@ load_dotenv()
 from telegram_bot.bot_instance import bot
 from telegram_bot.dispatcher import dp
 
-# Импортируем роутеры
-from telegram_bot.handlers import start_router, error_router
-
-# Регистрируем роутеры (error_router должен быть первым)
-dp.include_router(error_router)
-dp.include_router(start_router)
+# Роутеры уже зарегистрированы в dispatcher.py
+# Нам нужно только импортировать dp для запуска
 
 async def main():
     """
