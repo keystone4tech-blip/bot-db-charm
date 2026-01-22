@@ -11,8 +11,8 @@ RUN npm install
 # Копируем исходники
 COPY . .
 
-# Собираем проект
-RUN npm run build
+# Увеличиваем лимит памяти для сборки
+RUN node --max-old-space-size=4096 ./node_modules/.bin/vite build
 
 # Production stage
 FROM nginx:alpine
