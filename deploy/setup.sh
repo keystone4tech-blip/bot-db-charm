@@ -121,15 +121,43 @@ if [ ! -f .env ]; then
     if [ -f .env.example ]; then
         cp .env.example .env
         echo -e "${YELLOW}⚠️  .env файл создан из .env.example${NC}"
+
+        # Автоматически заполняем .env файл вашими значениями
+        sed -i "s/BOT_TOKEN=.*/BOT_TOKEN=8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA/" .env
+        sed -i "s/TELEGRAM_BOT_TOKEN=.*/TELEGRAM_BOT_TOKEN=8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA/" .env
+        sed -i "s/ADMIN_ID=.*/ADMIN_ID=6521050178/" .env
+        sed -i "s/ADMIN_IDS=.*/ADMIN_IDS=6521050178/" .env
+        sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=2046/" .env
+        sed -i "s/JWT_SECRET=.*/JWT_SECRET=jJ4K9XzF2qR8nP7wE3vL6cA1mS5tY0hB3nI6pW7oE4rT9yU2aQ5xZ8sM1nH6cV3bG7k/" .env
+        sed -i "s/VITE_TELEGRAM_BOT_USERNAME=.*/VITE_TELEGRAM_BOT_USERNAME=Keystone_Tech_Robot/" .env
+        sed -i "s/DOMAIN=.*/DOMAIN=keystone-tech.ru/" .env
+        sed -i "s/SSL_EMAIL=.*/SSL_EMAIL=m.v.s.4@mail.ru/" .env
+        sed -i "s/BOT_USERNAME=.*/BOT_USERNAME=Keystone_Tech_Robot/" .env
+
+        echo -e "${GREEN}✅ .env файл автоматически заполнен${NC}"
     else
         echo -e "${RED}❌ .env.example не найден. Создайте .env файл вручную${NC}"
     fi
-    echo -e "${YELLOW}ВАЖНО: Отредактируйте .env файл с вашими значениями!${NC}"
-    echo -e "${YELLOW}nano .env${NC}"
-    echo ""
-    read -p "Нажмите Enter когда отредактируете .env файл или пропустите этот шаг: " DONE
 else
     echo -e "${GREEN}✅ .env файл уже существует${NC}"
+
+    # Проверяем, нужно ли обновить значения
+    if grep -q "changeme\|your-secret-key-change-this" .env; then
+        echo -e "${YELLOW}🔄 Обновляем .env файл с вашими значениями...${NC}"
+
+        sed -i "s/BOT_TOKEN=.*/BOT_TOKEN=8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA/" .env
+        sed -i "s/TELEGRAM_BOT_TOKEN=.*/TELEGRAM_BOT_TOKEN=8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA/" .env
+        sed -i "s/ADMIN_ID=.*/ADMIN_ID=6521050178/" .env
+        sed -i "s/ADMIN_IDS=.*/ADMIN_IDS=6521050178/" .env
+        sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=2046/" .env
+        sed -i "s/JWT_SECRET=.*/JWT_SECRET=jJ4K9XzF2qR8nP7wE3vL6cA1mS5tY0hB3nI6pW7oE4rT9yU2aQ5xZ8sM1nH6cV3bG7k/" .env
+        sed -i "s/VITE_TELEGRAM_BOT_USERNAME=.*/VITE_TELEGRAM_BOT_USERNAME=Keystone_Tech_Robot/" .env
+        sed -i "s/DOMAIN=.*/DOMAIN=keystone-tech.ru/" .env
+        sed -i "s/SSL_EMAIL=.*/SSL_EMAIL=m.v.s.4@mail.ru/" .env
+        sed -i "s/BOT_USERNAME=.*/BOT_USERNAME=Keystone_Tech_Robot/" .env
+
+        echo -e "${GREEN}✅ .env файл обновлен${NC}"
+    fi
 fi
 
 # 11. НАСТРОЙКА ДОМЕНА И SSL

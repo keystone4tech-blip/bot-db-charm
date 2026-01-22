@@ -2,7 +2,7 @@ name: 🚀 Автоматический деплой на сервер
 
 on:
   push:
-    branches: 
+    branches:
       - main
       - master
   pull_request:
@@ -15,11 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     # Деплоим только при пуше в main/master, не на PR
     if: github.event_name == 'push'
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v3
-      
+
       - name: 🔑 Запуск SSH деплоя
         uses: appleboy/ssh-action@master
         with:
@@ -29,49 +29,59 @@ jobs:
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
             echo "🔄 Начинаем автоматический деплой..."
-            
+
             # Переходим в директорию проекта
             cd ~/keystone_project || { echo "❌ Директория проекта не найдена"; exit 1; }
-            
+
             # Получаем последние изменения
             echo "📥 Загружаем последние изменения из GitHub..."
             git fetch origin
             git reset --hard origin/main || git reset --hard origin/master
-            
+
             # Проверяем файл .env
             if [ ! -f .env ]; then
               echo "⚠️  .env файл не найден. Копируем из .env.example..."
               cp .env.example .env
-              echo "❌ Пожалуйста, отредактируйте .env файл и запустите деплой снова"
-              exit 1
+
+              # Автоматически заполняем .env файл стандартными значениями
+              sed -i "s/BOT_TOKEN=.*/BOT_TOKEN=8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA/" .env
+              sed -i "s/TELEGRAM_BOT_TOKEN=.*/TELEGRAM_BOT_TOKEN=8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA/" .env
+              sed -i "s/ADMIN_ID=.*/ADMIN_ID=6521050178/" .env
+              sed -i "s/ADMIN_IDS=.*/ADMIN_IDS=6521050178/" .env
+              sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=2046/" .env
+              sed -i "s/JWT_SECRET=.*/JWT_SECRET=jJ4K9XzF2qR8nP7wE3vL6cA1mS5tY0hB3nI6pW7oE4rT9yU2aQ5xZ8sM1nH6cV3bG7k/" .env
+              sed -i "s/VITE_TELEGRAM_BOT_USERNAME=.*/VITE_TELEGRAM_BOT_USERNAME=Keystone_Tech_Robot/" .env
+              sed -i "s/BOT_USERNAME=.*/BOT_USERNAME=Keystone_Tech_Robot/" .env
+
+              echo "✅ .env файл автоматически заполнен стандартными значениями"
             fi
-            
+
             # Останавливаем старые контейнеры
             echo "🛑 Останавливаем старые контейнеры..."
             docker-compose down
-            
+
             # Удаляем старые образы
             echo "🧹 Очищаем старые Docker образы..."
             docker image prune -f
-            
+
             # Пересобираем и запускаем контейнеры
             echo "🐳 Собираем и запускаем контейнеры..."
             docker-compose up -d --build
-            
+
             # Ждем запуска контейнеров
             echo "⏳ Ожидание запуска контейнеров (30 секунд)..."
             sleep 30
-            
+
             # Проверяем статус контейнеров
             echo "📊 Статус контейнеров:"
             docker-compose ps
-            
+
             # Показываем последние логи backend
             echo "📋 Последние логи backend:"
             docker-compose logs --tail=20 backend
-            
+
             # Показываем последние логи bot
             echo "📋 Последние логи bot:"
             docker-compose logs --tail=20 bot
-            
+
             echo "✅ Деплой завершен успешно!"

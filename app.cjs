@@ -4,6 +4,7 @@ const errorHandler = require('./middleware/errorHandler.cjs');
 const log = require('./utils/logger.cjs');
 
 const authRoutes = require('./routes/auth.cjs');
+const emailAuthRoutes = require('./routes/emailAuth.cjs');
 const profileRoutes = require('./routes/profiles.cjs');
 const balanceRoutes = require('./routes/balances.cjs');
 const referralRoutes = require('./routes/referrals.cjs');
@@ -20,6 +21,7 @@ app.use(corsMiddleware);
 app.use(express.json());
 
 app.use('/api', authRoutes);
+app.use('/api', emailAuthRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', balanceRoutes);
 app.use('/api', referralRoutes);

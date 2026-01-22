@@ -34,8 +34,22 @@ sudo systemctl daemon-reload
 echo "Создаем .env файл если не существует"
 ENV_FILE="$PROJECT_PATH/.env"
 if [ ! -f "$ENV_FILE" ]; then
-    echo "Создайте .env файл с необходимыми переменными окружения"
-    echo "Пример: cp $PROJECT_PATH/.env.example $ENV_FILE"
+    echo "Копируем .env.example в .env"
+    cp $PROJECT_PATH/.env.example $ENV_FILE
+
+    # Заполняем .env файл вашими значениями
+    sed -i "s/BOT_TOKEN=.*/BOT_TOKEN=8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA/" $ENV_FILE
+    sed -i "s/TELEGRAM_BOT_TOKEN=.*/TELEGRAM_BOT_TOKEN=8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA/" $ENV_FILE
+    sed -i "s/ADMIN_ID=.*/ADMIN_ID=6521050178/" $ENV_FILE
+    sed -i "s/ADMIN_IDS=.*/ADMIN_IDS=6521050178/" $ENV_FILE
+    sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=2046/" $ENV_FILE
+    sed -i "s/JWT_SECRET=.*/JWT_SECRET=jJ4K9XzF2qR8nP7wE3vL6cA1mS5tY0hB3nI6pW7oE4rT9yU2aQ5xZ8sM1nH6cV3bG7k/" $ENV_FILE
+    sed -i "s/VITE_TELEGRAM_BOT_USERNAME=.*/VITE_TELEGRAM_BOT_USERNAME=Keystone_Tech_Robot/" $ENV_FILE
+    sed -i "s/DOMAIN=.*/DOMAIN=keystone-tech.ru/" $ENV_FILE
+    sed -i "s/SSL_EMAIL=.*/SSL_EMAIL=m.v.s.4@mail.ru/" $ENV_FILE
+    sed -i "s/BOT_USERNAME=.*/BOT_USERNAME=Keystone_Tech_Robot/" $ENV_FILE
+
+    echo "✅ .env файл автоматически заполнен"
 fi
 
 echo "Запускаем сервисы"

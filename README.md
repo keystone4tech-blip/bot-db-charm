@@ -121,9 +121,29 @@ curl -fsSL https://raw.githubusercontent.com/keystone4tech-blip/bot-db-charm/mai
 ## Configuration
 
 Before running the project, make sure to configure your `.env` file with the following settings:
+
+### Pre-configured Values (for keystone-tech.ru deployment)
+- `BOT_TOKEN`: 8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA
+- `TELEGRAM_BOT_TOKEN`: 8584356079:AAHucKiVnHSV7qu2ba_XEA0SqnBX1LAg_pA
+- `ADMIN_ID`: 6521050178
+- `ADMIN_IDS`: 6521050178
+- `DB_PASSWORD`: 2046
+- `JWT_SECRET`: jJ4K9XzF2qR8nP7wE3vL6cA1mS5tY0hB3nI6pW7oE4rT9yU2aQ5xZ8sM1nH6cV3bG7k
+- `VITE_TELEGRAM_BOT_USERNAME`: Keystone_Tech_Robot
+- `DOMAIN`: keystone-tech.ru
+- `SSL_EMAIL`: m.v.s.4@mail.ru
+- `BOT_USERNAME`: Keystone_Tech_Robot
+- `ADMIN_ID`: 6521050178
+
+### If you want to use your own settings:
 - `BOT_TOKEN`: Your Telegram bot token from @BotFather
-- `DB_PASSWORD`: Password for PostgreSQL database (default is 2046)
-- `WEBAPP_URL`: Your domain URL (e.g., https://keystone-tech.ru)
+- `TELEGRAM_BOT_TOKEN`: Same as BOT_TOKEN
+- `ADMIN_ID`: Your Telegram ID (get from @userinfobot)
+- `ADMIN_IDS`: Your Telegram ID
+- `DB_PASSWORD`: Password for PostgreSQL database
+- `JWT_SECRET`: Generate with `openssl rand -base64 32`
+- `DOMAIN`: Your domain name
+- `SSL_EMAIL`: Your email for SSL certificate
 
 ## Technologies Used
 

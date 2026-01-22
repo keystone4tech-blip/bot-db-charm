@@ -140,6 +140,25 @@ export interface AuthResponse {
 }
 
 /**
+ * Интерфейс для регистрации по email
+ */
+export interface EmailRegistrationData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  referralCode?: string;
+}
+
+/**
+ * Интерфейс для входа по email
+ */
+export interface EmailLoginData {
+  email: string;
+  password: string;
+}
+
+/**
  * Аутентификация пользователя через Telegram
  */
 export const authenticateUser = async (initData: string, referralCode?: string): Promise<AuthResponse> => {
@@ -193,6 +212,110 @@ export const authenticateUser = async (initData: string, referralCode?: string):
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Неизвестная ошибка при аутентификации'
+    };
+  }
+};
+
+/**
+ * Регистрация пользователя по email
+ */
+export const registerWithEmail = async (data: EmailRegistrationData) => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+    const response = await fetch(`${serverBaseUrl}/api/email/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Email registration error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Registration failed'
+    };
+  }
+};
+
+/**
+ * Вход пользователя по email
+ */
+export const loginWithEmail = async (data: EmailLoginData) => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+    const response = await fetch(`${serverBaseUrl}/api/email/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Email login error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Login failed'
+    };
+  }
+};
+
+/**
+ * Отправка OTP на email
+ */
+export const sendOTP = async (email: string) => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+    const response = await fetch(`${serverBaseUrl}/api/email/send-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send OTP'
+    };
+  }
+};
+
+/**
+ * Проверка OTP
+ */
+export const verifyOTP = async (email: string, otp: string) => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+    const response = await fetch(`${serverBaseUrl}/api/email/verify-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, otp }),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to verify OTP'
     };
   }
 };

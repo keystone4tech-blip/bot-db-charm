@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: ${DB_NAME:-keystone}
       POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-2046}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -37,10 +37,10 @@ services:
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-keystone}
       DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-changeme}
-      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-changeme}@postgres:5432/${DB_NAME:-keystone}
-      POSTGRES_DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-changeme}@postgres:5432/${DB_NAME:-keystone}
-      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-this}
+      DB_PASSWORD: ${DB_PASSWORD:-2046}
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-2046}@postgres:5432/${DB_NAME:-keystone}
+      POSTGRES_DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-2046}@postgres:5432/${DB_NAME:-keystone}
+      JWT_SECRET: ${JWT_SECRET:-jJ4K9XzF2qR8nP7wE3vL6cA1mS5tY0hB3nI6pW7oE4rT9yU2aQ5xZ8sM1nH6cV3bG7k}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       BOT_TOKEN: ${BOT_TOKEN}
       ADMIN_ID: ${ADMIN_ID}
@@ -69,12 +69,12 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       BOT_TOKEN: ${BOT_TOKEN}
       API_BASE_URL: http://backend:3000/api
-      BOT_USERNAME: ${BOT_USERNAME}
+      BOT_USERNAME: ${VITE_TELEGRAM_BOT_USERNAME}
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-keystone}
       DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+      DB_PASSWORD: ${DB_PASSWORD:-2046}
       ADMIN_ID: ${ADMIN_ID}
       ADMIN_IDS: ${ADMIN_IDS}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
