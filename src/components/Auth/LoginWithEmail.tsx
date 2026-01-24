@@ -40,7 +40,7 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
       });
 
       if (result.success) {
-        onLoginSuccess?.(result.user);
+        onLoginSuccess?.(result.profile);
       } else {
         setError(result.error || 'Login failed');
       }
@@ -81,7 +81,7 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
       const result = await verifyOTP(formData.email, formData.otp);
 
       if (result.success) {
-        onLoginSuccess?.(result.user);
+        onLoginSuccess?.(result.profile);
       } else {
         setError(result.error || 'Invalid OTP');
       }

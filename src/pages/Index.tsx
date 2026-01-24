@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TelegramProvider } from '@/components/TelegramProvider';
+import { Navigate } from 'react-router-dom';
+import { useTelegramAuth } from '@/hooks/useTelegramAuth';
+import { useTelegram } from '@/hooks/useTelegram';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { AdminBottomNav } from '@/components/admin/AdminBottomNav';
@@ -25,9 +27,20 @@ const viewVariants = {
 };
 
 const Index = () => {
+  const { isAuthenticated, isLoading } = useTelegramAuth();
+  const { isTelegram } = useTelegram();
   const [activeTab, setActiveTab] = useState('info');
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [adminTab, setAdminTab] = useState('admin-stats');
+
+  // Redirect to auth if not authenticated and not in Telegram
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!isAuthenticated && !isTelegram) {
+    return <Navigate to="/auth" replace />;
+  }
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -104,39 +117,37 @@ const Index = () => {
   }, [activeTab, isAdminMode, adminTab]);
 
   return (
-    <TelegramProvider>
-      <div className="min-h-screen bg-background max-w-md mx-auto overflow-x-hidden pt-14">
-        {/* App header */}
-        <AppHeader isAdminMode={isAdminMode} />
+    <div className="min-h-screen bg-background max-w-md mx-auto overflow-x-hidden pt-14">
+      {/* App header */}
+      <AppHeader isAdminMode={isAdminMode} />
 
-        {/* Main content */}
-        <main className="min-h-[calc(100vh-3.5rem-4rem)]">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={isAdminMode ? adminTab : activeTab}
-              variants={viewVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ duration: 0.2 }}
-            >
-              {renderView()}
-            </motion.div>
-          </AnimatePresence>
-        </main>
+      {/* Main content */}
+      <main className="min-h-[calc(100vh-3.5rem-4rem)]">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={isAdminMode ? adminTab : activeTab}
+            variants={viewVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ duration: 0.2 }}
+          >
+            {renderView()}
+          </motion.div>
+        </AnimatePresence>
+      </main>
 
-        {/* Bottom navigation */}
-        {isAdminMode ? (
-          <AdminBottomNav
-            activeTab={adminTab}
-            onTabChange={handleAdminTabChange}
-            onExitAdmin={handleExitAdminMode}
-          />
-        ) : (
-          <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
-        )}
-      </div>
-    </TelegramProvider>
+      {/* Bottom navigation */}
+      {isAdminMode ? (
+        <AdminBottomNav
+          activeTab={adminTab}
+          onTabChange={handleAdminTabChange}
+          onExitAdmin={handleExitAdminMode}
+        />
+      ) : (
+        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+      )}
+    </div>
   );
 };
 

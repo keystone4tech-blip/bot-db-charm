@@ -49,7 +49,7 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onRegisterSuccess }: Reg
       });
 
       if (result.success) {
-        onRegisterSuccess?.(result.user);
+        onRegisterSuccess?.(result.profile);
       } else {
         setError(result.error || 'Registration failed');
       }
