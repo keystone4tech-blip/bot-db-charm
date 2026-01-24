@@ -230,7 +230,7 @@ export const authenticateUser = async (initData: string, referralCode?: string):
 
     return {
       success: true,
-      profile: data.profile as UserProfile,
+      profile: data.profile as ExtendedUserProfile,
       balance: data.balance as UserBalance,
       referralStats: data.referralStats as ReferralStats,
       role: data.role || 'user',
@@ -450,224 +450,300 @@ export const verifyOTPCode = async (sessionId: string, code: string): Promise<Au
 };
 
 /**
- * Получение профиля пользователя по Telegram ID
- */
-export const getUserProfile = async (telegramId: number) => {
-  try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${serverBaseUrl}/api/profiles/${telegramId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  * Получение профиля пользователя по ID (UUID)
+  */
+ export const getUserProfile = async (userId: string) => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
 
-    if (!response.ok) {
-      throw new Error('Не удалось получить профиль пользователя');
-    }
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    return await response.json() as UserProfile;
-  } catch (error) {
-    console.error('Ошибка получения профиля:', error);
-    throw error;
-  }
-};
+     const response = await fetch(`${serverBaseUrl}/api/profiles/${userId}`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
 
-/**
- * Получение баланса пользователя
- */
-export const getUserBalance = async (userId: string) => {
-  try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${serverBaseUrl}/api/balances/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+     clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      throw new Error('Не удалось получить баланс пользователя');
-    }
+     const data = await response.json().catch(() => null);
 
-    return await response.json() as UserBalance;
-  } catch (error) {
-    console.error('Ошибка получения баланса:', error);
-    throw error;
-  }
-};
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить профиль пользователя');
+     }
+
+     return ((data as any)?.profile ?? data) as ExtendedUserProfile;
+   } catch (error) {
+     console.error('Ошибка получения профиля:', error);
+     throw error;
+   }
+ };
 
 /**
- * Получение статистики по рефералам
- */
-export const getUserReferralStats = async (userId: string) => {
-  try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${serverBaseUrl}/api/referral-stats/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  * Получение баланса пользователя
+  */
+ export const getUserBalance = async (userId: string) => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
 
-    if (!response.ok) {
-      throw new Error('Не удалось получить статистику рефералов');
-    }
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    return await response.json() as ReferralStats;
-  } catch (error) {
-    console.error('Ошибка получения статистики рефералов:', error);
-    throw error;
-  }
-};
+     const response = await fetch(`${serverBaseUrl}/api/balances/${userId}`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
 
-/**
- * Создание VPN ключа
- */
-export const createVPNKey = async (keyData: any) => {
-  try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${serverBaseUrl}/api/vpn-keys`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(keyData),
-    });
+     clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      throw new Error('Не удалось создать VPN ключ');
-    }
+     const data = await response.json().catch(() => null);
 
-    const data = await response.json();
-    return data.vpnKey as any;
-  } catch (error) {
-    console.error('Ошибка создания VPN ключа:', error);
-    throw error;
-  }
-};
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить баланс пользователя');
+     }
+
+     return ((data as any)?.balance ?? data) as UserBalance;
+   } catch (error) {
+     console.error('Ошибка получения баланса:', error);
+     throw error;
+   }
+ };
 
 /**
- * Получение VPN ключей пользователя
- */
-export const getUserVPNKeys = async (userId: string) => {
-  try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${serverBaseUrl}/api/vpn-keys/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  * Получение статистики по рефералам
+  */
+ export const getUserReferralStats = async (userId: string) => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
 
-    if (!response.ok) {
-      throw new Error('Не удалось получить VPN ключи');
-    }
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    const data = await response.json();
-    return data.vpnKeys as any[];
-  } catch (error) {
-    console.error('Ошибка получения VPN ключей:', error);
-    throw error;
-  }
-};
+     const response = await fetch(`${serverBaseUrl}/api/referral-stats/${userId}`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
 
-/**
- * Получение телеграм каналов пользователя
- */
-export const getUserChannels = async (userId: string) => {
-  try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${serverBaseUrl}/api/telegram-channels/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+     clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      throw new Error('Не удалось получить телеграм каналы');
-    }
+     const data = await response.json().catch(() => null);
 
-    const data = await response.json();
-    return data.channels as any[];
-  } catch (error) {
-    console.error('Ошибка получения телеграм каналов:', error);
-    throw error;
-  }
-};
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить статистику рефералов');
+     }
+
+     return ((data as any)?.referralStats ?? data) as ReferralStats;
+   } catch (error) {
+     console.error('Ошибка получения статистики рефералов:', error);
+     throw error;
+   }
+ };
 
 /**
- * Получение ботов пользователя
- */
-export const getUserBots = async (userId: string) => {
-  try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${serverBaseUrl}/api/user-bots/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  * Создание VPN ключа
+  */
+ export const createVPNKey = async (keyData: any) => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
 
-    if (!response.ok) {
-      throw new Error('Не удалось получить ботов пользователя');
-    }
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    const data = await response.json();
-    return data.bots as any[];
-  } catch (error) {
-    console.error('Ошибка получения ботов пользователя:', error);
-    throw error;
-  }
-};
+     const response = await fetch(`${serverBaseUrl}/api/vpn-keys`, {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       body: JSON.stringify(keyData),
+       signal: controller.signal,
+     });
 
-/**
- * Получение подписок пользователя
- */
-export const getUserSubscriptions = async (userId: string) => {
-  try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${serverBaseUrl}/api/subscriptions/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+     clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      throw new Error('Не удалось получить подписки пользователя');
-    }
+     const data = await response.json().catch(() => null);
 
-    const data = await response.json();
-    return data.subscriptions as any[];
-  } catch (error) {
-    console.error('Ошибка получения подписок пользователя:', error);
-    throw error;
-  }
-};
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось создать VPN ключ');
+     }
+
+     return ((data as any)?.vpnKey ?? data) as any;
+   } catch (error) {
+     console.error('Ошибка создания VPN ключа:', error);
+     throw error;
+   }
+ };
 
 /**
- * Обновление профиля пользователя
- */
-export const updateUserProfile = async (userId: string, updates: Partial<ExtendedUserProfile>) => {
-  try {
-    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${serverBaseUrl}/api/profiles/${userId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updates),
-    });
+  * Получение VPN ключей пользователя
+  */
+ export const getUserVPNKeys = async (userId: string) => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
 
-    if (!response.ok) {
-      throw new Error('Не удалось обновить профиль пользователя');
-    }
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    return await response.json() as ExtendedUserProfile;
-  } catch (error) {
-    console.error('Ошибка обновления профиля:', error);
-    throw error;
-  }
-};
+     const response = await fetch(`${serverBaseUrl}/api/vpn-keys/${userId}`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
+
+     clearTimeout(timeoutId);
+
+     const data = await response.json().catch(() => null);
+
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить VPN ключи');
+     }
+
+     return (((data as any)?.vpnKeys ?? data) as any[]) || [];
+   } catch (error) {
+     console.error('Ошибка получения VPN ключей:', error);
+     throw error;
+   }
+ };
+
+/**
+  * Получение телеграм каналов пользователя
+  */
+ export const getUserChannels = async (userId: string) => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+     const response = await fetch(`${serverBaseUrl}/api/telegram-channels/${userId}`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
+
+     clearTimeout(timeoutId);
+
+     const data = await response.json().catch(() => null);
+
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить телеграм каналы');
+     }
+
+     return (((data as any)?.channels ?? data) as any[]) || [];
+   } catch (error) {
+     console.error('Ошибка получения телеграм каналов:', error);
+     throw error;
+   }
+ };
+
+/**
+  * Получение ботов пользователя
+  */
+ export const getUserBots = async (userId: string) => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+     const response = await fetch(`${serverBaseUrl}/api/user-bots/${userId}`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
+
+     clearTimeout(timeoutId);
+
+     const data = await response.json().catch(() => null);
+
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить ботов пользователя');
+     }
+
+     return (((data as any)?.bots ?? data) as any[]) || [];
+   } catch (error) {
+     console.error('Ошибка получения ботов пользователя:', error);
+     throw error;
+   }
+ };
+
+/**
+  * Получение подписок пользователя
+  */
+ export const getUserSubscriptions = async (userId: string) => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+     const response = await fetch(`${serverBaseUrl}/api/subscriptions/${userId}`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
+
+     clearTimeout(timeoutId);
+
+     const data = await response.json().catch(() => null);
+
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить подписки пользователя');
+     }
+
+     return (((data as any)?.subscriptions ?? data) as any[]) || [];
+   } catch (error) {
+     console.error('Ошибка получения подписок пользователя:', error);
+     throw error;
+   }
+ };
+
+/**
+  * Обновление профиля пользователя
+  */
+ export const updateUserProfile = async (userId: string, updates: Partial<ExtendedUserProfile>) => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+     const response = await fetch(`${serverBaseUrl}/api/profiles/${userId}`, {
+       method: 'PUT',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       body: JSON.stringify(updates),
+       signal: controller.signal,
+     });
+
+     clearTimeout(timeoutId);
+
+     const data = await response.json().catch(() => null);
+
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось обновить профиль пользователя');
+     }
+
+     return ((data as any)?.profile ?? data) as ExtendedUserProfile;
+   } catch (error) {
+     console.error('Ошибка обновления профиля:', error);
+     throw error;
+   }
+ };

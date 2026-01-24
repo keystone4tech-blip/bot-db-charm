@@ -1,29 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
 import {
-  UserProfile,
-  UserBalance,
-  ReferralStats,
-  VPNKey,
-  TelegramChannel,
-  UserBot,
-  Subscription,
-  getUserVPNKeys,
-  getUserChannels,
+  type ExtendedUserProfile as ApiExtendedUserProfile,
+  type ReferralStats,
+  type Subscription,
+  type TelegramChannel,
+  type UserBalance,
+  type UserBot,
+  type VPNKey,
+  getUserBalance,
   getUserBots,
+  getUserChannels,
+  getUserProfile,
+  getUserReferralStats,
   getUserSubscriptions,
+  getUserVPNKeys,
   updateUserProfile as apiUpdateUserProfile,
-  createVPNKey
 } from '@/lib/api';
 import { useTelegramContext } from '@/components/TelegramProvider';
 
-// Расширяем интерфейс профиля дополнительными полями
-export interface ExtendedUserProfile extends UserProfile {
-  city?: string;
-  phone?: string;
-  email?: string;
-  bio?: string;
-  link?: string;
-}
+export type ExtendedUserProfile = ApiExtendedUserProfile;
 
 interface ProfileHookReturn {
   profile: ExtendedUserProfile | null;
@@ -39,8 +35,32 @@ interface ProfileHookReturn {
   updateProfile: (updates: Partial<ExtendedUserProfile>) => Promise<void>;
 }
 
+const normalizeOptionalText = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : undefined;
+};
+
+const normalizeProfile = (profile: ApiExtendedUserProfile): ApiExtendedUserProfile => {
+  return {
+    ...profile,
+    city: normalizeOptionalText((profile as any).city),
+    phone: normalizeOptionalText((profile as any).phone),
+    email: normalizeOptionalText((profile as any).email),
+    bio: normalizeOptionalText((profile as any).bio),
+    link: normalizeOptionalText((profile as any).link),
+  };
+};
+
 export const useProfile = (): ProfileHookReturn => {
-  const { authProfile, authBalance, authReferralStats, isAuthenticated, user: telegramUser } = useTelegramContext();
+  const {
+    authProfile,
+    authBalance,
+    authReferralStats,
+    isAuthenticated,
+    user: telegramUser,
+  } = useTelegramContext();
+
   const [profile, setProfile] = useState<ExtendedUserProfile | null>(null);
   const [balance, setBalance] = useState<UserBalance | null>(null);
   const [referralStats, setReferralStats] = useState<ReferralStats | null>(null);
@@ -52,188 +72,222 @@ export const useProfile = (): ProfileHookReturn => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Загружаем данные при изменении аутентификации
   useEffect(() => {
-    if (isAuthenticated && authProfile) {
-      // Проверяем, изменились ли данные Telegram и обновляем их в базе
-      const hasChanged =
-        authProfile.first_name !== telegramUser?.first_name ||
-        authProfile.last_name !== telegramUser?.last_name ||
-        authProfile.telegram_username !== telegramUser?.username ||
-        authProfile.avatar_url !== telegramUser?.photo_url;
+    let cancelled = false;
 
-      // Загружаем расширенные данные профиля из базы данных (в реальной реализации)
-      // Для демонстрации используем заглушку
-      const extendedData = {
-        city: '', // В реальной реализации загружать из базы данных
-        phone: '', // В реальной реализации загружать из базы данных
-        email: '', // В реальной реализации загружать из базы данных
-        bio: '', // В реальной реализации загружать из базы данных
-        link: '', // В реальной реализации загружать из базы данных
+    const userId = authProfile?.id;
+
+    const resetState = () => {
+      setProfile(null);
+      setBalance(null);
+      setReferralStats(null);
+      setVpnKey(null);
+      setChannel(null);
+      setUserBot(null);
+      setSubscription(null);
+      setReferralLink(null);
+      setError(null);
+      setIsLoading(false);
+    };
+
+    if (!isAuthenticated || !userId) {
+      resetState();
+      return () => {
+        cancelled = true;
       };
-
-      if (hasChanged) {
-        // Обновляем профиль с новыми данными из Telegram
-        const updatedProfile: ExtendedUserProfile = {
-          ...authProfile,
-          first_name: telegramUser?.first_name || authProfile.first_name,
-          last_name: telegramUser?.last_name || authProfile.last_name,
-          telegram_username: telegramUser?.username || authProfile.telegram_username,
-          avatar_url: telegramUser?.photo_url || authProfile.avatar_url,
-          referred_by: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          ...extendedData // Добавляем расширенные данные
-        };
-
-        // Здесь в реальной реализации нужно вызвать API для обновления данных в базе
-        // updateProfileInDatabase(updatedProfile);
-        setProfile(updatedProfile);
-      } else {
-        // Преобразуем AuthProfile в ExtendedUserProfile с дополнительными полями
-        const fullProfile: ExtendedUserProfile = {
-          ...authProfile,
-          referred_by: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          ...extendedData // Добавляем расширенные данные
-        };
-        setProfile(fullProfile);
-      }
-
-      // Преобразуем AuthBalance в UserBalance
-      if (authBalance) {
-        const fullBalance: UserBalance = {
-          id: authProfile.id,
-          user_id: authProfile.id,
-          ...authBalance,
-          updated_at: new Date().toISOString(),
-        };
-        setBalance(fullBalance);
-      }
-
-      // Преобразуем AuthReferralStats в ReferralStats
-      if (authReferralStats) {
-        const fullReferralStats: ReferralStats = {
-          id: authProfile.id,
-          user_id: authProfile.id,
-          ...authReferralStats,
-          updated_at: new Date().toISOString(),
-        };
-        setReferralStats(fullReferralStats);
-      }
-
-      // Генерируем реферальную ссылку
-      if (authProfile.referral_code) {
-        setReferralLink(`https://t.me/Keystone_Tech_Robot?start=${authProfile.referral_code}`);
-      }
-
-      // Загружаем дополнительные данные
-      loadAdditionalData(authProfile.id);
-    } else {
-      setIsLoading(false);
     }
-  }, [isAuthenticated, authProfile, authBalance, authReferralStats, telegramUser]);
 
-  const loadAdditionalData = async (userId: string) => {
-    try {
-      setIsLoading(true);
+    setIsLoading(true);
+    setError(null);
 
-      // Загружаем все данные параллельно
-      const [vpnResponse, channelResponse, botResponse, subscriptionResponse] = await Promise.allSettled([
-        getUserVPNKeys(userId),
-        getUserChannels(userId),
-        getUserBots(userId),
-        getUserSubscriptions(userId)
-      ]);
+    // Быстрый старт: используем данные из auth ответа (они уже с бэкенда),
+    // а затем обновляем их из отдельных эндпоинтов.
+    const now = new Date().toISOString();
 
-      if (vpnResponse.status === 'fulfilled' && vpnResponse.value?.length > 0) {
-        setVpnKey(vpnResponse.value[0]);
-        console.log('Найден существующий VPN ключ:', vpnResponse.value[0]);
-      } else if (vpnResponse.status === 'fulfilled' && vpnResponse.value?.length === 0) {
-        // Если у пользователя нет VPN ключа, создаем пробный на 7 дней
-        // Пока отключено, чтобы избежать ошибок при загрузке
-        console.log('У пользователя нет VPN ключа, пробный ключ будет создан позже...');
-        // Отложенная генерация пробного ключа (временно отключена)
-        // setTimeout(() => createTrialVPNKey(userId), 1000);
-      } else if (vpnResponse.status === 'rejected') {
-        console.error('Ошибка при получении VPN ключей:', vpnResponse.reason);
-      }
+    const initialProfile: ExtendedUserProfile = normalizeProfile({
+      ...(authProfile as any),
+      telegram_username: telegramUser?.username ?? (authProfile as any).telegram_username ?? null,
+      first_name: telegramUser?.first_name ?? (authProfile as any).first_name ?? null,
+      last_name: telegramUser?.last_name ?? (authProfile as any).last_name ?? null,
+      avatar_url: telegramUser?.photo_url ?? (authProfile as any).avatar_url ?? null,
+      referred_by: (authProfile as any).referred_by ?? null,
+      created_at: (authProfile as any).created_at ?? now,
+      updated_at: (authProfile as any).updated_at ?? now,
+    });
 
-      if (channelResponse.status === 'fulfilled' && channelResponse.value?.length > 0) {
-        setChannel(channelResponse.value[0]);
-      }
+    setProfile(initialProfile);
 
-      if (botResponse.status === 'fulfilled' && botResponse.value?.length > 0) {
-        setUserBot(botResponse.value[0]);
-      }
-
-      if (subscriptionResponse.status === 'fulfilled' && subscriptionResponse.value?.length > 0) {
-        setSubscription(subscriptionResponse.value[0]);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка загрузки данных');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const createTrialVPNKey = async (userId: string) => {
-    try {
-      console.log('Попытка создания пробного VPN ключа для пользователя:', userId);
-
-      // Создаем пробный VPN ключ на 7 дней
-      const trialKey = {
+    if (authBalance) {
+      setBalance({
+        id: userId,
         user_id: userId,
-        key_value: `trial-${userId.substring(0, 8)}-${Date.now()}`,
-        server_location: 'США - Нью-Йорк', // или другое значение по умолчанию
-        status: 'active',
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 дней
-        is_trial: true
-      };
-
-      console.log('Данные для создания VPN ключа:', trialKey);
-
-      // Сохраняем пробный ключ в базе данных
-      const response = await createVPNKey(trialKey);
-      console.log('Ответ от API при создании VPN ключа:', response);
-
-      if (response) {
-        setVpnKey(response);
-        console.log('VPN ключ успешно установлен в состояние');
-      } else {
-        console.warn('Ответ от API пустой при создании VPN ключа');
-      }
-    } catch (err) {
-      console.error('Ошибка создания пробного VPN ключа:', err);
-      setError(err instanceof Error ? err.message : 'Ошибка создания пробного VPN ключа');
+        internal_balance: Number(authBalance.internal_balance ?? 0),
+        external_balance: Number(authBalance.external_balance ?? 0),
+        total_earned: Number(authBalance.total_earned ?? 0),
+        total_withdrawn: Number(authBalance.total_withdrawn ?? 0),
+        updated_at: now,
+      });
+    } else {
+      setBalance(null);
     }
-  };
 
-  const updateProfile = async (updates: Partial<ExtendedUserProfile>) => {
-    try {
-      // В реальной реализации здесь будет вызов API для обновления профиля
-      setProfile(prev => prev ? { ...prev, ...updates } : null);
+    if (authReferralStats) {
+      setReferralStats({
+        id: userId,
+        user_id: userId,
+        total_referrals: Number(authReferralStats.total_referrals ?? 0),
+        total_earnings: Number(authReferralStats.total_earnings ?? 0),
+        level_1_count: Number(authReferralStats.level_1_count ?? 0),
+        level_2_count: Number(authReferralStats.level_2_count ?? 0),
+        level_3_count: Number(authReferralStats.level_3_count ?? 0),
+        level_4_count: Number(authReferralStats.level_4_count ?? 0),
+        level_5_count: Number(authReferralStats.level_5_count ?? 0),
+        updated_at: now,
+      });
+    } else {
+      setReferralStats(null);
+    }
 
-      // Если профиль существует, обновляем его в базе данных
-      if (profile) {
-        try {
-          await apiUpdateUserProfile(profile.id, updates);
-        } catch (apiError) {
-          console.error('Ошибка обновления профиля в базе данных:', apiError);
-          // Возвращаем предыдущее состояние в случае ошибки
-          setProfile(prev => prev ? {
-            ...prev,
-            ...updates
-          } : null);
-          throw apiError;
+    setReferralLink(initialProfile.referral_code ? `https://t.me/Keystone_Tech_Robot?start=${initialProfile.referral_code}` : null);
+
+    setVpnKey(null);
+    setChannel(null);
+    setUserBot(null);
+    setSubscription(null);
+
+    const load = async () => {
+      try {
+        const [profileRes, balanceRes, referralRes] = await Promise.allSettled([
+          getUserProfile(userId),
+          getUserBalance(userId),
+          getUserReferralStats(userId),
+        ]);
+
+        if (cancelled) return;
+
+        if (profileRes.status === 'fulfilled' && profileRes.value) {
+          const nextProfile = normalizeProfile({
+            ...profileRes.value,
+            telegram_username: telegramUser?.username ?? profileRes.value.telegram_username,
+            first_name: telegramUser?.first_name ?? profileRes.value.first_name,
+            last_name: telegramUser?.last_name ?? profileRes.value.last_name,
+            avatar_url: telegramUser?.photo_url ?? profileRes.value.avatar_url,
+          });
+
+          setProfile(nextProfile);
+          setReferralLink(nextProfile.referral_code ? `https://t.me/Keystone_Tech_Robot?start=${nextProfile.referral_code}` : null);
+        } else if (profileRes.status === 'rejected') {
+          console.error('Ошибка загрузки профиля:', profileRes.reason);
+        }
+
+        if (balanceRes.status === 'fulfilled' && balanceRes.value) {
+          setBalance(balanceRes.value);
+        } else if (balanceRes.status === 'rejected') {
+          console.error('Ошибка загрузки баланса:', balanceRes.reason);
+        }
+
+        if (referralRes.status === 'fulfilled' && referralRes.value) {
+          setReferralStats(referralRes.value);
+        } else if (referralRes.status === 'rejected') {
+          console.error('Ошибка загрузки рефералов:', referralRes.reason);
+        }
+
+        const [vpnResponse, channelResponse, botResponse, subscriptionResponse] = await Promise.allSettled([
+          getUserVPNKeys(userId),
+          getUserChannels(userId),
+          getUserBots(userId),
+          getUserSubscriptions(userId),
+        ]);
+
+        if (cancelled) return;
+
+        if (vpnResponse.status === 'fulfilled') {
+          setVpnKey(vpnResponse.value?.[0] ?? null);
+        } else {
+          console.error('Ошибка при получении VPN ключей:', vpnResponse.reason);
+          setVpnKey(null);
+        }
+
+        if (channelResponse.status === 'fulfilled') {
+          setChannel(channelResponse.value?.[0] ?? null);
+        } else {
+          console.error('Ошибка при получении каналов:', channelResponse.reason);
+          setChannel(null);
+        }
+
+        if (botResponse.status === 'fulfilled') {
+          setUserBot(botResponse.value?.[0] ?? null);
+        } else {
+          console.error('Ошибка при получении ботов:', botResponse.reason);
+          setUserBot(null);
+        }
+
+        if (subscriptionResponse.status === 'fulfilled') {
+          setSubscription(subscriptionResponse.value?.[0] ?? null);
+        } else {
+          console.error('Ошибка при получении подписок:', subscriptionResponse.reason);
+          setSubscription(null);
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки данных профиля:', err);
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Ошибка загрузки данных');
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
         }
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка обновления профиля');
-      throw err;
-    }
-  };
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isAuthenticated,
+    authProfile?.id,
+    authProfile?.referral_code,
+    authBalance?.internal_balance,
+    authBalance?.external_balance,
+    authBalance?.total_earned,
+    authBalance?.total_withdrawn,
+    authReferralStats?.total_referrals,
+    authReferralStats?.total_earnings,
+    authReferralStats?.level_1_count,
+    authReferralStats?.level_2_count,
+    authReferralStats?.level_3_count,
+    authReferralStats?.level_4_count,
+    authReferralStats?.level_5_count,
+    telegramUser?.username,
+    telegramUser?.first_name,
+    telegramUser?.last_name,
+    telegramUser?.photo_url,
+  ]);
+
+  const updateProfile = useCallback(
+    async (updates: Partial<ExtendedUserProfile>) => {
+      if (!profile) return;
+
+      const prev = profile;
+      const optimistic = normalizeProfile({ ...profile, ...updates } as ApiExtendedUserProfile);
+
+      setProfile(optimistic);
+
+      try {
+        const updated = await apiUpdateUserProfile(profile.id, updates);
+        const normalized = normalizeProfile(updated);
+        setProfile(normalized);
+        setReferralLink(normalized.referral_code ? `https://t.me/Keystone_Tech_Robot?start=${normalized.referral_code}` : null);
+      } catch (err) {
+        setProfile(prev);
+        setError(err instanceof Error ? err.message : 'Ошибка обновления профиля');
+        throw err;
+      }
+    },
+    [profile],
+  );
 
   return {
     profile,
@@ -246,6 +300,6 @@ export const useProfile = (): ProfileHookReturn => {
     referralLink,
     isLoading,
     error,
-    updateProfile
+    updateProfile,
   };
 };

@@ -25,11 +25,10 @@ interface ProfileViewProps {
 }
 
 export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) => {
-  const { user: telegramUser, authProfile, authBalance, authReferralStats, authRole } = useTelegramContext();
+  const { user: telegramUser, authProfile, authBalance, authRole } = useTelegramContext();
   const {
     profile,
     balance,
-    referralStats,
     vpnKey,
     channel,
     userBot,
@@ -54,12 +53,16 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
 
   const isAdmin = authRole === 'admin';
 
+  // Используем данные из контекста, если хук не загрузил данные
+  const displayProfile = profile || authProfile;
+  const displayBalance = balance || authBalance;
+
   // Загружаем тикеты при загрузке профиля
   useEffect(() => {
-    if (profile?.id) {
-      fetchTickets(profile.id);
+    if (displayProfile?.id) {
+      fetchTickets(displayProfile.id);
     }
-  }, [profile?.id]); // Убираем fetchTickets из зависимостей, чтобы избежать бесконечного цикла
+  }, [displayProfile?.id, fetchTickets]);
 
   // Проверяем, есть ли активные тикеты
   useEffect(() => {
@@ -119,19 +122,28 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
     );
   }
 
-  // Используем данные из контекста, если хук не загрузил данные
-  const displayProfile = profile || authProfile;
-  const displayBalance = balance || authBalance;
-  const displayReferralStats = referralStats || authReferralStats;
-
-  const handleOpenTicket = (ticket: Ticket) => {
-    setActiveTicket(ticket);
-  };
+  if (!displayProfile) {
+    return (
+      <div className="px-4 pb-24 flex items-center justify-center min-h-[60vh]">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/40 flex items-center justify-center">
+            <User className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground mb-2">Профиль недоступен</p>
+          <p className="text-sm text-muted-foreground">Пожалуйста, авторизуйтесь и попробуйте снова</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   const handleCloseChat = async () => {
     // После закрытия тикета, обновляем список тикетов чтобы найти активный
-    if (profile?.id) {
-      await fetchTickets(profile.id);
+    if (displayProfile?.id) {
+      await fetchTickets(displayProfile.id);
     }
   };
 

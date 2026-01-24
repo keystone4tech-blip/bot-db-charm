@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
-import { Bot, Settings, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { Bot } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 
 interface BotStatusCardProps {
   bot: any; // UserBot
@@ -14,7 +14,7 @@ interface BotStatusCardProps {
 export const BotStatusCard = ({ bot, subscriptionExpiresAt, onNavigate }: BotStatusCardProps) => {
   const isActive = bot?.is_active || false;
   const isSubscribed = subscriptionExpiresAt && new Date(subscriptionExpiresAt) > new Date();
-  const botName = bot?.bot_name || 'Мой бот';
+  const botName = bot?.bot_name || 'Telegram бот';
   const botUsername = bot?.bot_username || 'не указан';
 
   return (
