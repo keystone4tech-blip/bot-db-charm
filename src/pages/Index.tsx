@@ -38,7 +38,8 @@ const Index = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab, isAdminMode, adminTab]);
 
-  // Redirect to auth if not authenticated and not in Telegram
+  // Remove duplicate useEffect - move all useEffect calls to the top
+  // No conditional hooks after this point
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -118,11 +119,6 @@ const Index = () => {
         return <InfoView key="info" />;
     }
   };
-
-  // Прокручиваем к началу при изменении вкладки
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [activeTab, isAdminMode, adminTab]);
 
   return (
     <div className="min-h-screen bg-background max-w-md mx-auto overflow-x-hidden pt-14">
