@@ -70,7 +70,7 @@ export const MainAuth = ({ onAuthSuccess }: MainAuthProps) => {
               onClick={() => setCurrentMethod(AuthMethod.TELEGRAM)}
               className="text-blue-500 hover:underline"
             >
-              Authenticate with Telegram
+              Войти через Telegram
             </button>
           </div>
         )}

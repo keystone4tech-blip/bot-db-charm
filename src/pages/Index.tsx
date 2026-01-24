@@ -35,7 +35,7 @@ const Index = () => {
 
   // Redirect to auth if not authenticated and not in Telegram
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center">Загрузка...</div>;
   }
 
   if (!isAuthenticated && !isTelegram) {
