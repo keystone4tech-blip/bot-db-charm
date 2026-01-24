@@ -86,32 +86,18 @@ export const usePlatformStats = (autoRefresh: boolean = false, refreshInterval: 
 
   // Умное обновление данных в зависимости от активности пользователя
   useEffect(() => {
-    let currentIntervalId: NodeJS.Timeout | null = null;
-
-    if (autoRefresh) {
-      if (useSmartRefresh) {
-        // Если используется умное обновление, проверяем активность пользователя
-        if (isUserActive) {
-          currentIntervalId = setInterval(fetchStats, refreshInterval);
-          setIntervalId(currentIntervalId);
-        } else if (intervalId) {
-          // Если пользователь неактивен, останавливаем обновление
-          clearInterval(intervalId);
-          setIntervalId(null);
-        }
-      } else {
-        // Если умное обновление отключено, используем стандартное обновление
-        currentIntervalId = setInterval(fetchStats, refreshInterval);
-        setIntervalId(currentIntervalId);
-      }
+    if (!autoRefresh || (useSmartRefresh && !isUserActive)) {
+      return;
     }
 
+    const id = setInterval(fetchStats, refreshInterval);
+    setIntervalId(id);
+
     return () => {
-      if (currentIntervalId) {
-        clearInterval(currentIntervalId);
-      }
+      clearInterval(id);
+      setIntervalId(null);
     };
-  }, [autoRefresh, refreshInterval, isUserActive, useSmartRefresh, intervalId]);
+  }, [autoRefresh, refreshInterval, isUserActive, useSmartRefresh, fetchStats]);
 
   return {
     stats,

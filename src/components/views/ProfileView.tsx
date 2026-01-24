@@ -29,6 +29,7 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
   const {
     profile,
     balance,
+    referralStats,
     vpnKey,
     channel,
     userBot,
