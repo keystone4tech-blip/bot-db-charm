@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useTelegram } from '@/hooks/useTelegram';
 import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 
 interface SplashScreenProps {
@@ -40,36 +39,26 @@ const MOTIVATIONAL_MESSAGES = [
 const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [animationComplete, setAnimationComplete] = useState(false);
-  const [showUsernameDialog, setShowUsernameDialog] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [showUsernameDialog] = useState(false);
+  const [minDisplayDone, setMinDisplayDone] = useState(false);
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
   const [currentMessage, setCurrentMessage] = useState('');
 
-  const { user, isReady } = useTelegram();
   const { isAuthenticated, isLoading: isAuthLoading, error: authError, profile: authProfile } = useTelegramAuth();
 
-  // Функция завершения сплеш-экрана
   const finalizeSplash = useCallback(() => {
-    setIsLoading(false);
     setAnimationComplete(true);
     onFinish();
   }, [onFinish]);
 
-  // ОТДЕЛЬНЫЙ useEffect для инициализации (прогресс, сообщения, таймеры)
+  // ОТДЕЛЬНЫЙ useEffect для инициализации (прогресс, сообщения)
   // Этот effect работает только при монтировании - пустой массив зависимостей
   useEffect(() => {
     let progressInterval: NodeJS.Timeout;
-    let minDisplayTimer: NodeJS.Timeout;
     let messageInterval: NodeJS.Timeout;
-    let isMinDisplayTimeCompleted = false;
-    let authCompleted = false;
-
-    // Устанавливаем минимальное время отображения 3 секунды
-    minDisplayTimer = setTimeout(() => {
-      isMinDisplayTimeCompleted = true;
-    }, 3000);
+    let minDisplayTimer: NodeJS.Timeout;
 
     // Прогресс загрузки
     progressInterval = setInterval(() => {
@@ -96,39 +85,30 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       setCurrentMessage(MOTIVATIONAL_MESSAGES[randomIndex]);
     }
 
-    // Проверяем готовность аутентификации и завершаем если всё готово
-    const checkAuthCompletion = () => {
-      if (!isAuthLoading && (authError || isAuthenticated)) {
-        authCompleted = true;
-        if (isMinDisplayTimeCompleted) {
-          finalizeSplash();
-        }
-      }
-    };
-
-    // Периодическая проверка
-    const authCheckTimer = setInterval(checkAuthCompletion, 100);
+    // Минимальное время отображения 2 секунды
+    minDisplayTimer = setTimeout(() => {
+      setMinDisplayDone(true);
+    }, 2000);
 
     return () => {
       clearInterval(progressInterval);
       clearInterval(messageInterval);
       clearTimeout(minDisplayTimer);
-      clearInterval(authCheckTimer);
     };
   }, []); // ПУСТОЙ МАССИВ - эффект выполняется только при монтировании
 
   // ОТДЕЛЬНЫЙ useEffect для проверки аутентификации
   useEffect(() => {
-    // Проверяем если аутентификация завершена
-    if (!isAuthLoading && (authError || (isAuthenticated && authProfile))) {
-      // Даём небольшое время на завершение анимации
+    // Проверяем если аутентификация завершена И минимальное время отображения прошло
+    if (minDisplayDone && !isAuthLoading && (authError || (isAuthenticated && authProfile))) {
+      // Небольшая задержка для плавности
       const timer = setTimeout(() => {
         finalizeSplash();
-      }, 500);
+      }, 300);
 
       return () => clearTimeout(timer);
     }
-  }, [isAuthLoading, isAuthenticated, authError, authProfile, finalizeSplash]);
+  }, [minDisplayDone, isAuthLoading, isAuthenticated, authError, authProfile, finalizeSplash]);
 
   // Анимация холста
   useEffect(() => {
