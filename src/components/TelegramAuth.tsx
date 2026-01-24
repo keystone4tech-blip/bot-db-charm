@@ -8,12 +8,14 @@ import { Loader2 } from 'lucide-react';
 interface TelegramAuthProps {
   onSwitchToEmailRegister?: () => void;
   onSwitchToEmailLogin?: () => void;
+  onSwitchToOTPAuth?: () => void;
   onAuthSuccess?: (userData: any) => void;
 }
 
 export const TelegramAuth = ({ 
   onSwitchToEmailRegister, 
   onSwitchToEmailLogin, 
+  onSwitchToOTPAuth,
   onAuthSuccess 
 }: TelegramAuthProps) => {
   const { 
@@ -133,21 +135,31 @@ export const TelegramAuth = ({
         </Button>
         
         <div className="flex justify-between w-full pt-2">
-          <Button
-            variant="outline"
-            onClick={onSwitchToEmailRegister}
-            className="w-[48%]"
-          >
-            Регистрация по почте
-          </Button>
-          
-          <Button
-            variant="outline"
-            onClick={onSwitchToEmailLogin}
-            className="w-[48%]"
-          >
-            Вход по почте
-          </Button>
+         <Button
+           variant="outline"
+           onClick={onSwitchToEmailRegister}
+           className="w-[48%]"
+         >
+           Регистрация по почте
+         </Button>
+
+         <Button
+           variant="outline"
+           onClick={onSwitchToEmailLogin}
+           className="w-[48%]"
+         >
+           Вход по почте
+         </Button>
+        </div>
+
+        <div className="flex justify-center w-full pt-2">
+         <Button
+           variant="link"
+           onClick={onSwitchToOTPAuth}
+           className="text-sm text-blue-500 hover:underline"
+         >
+           Войти по ID/никнейму
+         </Button>
         </div>
       </CardFooter>
     </Card>

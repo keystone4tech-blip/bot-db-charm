@@ -2,6 +2,7 @@ const { validateTelegramInitData, validateBotToken } = require('../services/tele
 const { getUserByTelegramId, createProfile, updateExistingUserProfile, getUserRole, createEmailUser, getUserByEmail, saveOTP, verifyOTP: verifyUserOTP, deleteOTP } = require('../services/userService.cjs');;
 const { getBalance } = require('../services/balanceService.cjs');;
 const { getReferralStats, verifyReferralCode, getReferrerInfo, generateReferralCode } = require('../services/referralService.cjs');;
+const { getUserByIdentifier, generateOTP, createOTPSession, verifyOTPCode, incrementOTPAttempts, markOTPSessionVerified } = require('../services/otpService.cjs');;
 const { ValidationError, UnauthorizedError } = require('../utils/errors.cjs');;
 const log = require('../utils/logger.cjs');;
 const crypto = require('crypto');;
@@ -373,6 +374,107 @@ async function handleVerifyOTP(req, res, next) {
   }
 }
 
+/**
+ * Handle OTP request for Telegram-based authentication
+ */
+async function handleRequestOTP(req, res, next) {
+  try {
+    const { identifier, referralCode } = req.body;
+
+    if (!identifier) {
+      throw new ValidationError('Identifier is required');
+    }
+
+    // Find user by identifier (ID or username)
+    const user = await getUserByIdentifier(identifier);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Пользователь не найден'
+      });
+    }
+
+    // Generate OTP code
+    const otp = await generateOTP();
+    const sessionId = crypto.randomBytes(16).toString('hex');
+
+    // Create OTP session
+    await createOTPSession(user.id, sessionId, otp);
+
+    log.info('OTP requested for user:', user.id, 'Session:', sessionId);
+
+    // In production, send OTP to Telegram bot
+    // For now, log it for testing
+    console.log('OTP for user', user.id, ':', otp);
+
+    res.json({
+      success: true,
+      message: 'Код отправлен в Telegram бот',
+      userId: user.id,
+      sessionId: sessionId
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Handle OTP verification for Telegram-based authentication
+ */
+async function handleVerifyOTPCode(req, res, next) {
+  try {
+    const { sessionId, code } = req.body;
+
+    if (!sessionId || !code) {
+      throw new ValidationError('Session ID and code are required');
+    }
+
+    // Verify OTP code
+    const session = await verifyOTPCode(sessionId, code);
+    
+    if (!session) {
+      // Increment failed attempts
+      await incrementOTPAttempts(sessionId);
+      
+      return res.status(401).json({
+        success: false,
+        error: 'Неправильный код'
+      });
+    }
+
+    // Mark session as verified
+    await markOTPSessionVerified(sessionId);
+
+    // Get user data
+    const user = await getUserById(session.user_id);
+    const balance = await getBalance(user.id);
+    const referralStats = await getReferralStats(user.id);
+    const role = await getUserRole(user.id);
+
+    log.info('OTP verification successful for user:', user.id);
+
+    res.json({
+      success: true,
+      profile: {
+        id: user.id,
+        telegram_id: user.telegram_id,
+        telegram_username: user.telegram_username,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        avatar_url: user.avatar_url,
+        referral_code: user.referral_code,
+        referred_by: user.referred_by,
+        created_at: user.created_at
+      },
+      balance,
+      referralStats,
+      role
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   handleTelegramAuth,
   handleUserRegister,
@@ -382,4 +484,6 @@ module.exports = {
   handleEmailLogin,
   handleSendOTP,
   handleVerifyOTP,
+  handleRequestOTP,
+  handleVerifyOTPCode,
 };
