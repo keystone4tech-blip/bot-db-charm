@@ -140,6 +140,12 @@ export const useTelegramAuth = () => {
         role: result.role || 'user',
       });
 
+      console.log('Auth state updated:', {
+        isAuthenticated: true,
+        profile: updatedProfile?.id,
+        balance: result.balance,
+      });
+
       // Show welcome message for new users
       if (referralCode && result.profile) {
         toast.success('Добро пожаловать! Вы зарегистрированы по реферальной ссылке');

@@ -144,6 +144,22 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
 
   // Объединяем проверку пользователя и анимацию
   useEffect(() => {
+    console.log('=== SplashScreen DEBUG ===');
+    console.log('isReady:', isReady);
+    console.log('isAuthLoading:', isAuthLoading);
+    console.log('isAuthenticated:', isAuthenticated);
+    console.log('authProfile:', authProfile);
+    console.log('authError:', authError);
+    console.log('animationComplete:', animationComplete);
+    console.log('showUsernameDialog:', showUsernameDialog);
+    console.log('=======================');
+
+    // If animation is complete and no dialog, don't run any logic
+    if (animationComplete && !showUsernameDialog) {
+      console.log('Animation complete and no dialog - skipping logic');
+      return;
+    }
+
     let progressInterval: NodeJS.Timeout;
     let minDisplayTimer: NodeJS.Timeout;
     let messageInterval: NodeJS.Timeout;
@@ -153,6 +169,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
 
     // Устанавливаем минимальное время отображения 2 секунды (уменьшено с 4)
     minDisplayTimer = setTimeout(() => {
+      console.log('Minimum display time completed');
       isMinDisplayTimeCompleted = true;
       // Если аутентификация уже завершена, можно завершать сплеш
       if (authCompleted) {
@@ -208,8 +225,10 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
 
     // Функция для завершения сплеш-экрана
     const finalizeSplash = () => {
+      console.log('finalizeSplash called - isMinDisplayTimeCompleted:', isMinDisplayTimeCompleted, 'authCompleted:', authCompleted);
       if (isMinDisplayTimeCompleted && authCompleted) {
         setTimeout(() => {
+          console.log('Finalizing splash - calling onFinish');
           setIsLoading(false);
           setAnimationComplete(true);
           onFinish();
@@ -223,24 +242,30 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
 
     // Проверяем состояние аутентификации
     if (isReady) {
+      console.log('SDK is ready - checking auth state');
       if (!isAuthLoading) {
+        console.log('Auth is not loading - marking authCompleted as true');
         authCompleted = true;
 
         // Если аутентификация завершена
         if (authError) {
           // Если произошла ошибка аутентификации - быстро завершаем сплеш
-          console.error('Auth error:', authError);
+          console.error('Auth error detected:', authError);
           if (isMinDisplayTimeCompleted) {
+            console.log('Min display time completed - finalizing splash due to error');
             finalizeSplash();
           } else {
+            console.log('Min display time not completed - just setting isLoading to false');
             setIsLoading(false);
           }
         } else if (isAuthenticated && authProfile) {
           // Если пользователь аутентифицирован и профиль получен
+          console.log('User authenticated - profile ID:', authProfile.id);
           // Проверяем, есть ли username у пользователя
           const userProfile = user || { username: authProfile.telegram_username || null };
 
           if (!userProfile.username) {
+            console.log('No username found - showing username dialog');
             setShowUsernameDialog(true);
             setIsLoading(false);
             clearInterval(progressInterval);
@@ -248,18 +273,28 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
             clearTimeout(minDisplayTimer);
             clearTimeout(authTimeout);
           } else if (isMinDisplayTimeCompleted) {
+            console.log('Username found and min display time completed - finalizing splash');
             finalizeSplash();
+          } else {
+            console.log('Username found but min display time not completed - waiting');
           }
+        } else {
+          console.log('Not authenticated and no error - waiting');
         }
+      } else {
+        console.log('Auth is still loading - waiting');
       }
     } else if (!isReady && !isAuthLoading) {
       // Если SDK не готов и не загружается, возможно, пользователь не в Telegram WebApp
       // В этом случае просто завершаем сплеш быстро
+      console.log('SDK not ready and not in Telegram - finishing quickly');
       authCompleted = true;
       if (isMinDisplayTimeCompleted) {
+        console.log('Min display time completed - finalizing splash');
         finalizeSplash();
       } else {
         setTimeout(() => {
+          console.log('Min display time not completed - finishing splash anyway');
           setIsLoading(false);
           setAnimationComplete(true);
           onFinish();
@@ -269,6 +304,8 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
         clearTimeout(minDisplayTimer);
         clearTimeout(authTimeout);
       }
+    } else {
+      console.log('SDK not ready but auth is loading - waiting');
     }
 
     return () => {
