@@ -249,9 +249,13 @@ server {
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
 
-        # Заголовки безопасности
+        # Заголовки безопасности (осторожно с Telegram WebApp)
         add_header X-Frame-Options \"SAMEORIGIN\" always;
         add_header X-Content-Type-Options \"nosniff\" always;
+        add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;
+
+        # Для предотвращения циклических редиректов в Telegram WebApp
+        proxy_redirect off;
     }
 
     # API backend
@@ -262,12 +266,28 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Original-Host \$host;
         proxy_redirect off;
     }
 
     # Health check
     location /health {
         proxy_pass http://localhost:3000/health;
+        proxy_redirect off;
+    }
+
+    # Для Telegram WebApp (важно для избежания циклических редиректов)
+    location ~ ^/(telegram|webapp|launch)/ {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
         proxy_redirect off;
     }
 }
