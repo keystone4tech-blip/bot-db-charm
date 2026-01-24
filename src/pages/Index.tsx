@@ -33,16 +33,6 @@ const Index = () => {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [adminTab, setAdminTab] = useState('admin-stats');
 
-  // Log when Index component mounts
-  useEffect(() => {
-    console.log('=== Index component mounted ===');
-    console.log('This means SplashScreen was successfully closed');
-    console.log('isAuthenticated:', isAuthenticated);
-    console.log('isTelegram:', isTelegram);
-  }, []);
-
-  console.log('Index rendering - activeTab:', activeTab, 'isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
-
   // Redirect to auth if not authenticated and not in Telegram
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Загрузка...</div>;

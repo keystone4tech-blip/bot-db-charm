@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import SplashScreen from './components/SplashScreen';
 import { TelegramProvider } from './components/TelegramProvider';
 import { MainAuth } from './components/Auth/MainAuth';
@@ -16,9 +16,9 @@ const queryClient = new QueryClient();
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
 
-  const handleSplashFinish = useCallback(() => {
+  const handleSplashFinish = () => {
     setShowSplash(false);
-  }, []);
+  };
 
   return (
     <TelegramProvider>
