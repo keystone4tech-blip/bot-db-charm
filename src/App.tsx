@@ -17,8 +17,12 @@ const App = () => {
   const [showSplash, setShowSplash] = useState(true);
 
   const handleSplashFinish = () => {
+    console.log('=== App: handleSplashFinish called ===');
     setShowSplash(false);
+    console.log('showSplash set to false');
   };
+
+  console.log('App render - showSplash:', showSplash);
 
   return (
     <TelegramProvider>
@@ -29,14 +33,22 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               {showSplash ? (
-                <SplashScreen onFinish={handleSplashFinish} />
+                <>
+                  <SplashScreen onFinish={handleSplashFinish} />
+                  <div style={{display: 'none'}}>Content hidden while splash is showing</div>
+                </>
               ) : (
-                <Routes>
-                  <Route path="/auth" element={<MainAuth />} />
-                  <Route path="/" element={<Index />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <>
+                  <div style={{background: '#fef08a', padding: '10px', textAlign: 'center', fontSize: '12px'}}>
+                    ✅ SPLASH FINISHED - SHOWING MAIN APP
+                  </div>
+                  <Routes>
+                    <Route path="/auth" element={<MainAuth />} />
+                    <Route path="/" element={<Index />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </>
               )}
             </BrowserRouter>
           </TooltipProvider>
