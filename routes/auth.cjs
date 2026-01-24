@@ -8,6 +8,8 @@ const {
   handleEmailLogin,
   handleSendOTP,
   handleVerifyOTP,
+  handleRequestOTP,
+  handleVerifyOTPCode,
 } = require('../controllers/authController.cjs');;
 
 const router = express.Router();
@@ -20,5 +22,7 @@ router.post('/email/register', handleEmailRegister);
 router.post('/email/login', handleEmailLogin);
 router.post('/email/send-otp', handleSendOTP);
 router.post('/email/verify-otp', handleVerifyOTP);
+router.post('/auth/request-otp', handleRequestOTP);
+router.post('/auth/verify-otp', handleVerifyOTPCode);
 
 module.exports = router;

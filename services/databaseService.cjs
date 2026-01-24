@@ -118,6 +118,28 @@ async function updateDatabaseStructure() {
     await pool.query(createOTPTableQuery);
     log.info('otp_codes table created successfully');
 
+    // Создаем таблицу для OTP сессий (Telegram-based authentication)
+    const createOTPSessionsTableQuery = `
+      CREATE TABLE IF NOT EXISTS otp_sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+        code_hash VARCHAR(255) NOT NULL,
+        session_id VARCHAR(32) UNIQUE NOT NULL,
+        attempts INT DEFAULT 0,
+        max_attempts INT DEFAULT 3,
+        expires_at TIMESTAMP NOT NULL,
+        verified BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_otp_sessions_session_id ON otp_sessions(session_id);
+      CREATE INDEX IF NOT EXISTS idx_otp_sessions_user_id ON otp_sessions(user_id);
+      CREATE INDEX IF NOT EXISTS idx_otp_sessions_expires_at ON otp_sessions(expires_at);
+    `;
+
+    await pool.query(createOTPSessionsTableQuery);
+    log.info('otp_sessions table created successfully');
+
     // Создаем индекс для email
     const createEmailIndexQuery = `
       CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email) WHERE email IS NOT NULL;

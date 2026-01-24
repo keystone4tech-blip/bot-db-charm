@@ -371,6 +371,85 @@ export const verifyOTP = async (email: string, otp: string) => {
 };
 
 /**
+ * Интерфейс для запроса OTP кода по ID/никнейму
+ */
+export interface OTPRequestData {
+  identifier: string;
+  referralCode?: string;
+}
+
+/**
+ * Интерфейс для ответа запроса OTP
+ */
+export interface OTPRequestResponse {
+  success: boolean;
+  message?: string;
+  userId?: string;
+  sessionId?: string;
+  error?: string;
+}
+
+/**
+ * Интерфейс для проверки OTP кода
+ */
+export interface OTPVerifyData {
+  sessionId: string;
+  code: string;
+}
+
+/**
+ * Запросить OTP код для входа по ID/никнейму
+ */
+export const requestOTPCode = async (identifier: string, referralCode?: string): Promise<OTPRequestResponse> => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+    const response = await fetch(`${serverBaseUrl}/api/auth/request-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ identifier, referralCode }),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Request OTP error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to request OTP'
+    };
+  }
+};
+
+/**
+ * Проверить OTP код для Telegram-based аутентификации
+ */
+export const verifyOTPCode = async (sessionId: string, code: string): Promise<AuthResponse> => {
+  try {
+    const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+    const response = await fetch(`${serverBaseUrl}/api/auth/verify-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ sessionId, code }),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Verify OTP code error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to verify OTP code'
+    };
+  }
+};
+
+/**
  * Получение профиля пользователя по Telegram ID
  */
 export const getUserProfile = async (telegramId: number) => {
