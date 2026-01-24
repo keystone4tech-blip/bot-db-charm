@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Image, Text } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppDispatch } from '../../redux/hooks';
 import { setLoading, setTelegramId } from '../../redux/slices/authSlice';
@@ -13,6 +13,11 @@ export default function SplashScreen({ navigation }: any) {
   }, []);
 
   const checkAuth = async () => {
+    const authTimeout = setTimeout(() => {
+      console.warn('Auth check timeout - proceeding anyway');
+      finishCheck();
+    }, 5000); // 5 second timeout
+
     try {
       dispatch(setLoading(true));
 
@@ -21,28 +26,37 @@ export default function SplashScreen({ navigation }: any) {
       const firstName = await storage.getFirstName();
       const userId = await storage.getUserId();
 
+      clearTimeout(authTimeout);
+
       if (telegramId && userId) {
         // User is logged in, set auth state
         dispatch(setTelegramId(parseInt(telegramId)));
 
-        // Navigate to main app
+        // Navigate to main app quickly (500ms delay)
         setTimeout(() => {
           navigation.replace('MainTabs');
-        }, 1500);
+        }, 500);
       } else {
         // User is not logged in, go to login
         setTimeout(() => {
           navigation.replace('Login');
-        }, 1500);
+        }, 500);
       }
     } catch (error) {
       console.error('Error checking auth:', error);
+      clearTimeout(authTimeout);
+      // Navigate to login quickly on error
       setTimeout(() => {
         navigation.replace('Login');
-      }, 1500);
+      }, 500);
     } finally {
       dispatch(setLoading(false));
     }
+  };
+
+  const finishCheck = () => {
+    // Called on timeout
+    navigation.replace('Login');
   };
 
   return (

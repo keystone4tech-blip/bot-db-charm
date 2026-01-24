@@ -147,28 +147,50 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
     let progressInterval: NodeJS.Timeout;
     let minDisplayTimer: NodeJS.Timeout;
     let messageInterval: NodeJS.Timeout;
+    let authTimeout: NodeJS.Timeout;
     let isMinDisplayTimeCompleted = false;
+    let authCompleted = false;
 
-    // Устанавливаем минимальное время отображения 10 секунд
+    // Устанавливаем минимальное время отображения 2 секунды (уменьшено с 4)
     minDisplayTimer = setTimeout(() => {
       isMinDisplayTimeCompleted = true;
       // Если аутентификация уже завершена, можно завершать сплеш
-      if (!isAuthLoading && (authError || (isAuthenticated && authProfile))) {
+      if (authCompleted) {
         finalizeSplash();
       }
-    }, 4000); // 4 секунды минимального времени отображения
+    }, 2000); // 2 секунды минимального времени отображения
 
-    // Имитируем прогресс загрузки (25% в секунду, т.е. примерно 2.5% каждые 100мс в течение 4 секунд)
-    progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          return 100;
+    // Таймаут для зависшей аутентификации (5 секунд)
+    authTimeout = setTimeout(() => {
+      if (!authCompleted && isAuthLoading) {
+        console.warn('Auth timeout - proceeding anyway');
+        authCompleted = true;
+        if (isMinDisplayTimeCompleted) {
+          finalizeSplash();
+        } else {
+          // Wait for minimum display time
+          setIsLoading(false);
         }
-        // Увеличиваем прогресс на 2.5% каждые 100мс (25% в секунду)
-        return Math.min(100, prev + 2.5);
-      });
-    }, 100); // Обновляем каждые 100мс для плавного увеличения на 2.5% за шаг
+      }
+    }, 5000);
+
+    // Реальный прогресс на основе состояния загрузки (не имитация)
+    const updateProgress = () => {
+      if (authCompleted) {
+        setProgress(100);
+        clearInterval(progressInterval);
+      } else if (isAuthLoading) {
+        // Показываем прогресс до 80% пока загружаемся
+        setProgress(prev => Math.min(80, prev + 10));
+      } else if (authError || (isAuthenticated && authProfile)) {
+        authCompleted = true;
+        setProgress(100);
+        clearInterval(progressInterval);
+      }
+    };
+
+    // Обновляем прогресс каждые 200мс
+    progressInterval = setInterval(updateProgress, 200);
 
     // Устанавливаем интервал для смены мотивационных сообщений (каждые 5 секунд)
     messageInterval = setInterval(() => {
@@ -176,7 +198,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
         const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length);
         setCurrentMessage(MOTIVATIONAL_MESSAGES[randomIndex]);
       }
-    }, 5000); // Меняем сообщение каждые 5 секунд
+    }, 5000);
 
     // Показываем первое случайное сообщение сразу
     if (MOTIVATIONAL_MESSAGES.length > 0) {
@@ -186,29 +208,33 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
 
     // Функция для завершения сплеш-экрана
     const finalizeSplash = () => {
-      if (isMinDisplayTimeCompleted) {
+      if (isMinDisplayTimeCompleted && authCompleted) {
         setTimeout(() => {
           setIsLoading(false);
           setAnimationComplete(true);
           onFinish();
-        }, 500); // Небольшая задержка для плавности
+        }, 300); // Быстрая задержка для плавности
         clearInterval(progressInterval);
         clearInterval(messageInterval);
         clearTimeout(minDisplayTimer);
+        clearTimeout(authTimeout);
       }
     };
 
     // Проверяем состояние аутентификации
     if (isReady) {
       if (!isAuthLoading) {
+        authCompleted = true;
+
         // Если аутентификация завершена
         if (authError) {
-          // Если произошла ошибка аутентификации
+          // Если произошла ошибка аутентификации - быстро завершаем сплеш
           console.error('Auth error:', authError);
-          clearInterval(progressInterval);
-          clearInterval(messageInterval);
-          clearTimeout(minDisplayTimer);
-          setIsLoading(false);
+          if (isMinDisplayTimeCompleted) {
+            finalizeSplash();
+          } else {
+            setIsLoading(false);
+          }
         } else if (isAuthenticated && authProfile) {
           // Если пользователь аутентифицирован и профиль получен
           // Проверяем, есть ли username у пользователя
@@ -220,27 +246,28 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
             clearInterval(progressInterval);
             clearInterval(messageInterval);
             clearTimeout(minDisplayTimer);
-          } else {
-            // Если минимальное время отображения прошло, завершаем сплеш
-            if (isMinDisplayTimeCompleted) {
-              finalizeSplash();
-            }
-            // Иначе ждем завершения таймера
+            clearTimeout(authTimeout);
+          } else if (isMinDisplayTimeCompleted) {
+            finalizeSplash();
           }
         }
       }
     } else if (!isReady && !isAuthLoading) {
       // Если SDK не готов и не загружается, возможно, пользователь не в Telegram WebApp
-      // В этом случае просто завершаем сплеш после минимального времени
+      // В этом случае просто завершаем сплеш быстро
+      authCompleted = true;
       if (isMinDisplayTimeCompleted) {
+        finalizeSplash();
+      } else {
         setTimeout(() => {
           setIsLoading(false);
           setAnimationComplete(true);
           onFinish();
-        }, 1000); // Небольшая задержка для плавности
+        }, 500); // Очень быстрая задержка
         clearInterval(progressInterval);
         clearInterval(messageInterval);
         clearTimeout(minDisplayTimer);
+        clearTimeout(authTimeout);
       }
     }
 
@@ -248,6 +275,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       if (progressInterval) clearInterval(progressInterval);
       if (messageInterval) clearInterval(messageInterval);
       if (minDisplayTimer) clearTimeout(minDisplayTimer);
+      if (authTimeout) clearTimeout(authTimeout);
     };
   }, [isReady, isAuthLoading, isAuthenticated, authError, authProfile, user, onFinish]);
 
