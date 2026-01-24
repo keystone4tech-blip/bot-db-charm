@@ -125,7 +125,7 @@ export const useProfile = (): ProfileHookReturn => {
 
       // Генерируем реферальную ссылку
       if (authProfile.referral_code) {
-        setReferralLink(`https://t.me/Keystone_Tech_bot?start=${authProfile.referral_code}`);
+        setReferralLink(`https://t.me/Keystone_Tech_Robot?start=${authProfile.referral_code}`);
       }
 
       // Загружаем дополнительные данные

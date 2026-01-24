@@ -82,7 +82,7 @@ export const ProfileHeader = ({ profile, telegramUser, onEditClick }: ProfileHea
 
   const handleCopyReferralLink = () => {
     if (!profile?.referral_code) return;
-    const referralLink = `https://t.me/Keystone_Tech_bot?start=${profile.referral_code}`;
+    const referralLink = `https://t.me/Keystone_Tech_Robot?start=${profile.referral_code}`;
     navigator.clipboard.writeText(referralLink);
   };
 

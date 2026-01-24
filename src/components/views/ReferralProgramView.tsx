@@ -37,7 +37,7 @@ export const ReferralProgramView = (_props: ReferralProgramViewProps) => {
     { level: 4, count: authReferralStats?.level_4_count || 0, color: 'bg-yellow-500', reward: '0.10', rewardCoins: 10 },
     { level: 5, count: authReferralStats?.level_5_count || 0, color: 'bg-red-500', reward: '0.05', rewardCoins: 5 },
   ];
-  const referralLink = authProfile?.referral_code ? `https://t.me/Keystone_Tech_bot?start=${authProfile.referral_code}` : '';
+  const referralLink = authProfile?.referral_code ? `https://t.me/Keystone_Tech_Robot?start=${authProfile.referral_code}` : '';
 
   const levelChartData = levelCounts.map((l) => ({ level: `L${l.level}`, count: l.count }));
   const pieData = levelCounts.map((l) => ({ name: `Уровень ${l.level}`, value: l.count }));
