@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Radio, Plus, ExternalLink, Copy, Check, Users, MessageSquare, SkipForward, Flag, CheckCircle, CheckSquare, ChevronDown } from 'lucide-react';
+import { Radio, Plus, ExternalLink, Copy, Check, Users, MessageSquare, SkipForward, Flag, CheckCircle, CheckSquare, ChevronDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -429,7 +429,7 @@ export const ChannelsView = () => {
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
             className="w-12 h-12 mx-auto mb-4"
           >
-            <Radio className="w-full h-full text-primary animate-spin" />
+            <Loader2 className="w-full h-full text-primary" />
           </motion.div>
           <p className="text-muted-foreground">Загрузка каналов...</p>
         </motion.div>
