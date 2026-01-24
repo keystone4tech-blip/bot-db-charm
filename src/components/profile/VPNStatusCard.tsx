@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
-import { Shield, Wifi, Clock, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { Wifi, CheckCircle } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 
 interface VPNStatusCardProps {
   vpnKey: any; // VPNKey
@@ -14,7 +14,7 @@ export const VPNStatusCard = ({ vpnKey, onNavigate }: VPNStatusCardProps) => {
   const isActive = vpnKey?.status === 'active';
   const expiresAt = vpnKey?.expires_at ? new Date(vpnKey.expires_at) : null;
   const isExpired = expiresAt && expiresAt < new Date();
-  const serverLocation = vpnKey?.server_location || 'США - Нью-Йорк';
+  const serverLocation = vpnKey?.server_location || 'не указано';
   const vpnKeyText = vpnKey?.key_value || 'Ключ недоступен';
 
   return (

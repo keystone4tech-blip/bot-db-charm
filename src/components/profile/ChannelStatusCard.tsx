@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
-import { MessageSquare, Users, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { MessageSquare, Users, CheckCircle } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 
 interface ChannelStatusCardProps {
   channel: any; // TelegramChannel
@@ -14,7 +14,7 @@ export const ChannelStatusCard = ({ channel, onNavigate }: ChannelStatusCardProp
   const isActive = !!channel;
   const subscriberCount = channel?.subscribers_count || 0;
   const isVerified = channel?.is_verified || false;
-  const channelTitle = channel?.channel_title || 'Мой канал';
+  const channelTitle = channel?.channel_title || 'Telegram канал';
   const channelUsername = channel?.channel_username || 'не указан';
 
   return (
