@@ -23,7 +23,7 @@ function validateTelegramInitData(initData, botToken) {
     const dataCheckString = dataCheckArr.join('\n');
     
     const secretKey = crypto
-      .createHmac('sha256', crypto.createHash('sha256').update('WebAppData').digest())
+      .createHmac('sha256', 'WebAppData')
       .update(botToken)
       .digest();
     
