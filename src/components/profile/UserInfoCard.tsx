@@ -46,7 +46,7 @@ function InfoRow({
 }
 
 export const UserInfoCard = ({ profile }: UserInfoCardProps) => {
-  const referralLink = profile.referral_code ? `https://t.me/Keystone_Tech_bot?start=${profile.referral_code}` : null;
+  const referralLink = profile.referral_code ? `https://t.me/Keystone_Tech_Robot?start=${profile.referral_code}` : null;
 
   return (
     <Card className="rounded-3xl">

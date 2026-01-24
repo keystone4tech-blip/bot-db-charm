@@ -125,8 +125,8 @@ export const TelegramAuth = ({
         </div>
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
-        <Button 
-          onClick={() => window.location.href = 'https://t.me/Keystone_Tech_bot'} 
+        <Button
+          onClick={() => window.location.href = 'https://t.me/Keystone_Tech_Robot'}
           className="w-full"
         >
           Open Telegram Bot

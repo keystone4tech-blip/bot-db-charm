@@ -164,32 +164,60 @@ export interface EmailLoginData {
 export const authenticateUser = async (initData: string, referralCode?: string): Promise<AuthResponse> => {
   try {
     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+    const authUrl = `${serverBaseUrl}/api/telegram-auth`;
 
-    const response = await fetch(`${serverBaseUrl}/api/telegram-auth`, {
+    console.log('🔐 Аутентификация:', {
+      url: authUrl,
+      serverBaseUrl,
+      hasInitData: !!initData,
+      initDataLength: initData?.length,
+      referralCode: referralCode || getReferralCode() || null,
+    });
+
+    // Создаем AbortController для таймаута (10 секунд)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(authUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({
         initData,
         referralCode: referralCode || getReferralCode() || null,
       }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    console.log('📡 Ответ сервера:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      contentType: response.headers.get('content-type'),
     });
 
     // Проверяем, является ли ответ валидным JSON
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       const responseText = await response.text();
-      console.error('Non-JSON response received:', responseText);
-      throw new Error('Сервер вернул некорректный ответ. Пожалуйста, проверьте конфигурацию сервера.');
+      console.error('❌ Non-JSON response received:', {
+        contentType,
+        responseText: responseText.substring(0, 200),
+      });
+      throw new Error(`Сервер вернул некорректный ответ (ContentType: ${contentType}). Пожалуйста, проверьте конфигурацию сервера.`);
     }
 
     const data = await response.json();
+    console.log('📦 Данные ответа:', data);
 
     if (!response.ok) {
       return {
         success: false,
-        error: data.error || 'Ошибка аутентификации'
+        error: data.error || `Ошибка сервера (${response.status})`
       };
     }
 
@@ -208,7 +236,29 @@ export const authenticateUser = async (initData: string, referralCode?: string):
       role: data.role || 'user',
     };
   } catch (error) {
-    console.error('Ошибка аутентификации:', error);
+    console.error('❌ Ошибка аутентификации:', {
+      error,
+      message: error instanceof Error ? error.message : 'Неизвестная ошибка',
+      name: error instanceof Error ? error.name : 'Unknown',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    // Специальная обработка для таймаута
+    if (error instanceof Error && error.name === 'AbortError') {
+      return {
+        success: false,
+        error: 'Превышено время ожидания ответа от сервера (10 сек). Проверьте подключение к интернету.'
+      };
+    }
+
+    // Специальная обработка для сетевых ошибок
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      return {
+        success: false,
+        error: `Ошибка сети: ${error.message}. Проверьте что сервер доступен по адресу: ${import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000'}`
+      };
+    }
+
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Неизвестная ошибка при аутентификации'

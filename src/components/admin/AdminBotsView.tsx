@@ -14,11 +14,11 @@ import { Switch } from '@/components/ui/switch';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 const mockBots = [
-  { 
-    id: '1', 
-    name: 'Keystone Tech Bot', 
-    username: '@Keystone_Tech_bot', 
-    isActive: true, 
+  {
+    id: '1',
+    name: 'Keystone Tech Bot',
+    username: '@Keystone_Tech_Robot',
+    isActive: true,
     users: 1234,
     messages: 45678,
     type: 'main'
