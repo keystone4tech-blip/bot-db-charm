@@ -211,7 +211,7 @@ EOF"
 server {
     listen 80;
     server_name DOMAIN_PLACEHOLDER www.DOMAIN_PLACEHOLDER;
-    
+
     location / {
         return 301 https://\$server_name\$request_uri;
     }
@@ -222,31 +222,54 @@ server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
     server_name DOMAIN_PLACEHOLDER www.DOMAIN_PLACEHOLDER;
-    
+
     # SSL сертификаты
     ssl_certificate /etc/letsencrypt/live/DOMAIN_PLACEHOLDER/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/DOMAIN_PLACEHOLDER/privkey.pem;
-    
+
     # SSL параметры
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
-    
-    # Проксируем запросы на backend (порт 3000)
+
+    # Проксируем запросы на frontend (порт 3001 для статических файлов)
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
-        
+
         # Таймауты
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
+
+        # Заголовки безопасности
+        add_header X-Frame-Options \"SAMEORIGIN\" always;
+        add_header X-Content-Type-Options \"nosniff\" always;
+
+        # Обработка SPA - все маршруты направляем на index.html
+        # Только для запросов, не начинающихся с /api
+        try_files \$uri \$uri/ @fallback;
     }
-    
+
+    # Обработка SPA для маршрутов, не совпадающих с файлами
+    location @fallback {
+        proxy_pass http://localhost:3001/index.html;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
     # API backend
     location /api/ {
         proxy_pass http://localhost:3000;
@@ -255,6 +278,13 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_redirect off;
+    }
+
+    # Health check
+    location /health {
+        proxy_pass http://localhost:3000/health;
+        proxy_redirect off;
     }
 }
 EOFNGINX"
