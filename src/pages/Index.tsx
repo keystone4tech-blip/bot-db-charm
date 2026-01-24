@@ -33,9 +33,21 @@ const Index = () => {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [adminTab, setAdminTab] = useState('admin-stats');
 
+  // Прокручиваем к началу при изменении вкладки
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab, isAdminMode, adminTab]);
+
   // Redirect to auth if not authenticated and not in Telegram
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Загрузка...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Загрузка...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated && !isTelegram) {
@@ -44,26 +56,22 @@ const Index = () => {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    // Прокручиваем к началу при смене вкладки
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleEnterAdminMode = () => {
     setIsAdminMode(true);
     setAdminTab('admin-stats');
-    // Прокручиваем к началу при смене режима
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleExitAdminMode = () => {
     setIsAdminMode(false);
-    // Прокручиваем к началу при выходе из режима администратора
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleAdminTabChange = (tab: string) => {
     setAdminTab(tab);
-    // Прокручиваем к началу при смене админ-вкладки
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
