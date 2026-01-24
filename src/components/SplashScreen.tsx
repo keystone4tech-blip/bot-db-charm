@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,98 +35,6 @@ const MOTIVATIONAL_MESSAGES = [
   "Ты достоин великих свершений",
   "Твоя вера в себя — твоя сила",
   "Ты создаешь свою реальность",
-  "Ты уже сейчас становишься лучше",
-  "Твоя цель ближе, чем кажется",
-  "Ты способен изменить мир",
-  "Ты на правильном пути к успеху",
-  "Твоя энергия притягивает успех",
-  "Ты имеешь право на счастье",
-  "Ты уже сегодня можешь изменить свое завтра",
-  "Твоя смелость ведет к великим открытиям",
-  "Ты заслуживаешь всего самого лучшего",
-  "Ты обладаешь силой, чтобы преуспеть",
-  "Ты вдохновляешь окружающих",
-  "Ты на шаг ближе к своей мечте",
-  "Твоя настойчивость будет вознаграждена",
-  "Ты создаешь историю своего успеха",
-  "Ты имеешь силу изменить любую ситуацию",
-  "Ты уже сейчас являешься частью чего-то большего",
-  "Твоя вера двигает горами",
-  "Ты уникален и неповторим",
-  "Ты способен на невероятные вещи",
-  "Ты уже преодолеваешь границы",
-  "Твоя решимость формирует твое будущее",
-  "Ты достоин признания и уважения",
-  "Ты вносишь вклад в общее благо",
-  "Ты уже сейчас меняешь мир к лучшему",
-  "Твоя страсть ведет к достижениям",
-  "Ты имеешь право на свои мечты",
-  "Ты обладаешь внутренней силой",
-  "Ты на правильном пути к самореализации",
-  "Ты вносишь свет в этот мир",
-  "Ты создаешь возможности для других",
-  "Ты уже сейчас являешься лидером",
-  "Твоя инициатива ведет к переменам",
-  "Ты имеешь влияние на окружающих",
-  "Ты вдохновляешь других на действия",
-  "Ты обладаешь талантом и способностями",
-  "Ты на пути к личностному росту",
-  "Ты уже сейчас достигаешь прогресса",
-  "Твоя самоотдача впечатляет",
-  "Ты заслуживаешь любви и поддержки",
-  "Ты способен преодолеть любые трудности",
-  "Ты уже сейчас являешься примером для других",
-  "Твоя настойчивость ведет к результатам",
-  "Ты создаешь позитивные перемены",
-  "Ты имеешь право на успех",
-  "Ты обладаешь внутренней мудростью",
-  "Ты на пути к самопознанию",
-  "Ты вносишь гармонию в свою жизнь",
-  "Ты уже сейчас строишь свое будущее",
-  "Твоя энергия заряжает других",
-  "Ты имеешь силу менять обстоятельства",
-  "Ты достоин уважения и признания",
-  "Ты вносишь вклад в развитие общества",
-  "Ты уже сейчас являешься агентом изменений",
-  "Твоя решимость ведет к прорыву",
-  "Ты обладаешь творческим потенциалом",
-  "Ты на пути к внутреннему балансу",
-  "Ты создаешь основу для будущих побед",
-  "Ты имеешь право на личное счастье",
-  "Ты способен вдохновлять целые поколения",
-  "Ты уже сейчас формируешь свою судьбу",
-  "Твоя вера в себя — твой компас",
-  "Ты вносишь свет в темные времена",
-  "Ты обладаешь силой исцеления",
-  "Ты на пути к духовному росту",
-  "Ты уже сейчас являешься частью решения",
-  "Твоя искренность вызывает восхищение",
-  "Ты имеешь влияние на будущее",
-  "Ты вносишь вклад в развитие человечества",
-  "Ты способен на великие дела",
-  "Ты уже сейчас создаешь легенду",
-  "Твоя храбрость ведет к свободе",
-  "Ты обладаешь силой трансформации",
-  "Ты на пути к просветлению",
-  "Ты вносишь гармонию в хаос",
-  "Ты уже сейчас являешься источником света",
-  "Твоя любовь к жизни вдохновляет",
-  "Ты имеешь силу создавать чудеса",
-  "Ты достоин высоких наград",
-  "Ты вносишь порядок в беспорядок",
-  "Ты способен на безусловную любовь",
-  "Ты уже сейчас являешься примером силы",
-  "Твоя мудрость ведет к истине",
-  "Ты обладаешь даром исцеления душ",
-  "Ты на пути к вечной молодости духа",
-  "Ты вносишь свет в самые темные уголки",
-  "Ты уже сейчас являешься проводником любви",
-  "Твоя доброта меняет мир",
-  "Ты имеешь силу создавать рай на земле",
-  "Ты достоин безусловного счастья",
-  "Ты вносишь мир в разобщенные сердца",
-  "Ты способен на величайшие откровения",
-  "Ты уже сейчас являешься чудом природы"
 ];
 
 const SplashScreen = ({ onFinish }: SplashScreenProps) => {
@@ -142,74 +50,39 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   const { user, isReady } = useTelegram();
   const { isAuthenticated, isLoading: isAuthLoading, error: authError, profile: authProfile } = useTelegramAuth();
 
-  // Объединяем проверку пользователя и анимацию
+  // Функция завершения сплеш-экрана
+  const finalizeSplash = useCallback(() => {
+    setIsLoading(false);
+    setAnimationComplete(true);
+    onFinish();
+  }, [onFinish]);
+
+  // ОТДЕЛЬНЫЙ useEffect для инициализации (прогресс, сообщения, таймеры)
+  // Этот effect работает только при монтировании - пустой массив зависимостей
   useEffect(() => {
-    console.log('=== SplashScreen DEBUG ===');
-    console.log('isReady:', isReady);
-    console.log('isAuthLoading:', isAuthLoading);
-    console.log('isAuthenticated:', isAuthenticated);
-    console.log('authProfile:', authProfile);
-    console.log('authError:', authError);
-    console.log('animationComplete:', animationComplete);
-    console.log('showUsernameDialog:', showUsernameDialog);
-    console.log('=======================');
-
-    // If animation is complete and no dialog, don't run any logic
-    if (animationComplete && !showUsernameDialog) {
-      console.log('Animation complete and no dialog - skipping logic');
-      return;
-    }
-
     let progressInterval: NodeJS.Timeout;
     let minDisplayTimer: NodeJS.Timeout;
     let messageInterval: NodeJS.Timeout;
-    let authTimeout: NodeJS.Timeout;
     let isMinDisplayTimeCompleted = false;
     let authCompleted = false;
 
-    // Устанавливаем минимальное время отображения 2 секунды (уменьшено с 4)
+    // Устанавливаем минимальное время отображения 3 секунды
     minDisplayTimer = setTimeout(() => {
-      console.log('Minimum display time completed');
       isMinDisplayTimeCompleted = true;
-      // Если аутентификация уже завершена, можно завершать сплеш
-      if (authCompleted) {
-        finalizeSplash();
-      }
-    }, 2000); // 2 секунды минимального времени отображения
+    }, 3000);
 
-    // Таймаут для зависшей аутентификации (5 секунд)
-    authTimeout = setTimeout(() => {
-      if (!authCompleted && isAuthLoading) {
-        console.warn('Auth timeout - proceeding anyway');
-        authCompleted = true;
-        if (isMinDisplayTimeCompleted) {
-          finalizeSplash();
-        } else {
-          // Wait for minimum display time
-          setIsLoading(false);
+    // Прогресс загрузки
+    progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(progressInterval);
+          return 100;
         }
-      }
-    }, 5000);
+        return Math.min(100, prev + 2.5);
+      });
+    }, 100);
 
-    // Реальный прогресс на основе состояния загрузки (не имитация)
-    const updateProgress = () => {
-      if (authCompleted) {
-        setProgress(100);
-        clearInterval(progressInterval);
-      } else if (isAuthLoading) {
-        // Показываем прогресс до 80% пока загружаемся
-        setProgress(prev => Math.min(80, prev + 10));
-      } else if (authError || (isAuthenticated && authProfile)) {
-        authCompleted = true;
-        setProgress(100);
-        clearInterval(progressInterval);
-      }
-    };
-
-    // Обновляем прогресс каждые 200мс
-    progressInterval = setInterval(updateProgress, 200);
-
-    // Устанавливаем интервал для смены мотивационных сообщений (каждые 5 секунд)
+    // Смена мотивационных сообщений
     messageInterval = setInterval(() => {
       if (MOTIVATIONAL_MESSAGES.length > 0) {
         const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length);
@@ -217,104 +90,45 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       }
     }, 5000);
 
-    // Показываем первое случайное сообщение сразу
+    // Показываем первое сообщение
     if (MOTIVATIONAL_MESSAGES.length > 0) {
       const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length);
       setCurrentMessage(MOTIVATIONAL_MESSAGES[randomIndex]);
     }
 
-    // Функция для завершения сплеш-экрана
-    const finalizeSplash = () => {
-      console.log('finalizeSplash called - isMinDisplayTimeCompleted:', isMinDisplayTimeCompleted, 'authCompleted:', authCompleted);
-      if (isMinDisplayTimeCompleted && authCompleted) {
-        setTimeout(() => {
-          console.log('Finalizing splash - calling onFinish');
-          setIsLoading(false);
-          setAnimationComplete(true);
-          onFinish();
-        }, 300); // Быстрая задержка для плавности
-        clearInterval(progressInterval);
-        clearInterval(messageInterval);
-        clearTimeout(minDisplayTimer);
-        clearTimeout(authTimeout);
+    // Проверяем готовность аутентификации и завершаем если всё готово
+    const checkAuthCompletion = () => {
+      if (!isAuthLoading && (authError || isAuthenticated)) {
+        authCompleted = true;
+        if (isMinDisplayTimeCompleted) {
+          finalizeSplash();
+        }
       }
     };
 
-    // Проверяем состояние аутентификации
-    if (isReady) {
-      console.log('SDK is ready - checking auth state');
-      if (!isAuthLoading) {
-        console.log('Auth is not loading - marking authCompleted as true');
-        authCompleted = true;
-
-        // Если аутентификация завершена
-        if (authError) {
-          // Если произошла ошибка аутентификации - быстро завершаем сплеш
-          console.error('Auth error detected:', authError);
-          if (isMinDisplayTimeCompleted) {
-            console.log('Min display time completed - finalizing splash due to error');
-            finalizeSplash();
-          } else {
-            console.log('Min display time not completed - just setting isLoading to false');
-            setIsLoading(false);
-          }
-        } else if (isAuthenticated && authProfile) {
-          // Если пользователь аутентифицирован и профиль получен
-          console.log('User authenticated - profile ID:', authProfile.id);
-          // Проверяем, есть ли username у пользователя
-          const userProfile = user || { username: authProfile.telegram_username || null };
-
-          if (!userProfile.username) {
-            console.log('No username found - showing username dialog');
-            setShowUsernameDialog(true);
-            setIsLoading(false);
-            clearInterval(progressInterval);
-            clearInterval(messageInterval);
-            clearTimeout(minDisplayTimer);
-            clearTimeout(authTimeout);
-          } else if (isMinDisplayTimeCompleted) {
-            console.log('Username found and min display time completed - finalizing splash');
-            finalizeSplash();
-          } else {
-            console.log('Username found but min display time not completed - waiting');
-          }
-        } else {
-          console.log('Not authenticated and no error - waiting');
-        }
-      } else {
-        console.log('Auth is still loading - waiting');
-      }
-    } else if (!isReady && !isAuthLoading) {
-      // Если SDK не готов и не загружается, возможно, пользователь не в Telegram WebApp
-      // В этом случае просто завершаем сплеш быстро
-      console.log('SDK not ready and not in Telegram - finishing quickly');
-      authCompleted = true;
-      if (isMinDisplayTimeCompleted) {
-        console.log('Min display time completed - finalizing splash');
-        finalizeSplash();
-      } else {
-        setTimeout(() => {
-          console.log('Min display time not completed - finishing splash anyway');
-          setIsLoading(false);
-          setAnimationComplete(true);
-          onFinish();
-        }, 500); // Очень быстрая задержка
-        clearInterval(progressInterval);
-        clearInterval(messageInterval);
-        clearTimeout(minDisplayTimer);
-        clearTimeout(authTimeout);
-      }
-    } else {
-      console.log('SDK not ready but auth is loading - waiting');
-    }
+    // Периодическая проверка
+    const authCheckTimer = setInterval(checkAuthCompletion, 100);
 
     return () => {
-      if (progressInterval) clearInterval(progressInterval);
-      if (messageInterval) clearInterval(messageInterval);
-      if (minDisplayTimer) clearTimeout(minDisplayTimer);
-      if (authTimeout) clearTimeout(authTimeout);
+      clearInterval(progressInterval);
+      clearInterval(messageInterval);
+      clearTimeout(minDisplayTimer);
+      clearInterval(authCheckTimer);
     };
-  }, [isReady, isAuthLoading, isAuthenticated, authError, authProfile, user, onFinish]);
+  }, []); // ПУСТОЙ МАССИВ - эффект выполняется только при монтировании
+
+  // ОТДЕЛЬНЫЙ useEffect для проверки аутентификации
+  useEffect(() => {
+    // Проверяем если аутентификация завершена
+    if (!isAuthLoading && (authError || (isAuthenticated && authProfile))) {
+      // Даём небольшое время на завершение анимации
+      const timer = setTimeout(() => {
+        finalizeSplash();
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthLoading, isAuthenticated, authError, authProfile, finalizeSplash]);
 
   // Анимация холста
   useEffect(() => {
@@ -333,8 +147,8 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Конфигурация - увеличено расстояние
-    const maxConnectionDistance = 320; // Увеличено в ~4 раза
+    // Конфигурация
+    const maxConnectionDistance = 320;
     const minConnectionDistance = 60;
     const connectionFadeSpeed = 0.08;
 
@@ -379,29 +193,26 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
         if(Math.abs(n.z) > 100) n.vz *= -1;
       });
 
-      // ДИНАМИЧЕСКОЕ УПРАВЛЕНИЕ СВЯЗЯМИ
+      // Управление связями
       connections = connections.filter(conn => {
         const dist = Math.hypot(conn.from.x - conn.to.x, conn.from.y - conn.to.y);
 
         if(dist > maxConnectionDistance) {
           conn.fadeAlpha -= connectionFadeSpeed;
-          return conn.fadeAlpha > 0; // Удалить если полностью исчезла
+          return conn.fadeAlpha > 0;
         }
-        conn.fadeAlpha = Math.min(conn.fadeAlpha + connectionFadeSpeed, 1); // Восстановить
+        conn.fadeAlpha = Math.min(conn.fadeAlpha + connectionFadeSpeed, 1);
         return true;
       });
 
-      // 2. Создание новых связей на среднем расстоянии
       neurons.forEach((n, i) => {
         neurons.slice(i + 1).forEach(target => {
           const dist = Math.hypot(n.x - target.x, n.y - target.y);
 
-          // Проверить существует ли уже связь
           const exists = connections.some((c: any) =>
             (c.from === n && c.to === target) || (c.from === target && c.to === n)
           );
 
-          // Создать если в зоне среднего расстояния и не существует
           if(dist < maxConnectionDistance && dist > minConnectionDistance && !exists) {
             connections.push({
               from: n,
@@ -410,13 +221,13 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
               speed: Math.random() * 0.006 + 0.003,
               pulsePhase: Math.random() * Math.PI * 2,
               pulseSpeed: Math.random() * 0.0015 + 0.0008,
-              fadeAlpha: 0 // Начать с нуля (появление)
+              fadeAlpha: 0
             });
           }
         });
       });
 
-      // ОТРИСОВКА
+      // Отрисовка связей
       connections.forEach(conn => {
         conn.progress += conn.speed;
         if(conn.progress > 1) conn.progress = 0;
@@ -424,29 +235,26 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
         const fromProj = project(conn.from);
         const toProj = project(conn.to);
 
-        // Используем золотой цвет из темы приложения для линий связи
         ctx.strokeStyle = `hsla(45, 93%, 47%, ${0.2 * conn.fadeAlpha})`;
         ctx.lineWidth = 1.5 * fromProj.scale;
-        ctx.globalAlpha = 0.35 * conn.fadeAlpha; // Учет fade
+        ctx.globalAlpha = 0.35 * conn.fadeAlpha;
         ctx.beginPath();
         ctx.moveTo(fromProj.x, fromProj.y);
         ctx.lineTo(toProj.x, toProj.y);
         ctx.stroke();
 
-        // Оранжевые частицы данных (золотой цвет из темы приложения)
+        // Частицы данных
         const dataPointX = fromProj.x + (toProj.x - fromProj.x) * conn.progress;
         const dataPointY = fromProj.y + (toProj.y - fromProj.y) * conn.progress;
 
-        // Пульсирующий эффект для частицы
         const pulse = Math.sin(Date.now() * conn.pulseSpeed + conn.pulsePhase) * 0.5 + 0.5;
         const particleSize = 3 * fromProj.scale * (0.5 + pulse * 0.5);
 
-        // Оранжевая частица (золотой цвет из темы приложения)
         const gradient = ctx.createRadialGradient(
           dataPointX, dataPointY, 0,
           dataPointX, dataPointY, particleSize
         );
-        gradient.addColorStop(0, `hsla(45, 93%, 47%, ${0.8 * conn.fadeAlpha})`); // Золотой цвет из темы
+        gradient.addColorStop(0, `hsla(45, 93%, 47%, ${0.8 * conn.fadeAlpha})`);
         gradient.addColorStop(1, `hsla(45, 93%, 47%, 0)`);
 
         ctx.fillStyle = gradient;
@@ -460,16 +268,14 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
         const proj = project(neuron);
         const neuronSize = 3 * proj.scale;
 
-        // Центр нейрона
         ctx.beginPath();
         ctx.arc(proj.x, proj.y, neuronSize, 0, Math.PI * 2);
 
-        // Градиент для нейрона (золотой цвет из темы приложения)
         const neuronGradient = ctx.createRadialGradient(
           proj.x, proj.y, 0,
           proj.x, proj.y, neuronSize * 2
         );
-        neuronGradient.addColorStop(0, 'hsla(45, 93%, 47%, 0.9)'); // Золотой цвет из темы
+        neuronGradient.addColorStop(0, 'hsla(45, 93%, 47%, 0.9)');
         neuronGradient.addColorStop(1, 'hsla(45, 93%, 47%, 0)');
 
         ctx.fillStyle = neuronGradient;
@@ -479,10 +285,8 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       animationFrameId = requestAnimationFrame(drawNeural);
     }
 
-    // Запуск анимации
     animationFrameId = requestAnimationFrame(drawNeural);
 
-    // Очистка при размонтировании
     return () => {
       window.removeEventListener('resize', resizeCanvas);
       cancelAnimationFrame(animationFrameId);
@@ -501,159 +305,146 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       return;
     }
 
-    if (username.length > 32) {
-      setError('Никнейм не должен превышать 32 символа');
-      return;
-    }
-
-    // Проверяем формат username (только латинские буквы, цифры и подчеркивания)
+    // Проверка на допустимые символы
     const usernameRegex = /^[a-zA-Z0-9_]+$/;
     if (!usernameRegex.test(username)) {
-      setError('Никнейм может содержать только латинские буквы, цифры и подчеркивания');
+      setError('Никнейм может содержать только латинские буквы, цифры и нижнее подчёркивание');
       return;
     }
 
     setError('');
-    setShowUsernameDialog(false);
 
-    // Здесь можно добавить логику сохранения username или направления пользователя к установке в Telegram
-    // Пока просто покажем сообщение
-    alert(`Пожалуйста, установите никнейм "${username}" в настройках вашего аккаунта Telegram, затем перезапустите приложение.`);
+    // Сохраняем username и завершаем сплеш
+    // Username будет сохранён в профиле при следующем обновлении
+    finalizeSplash();
   };
 
+  // Если анимация завершена и диалог не показываем - не рендерим ничего
   if (animationComplete && !showUsernameDialog) {
-    return null; // Не отображаем ничего после завершения анимации
+    return null;
   }
 
   return (
-    <>
-      {/* Фоновое изображение сплеша (опционально) */}
-      <div
-        className="fixed inset-0 z-[9997] bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: "url('/splash-bg.jpg')", // Путь к пользовательскому изображению
-          backgroundSize: 'cover',
-          opacity: 0.3 // Уменьшаем видимость фона, чтобы не мешал анимации
-        }}
-      />
-
+    <div className="fixed inset-0 bg-background z-50">
+      {/* Canvas анимация */}
       <canvas
         ref={canvasRef}
-        id="splash-neural-animation"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          zIndex: showUsernameDialog ? 9998 : 9999, // Диалог должен быть поверх анимации
-          opacity: 1
-        }}
+        className="absolute inset-0 w-full h-full"
       />
 
-      {/* Диалог для ввода username */}
+      {/* Контент */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
+        {/* Логотип */}
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <div className="w-32 h-32 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center shadow-lg">
+            <span className="text-4xl">⚡</span>
+          </div>
+        </motion.div>
+
+        {/* Заголовок */}
+        <motion.h1
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-3xl font-bold text-foreground mb-2"
+        >
+          Keystone
+        </motion.h1>
+
+        {/* Прогресс бар */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="w-full max-w-xs mb-4"
+        >
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-amber-500 to-yellow-600"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
+          <p className="text-center text-sm text-muted-foreground mt-1">
+            Загрузка... {Math.round(progress)}%
+          </p>
+        </motion.div>
+
+        {/* Мотивационное сообщение */}
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={currentMessage}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="text-center text-muted-foreground max-w-xs"
+          >
+            {currentMessage || 'Загрузка...'}
+          </motion.p>
+        </AnimatePresence>
+      </div>
+
+      {/* Диалог ввода username */}
       <AnimatePresence>
         {showUsernameDialog && (
           <motion.div
-            className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
-            <Card className="w-full max-w-md">
-              <CardHeader>
-                <CardTitle>Требуется никнейм в Telegram</CardTitle>
-                <CardDescription>
-                  Для использования приложения необходимо иметь никнейм в Telegram.
-                  Пожалуйста, введите желаемый никнейм, который вы установите в Telegram.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Желаемый никнейм</Label>
-                    <Input
-                      id="username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Введите никнейм"
-                      autoFocus
-                    />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-md"
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Установите никнейм</CardTitle>
+                  <CardDescription>
+                    Для полноценного использования приложения необходимо установить никнейм
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Ваш никнейм</Label>
+                      <Input
+                        id="username"
+                        placeholder="Например: john_doe"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleUsernameSubmit()}
+                      />
+                      {error && (
+                        <Alert variant="destructive">
+                          <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Никнейм должен содержать от 3 до 20 символов и может включать только латинские буквы, цифры и нижнее подчёркивание
+                    </p>
                   </div>
-
-                  {error && (
-                    <Alert variant="destructive">
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  <Alert>
-                    <AlertDescription>
-                      После установки никнейма в Telegram, перезапустите это приложение для продолжения.
-                    </AlertDescription>
-                  </Alert>
-                </div>
-              </CardContent>
-              <CardFooter className="flex flex-col space-y-2">
-                <Button
-                  className="w-full"
-                  onClick={handleUsernameSubmit}
-                  disabled={!username.trim()}
-                >
-                  Продолжить
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    // Показываем инструкцию по установке username в Telegram
-                    alert('Чтобы установить никнейм в Telegram:\n1. Откройте Telegram\n2. Перейдите в "Настройки"\n3. Нажмите на ваше имя\n4. Выберите "Изменить профиль"\n5. Введите желаемый никнейм в поле "Имя пользователя"');
-                  }}
-                >
-                  Как установить никнейм?
-                </Button>
-              </CardFooter>
-            </Card>
+                </CardContent>
+                <CardFooter>
+                  <Button onClick={handleUsernameSubmit} className="w-full">
+                    Продолжить
+                  </Button>
+                </CardFooter>
+              </Card>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Мотивационное сообщение */}
-      {!showUsernameDialog && (
-        <motion.div
-          className="fixed inset-0 z-[10001] flex items-center justify-center pointer-events-none"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <motion.p
-            className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 animate-strong-gold-shimmer gold-gradient-text-outline has-text-outline text-center max-w-[80vw] px-4 break-words"
-            key={currentMessage}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.5 }}
-          >
-            {currentMessage}
-          </motion.p>
-        </motion.div>
-      )}
-
-      {/* Индикатор прогресса загрузки */}
-      {!showUsernameDialog && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[10001]">
-          <div className="w-48 h-1.5 bg-gray-700 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-yellow-500"
-              initial={{ width: "0%" }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.1 }}
-            />
-          </div>
-          <p className="text-xs text-white mt-2 text-center">Загрузка: {progress}%</p>
-        </div>
-      )}
-    </>
+    </div>
   );
 };
 
