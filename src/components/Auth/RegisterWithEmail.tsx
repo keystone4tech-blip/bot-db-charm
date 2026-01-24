@@ -34,7 +34,7 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onRegisterSuccess }: Reg
     setLoading(true);
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Пароли не совпадают');
       setLoading(false);
       return;
     }
@@ -51,10 +51,10 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onRegisterSuccess }: Reg
       if (result.success) {
         onRegisterSuccess?.(result.profile);
       } else {
-        setError(result.error || 'Registration failed');
+        setError(result.error || 'Ошибка регистрации');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Произошла ошибка');
     } finally {
       setLoading(false);
     }
@@ -63,19 +63,20 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onRegisterSuccess }: Reg
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Register with Email</CardTitle>
-        <CardDescription>Create an account using your email address</CardDescription>
+        <CardTitle>Регистрация по почте</CardTitle>
+        <CardDescription>Создайте аккаунт, используя ваш адрес электронной почты</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && <div className="text-red-500 text-sm">{error}</div>}
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Электронная почта</Label>
             <Input
               id="email"
               name="email"
               type="email"
+              placeholder="Введите вашу электронную почту"
               value={formData.email}
               onChange={handleChange}
               required
@@ -83,10 +84,11 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onRegisterSuccess }: Reg
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="firstName">First Name</Label>
+            <Label htmlFor="firstName">Имя</Label>
             <Input
               id="firstName"
               name="firstName"
+              placeholder="Введите ваше имя"
               value={formData.firstName}
               onChange={handleChange}
               required
@@ -94,21 +96,23 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onRegisterSuccess }: Reg
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name</Label>
+            <Label htmlFor="lastName">Фамилия</Label>
             <Input
               id="lastName"
               name="lastName"
+              placeholder="Введите вашу фамилию"
               value={formData.lastName}
               onChange={handleChange}
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Пароль</Label>
             <Input
               id="password"
               name="password"
               type="password"
+              placeholder="Введите ваш пароль"
               value={formData.password}
               onChange={handleChange}
               required
@@ -116,11 +120,12 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onRegisterSuccess }: Reg
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">Подтвердите пароль</Label>
             <Input
               id="confirmPassword"
               name="confirmPassword"
               type="password"
+              placeholder="Введите пароль еще раз"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
@@ -128,10 +133,11 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onRegisterSuccess }: Reg
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="referralCode">Referral Code (optional)</Label>
+            <Label htmlFor="referralCode">Реферальный код (необязательно)</Label>
             <Input
               id="referralCode"
               name="referralCode"
+              placeholder="Введите реферальный код"
               value={formData.referralCode}
               onChange={handleChange}
             />
@@ -139,7 +145,7 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onRegisterSuccess }: Reg
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Registering...' : 'Register'}
+            {loading ? 'Регистрация...' : 'Зарегистрироваться'}
           </Button>
           
           <Button
@@ -148,7 +154,7 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onRegisterSuccess }: Reg
             onClick={onSwitchToTelegram}
             type="button"
           >
-            Register with Telegram instead
+            Регистрация через Telegram
           </Button>
         </CardFooter>
       </form>

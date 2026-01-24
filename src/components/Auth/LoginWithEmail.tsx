@@ -42,10 +42,10 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
       if (result.success) {
         onLoginSuccess?.(result.profile);
       } else {
-        setError(result.error || 'Login failed');
+        setError(result.error || 'Ошибка входа');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Произошла ошибка');
     } finally {
       setLoading(false);
     }
@@ -63,10 +63,10 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
         setOtpSent(true);
         setLoginMethod('otp');
       } else {
-        setError(result.error || 'Failed to send OTP');
+        setError(result.error || 'Не удалось отправить OTP');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Произошла ошибка');
     } finally {
       setLoading(false);
     }
@@ -83,10 +83,10 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
       if (result.success) {
         onLoginSuccess?.(result.profile);
       } else {
-        setError(result.error || 'Invalid OTP');
+        setError(result.error || 'Неверный OTP');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Произошла ошибка');
     } finally {
       setLoading(false);
     }
@@ -95,8 +95,8 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Login with Email</CardTitle>
-        <CardDescription>Sign in to your account using your email</CardDescription>
+        <CardTitle>Вход по почте</CardTitle>
+        <CardDescription>Войдите в свой аккаунт, используя адрес электронной почты</CardDescription>
       </CardHeader>
       
       {loginMethod === 'password' ? (
@@ -105,11 +105,12 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
             {error && <div className="text-red-500 text-sm">{error}</div>}
             
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Электронная почта</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
+                placeholder="Введите вашу электронную почту"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -117,11 +118,12 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Пароль</Label>
               <Input
                 id="password"
                 name="password"
                 type="password"
+                placeholder="Введите ваш пароль"
                 value={formData.password}
                 onChange={handleChange}
                 required
@@ -130,7 +132,7 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
           </CardContent>
           <CardFooter className="flex flex-col space-y-2">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Logging in...' : 'Login with Password'}
+              {loading ? 'Вход...' : 'Войти по паролю'}
             </Button>
             
             <Button
@@ -140,7 +142,7 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
               type="button"
               disabled={loading}
             >
-              Login with OTP
+              Вход по OTP
             </Button>
             
             <div className="flex justify-between w-full pt-2">
@@ -149,7 +151,7 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
                 onClick={onSwitchToRegister}
                 type="button"
               >
-                Register
+                Регистрация
               </Button>
               
               <Button
@@ -157,7 +159,7 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
                 onClick={onSwitchToTelegram}
                 type="button"
               >
-                Login with Telegram
+                Вход через Telegram
               </Button>
             </div>
           </CardFooter>
@@ -168,11 +170,12 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
             {error && <div className="text-red-500 text-sm">{error}</div>}
             
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Электронная почта</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
+                placeholder="Введите вашу электронную почту"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -188,13 +191,13 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
                   onClick={handleSendOTP}
                   disabled={loading}
                 >
-                  Send OTP
+                  Отправить OTP
                 </Button>
               </div>
             ) : (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="otp">One-Time Password</Label>
+                  <Label htmlFor="otp">Одноразовый пароль</Label>
                   <Input
                     id="otp"
                     name="otp"
@@ -202,7 +205,7 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
                     value={formData.otp}
                     onChange={handleChange}
                     required
-                    placeholder="Enter 6-digit code"
+                    placeholder="Введите 6-значный код"
                   />
                 </div>
                 
@@ -212,7 +215,7 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
                     className="w-full" 
                     disabled={loading}
                   >
-                    Verify OTP
+                    Подтвердить OTP
                   </Button>
                 </div>
               </>
@@ -229,7 +232,7 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
               type="button"
               disabled={loading}
             >
-              Back to Password Login
+              Вернуться к входу по паролю
             </Button>
             
             <div className="flex justify-between w-full pt-2">
@@ -238,7 +241,7 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
                 onClick={onSwitchToRegister}
                 type="button"
               >
-                Register
+                Регистрация
               </Button>
               
               <Button
@@ -246,7 +249,7 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
                 onClick={onSwitchToTelegram}
                 type="button"
               >
-                Login with Telegram
+                Вход через Telegram
               </Button>
             </div>
           </CardFooter>

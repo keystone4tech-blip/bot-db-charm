@@ -51,21 +51,21 @@ export const TelegramAuth = ({
     return (
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Telegram Authentication Error</CardTitle>
+          <CardTitle>Ошибка аутентификации Telegram</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-red-500">{authError}</p>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <Button onClick={refetchAuth} className="w-full">
-            Retry
+            Повторить попытку
           </Button>
           <Button
             variant="outline"
             onClick={onSwitchToEmailLogin}
             className="w-full"
           >
-            Login with Email
+            Вход по почте
           </Button>
         </CardFooter>
       </Card>
@@ -76,10 +76,10 @@ export const TelegramAuth = ({
     return (
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Welcome back!</CardTitle>
+          <CardTitle>С возвращением!</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>You are authenticated as:</p>
+          <p>Вы вошли как:</p>
           <p className="font-semibold">{authProfile.first_name} {authProfile.last_name}</p>
           <p className="text-sm text-gray-500">@{authProfile.telegram_username}</p>
         </CardContent>
@@ -97,14 +97,14 @@ export const TelegramAuth = ({
             }}
             className="w-full"
           >
-            Continue to App
+            Продолжить работу
           </Button>
           <Button
             variant="outline"
             onClick={onSwitchToEmailLogin}
             className="w-full"
           >
-            Switch to Email Account
+            Перейти к аккаунту по почте
           </Button>
         </CardFooter>
       </Card>
@@ -114,14 +114,14 @@ export const TelegramAuth = ({
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Authenticate with Telegram</CardTitle>
+        <CardTitle>Аутентификация через Telegram</CardTitle>
         <CardDescription>
-          Open this app through our Telegram bot to authenticate
+          Откройте это приложение через нашего Telegram-бота для входа
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-          <p className="text-center">🔒 Secure Telegram Authentication</p>
+          <p className="text-center">🔒 Безопасная аутентификация через Telegram</p>
         </div>
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
@@ -129,7 +129,7 @@ export const TelegramAuth = ({
           onClick={() => window.location.href = 'https://t.me/Keystone_Tech_Robot'}
           className="w-full"
         >
-          Open Telegram Bot
+          Открыть Telegram-бота
         </Button>
         
         <div className="flex justify-between w-full pt-2">
@@ -138,7 +138,7 @@ export const TelegramAuth = ({
             onClick={onSwitchToEmailRegister}
             className="w-[48%]"
           >
-            Register with Email
+            Регистрация по почте
           </Button>
           
           <Button
@@ -146,7 +146,7 @@ export const TelegramAuth = ({
             onClick={onSwitchToEmailLogin}
             className="w-[48%]"
           >
-            Login with Email
+            Вход по почте
           </Button>
         </div>
       </CardFooter>
