@@ -85,3 +85,19 @@ export function InteractiveBackground({ className, children, intensity = 1 }: In
     </div>
   );
 }
+
+// Компонент с резервным вариантом для случаев ошибок
+export const SafeInteractiveBackground = ({ className, children, intensity = 1 }: InteractiveBackgroundProps) => {
+  try {
+    return <InteractiveBackground className={className} children={children} intensity={intensity} />;
+  } catch (error) {
+    console.error("InteractiveBackground error:", error);
+    // Возвращаем простой фон вместо 3D эффекта
+    return (
+      <div className={cn("relative overflow-hidden", className)}>
+        <div className="absolute inset-0 bg-gradient-to-br from-background to-secondary/20" />
+        <div className="relative">{children}</div>
+      </div>
+    );
+  }
+};

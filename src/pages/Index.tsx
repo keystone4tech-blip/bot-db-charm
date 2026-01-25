@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navigate } from 'react-router-dom';
 import { useTelegramAuth } from '@/hooks/useTelegramAuth';
@@ -19,6 +19,7 @@ import { AdminUsersView } from '@/components/admin/AdminUsersView';
 import { AdminBotsView } from '@/components/admin/AdminBotsView';
 import { AdminSettingsView } from '@/components/admin/AdminSettingsView';
 import AdminTicketsView from '@/components/admin/AdminTicketsView';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const viewVariants = {
   initial: { opacity: 0, x: 20 },
@@ -79,17 +80,41 @@ const Index = () => {
   const renderAdminView = () => {
     switch (adminTab) {
       case 'admin-stats':
-        return <AdminStatsView key="admin-stats" />;
+        return (
+          <ErrorBoundary>
+            <AdminStatsView key="admin-stats" />
+          </ErrorBoundary>
+        );
       case 'admin-users':
-        return <AdminUsersView key="admin-users" />;
+        return (
+          <ErrorBoundary>
+            <AdminUsersView key="admin-users" />
+          </ErrorBoundary>
+        );
       case 'admin-bots':
-        return <AdminBotsView key="admin-bots" />;
+        return (
+          <ErrorBoundary>
+            <AdminBotsView key="admin-bots" />
+          </ErrorBoundary>
+        );
       case 'admin-tickets':
-        return <AdminTicketsView key="admin-tickets" />;
+        return (
+          <ErrorBoundary>
+            <AdminTicketsView key="admin-tickets" />
+          </ErrorBoundary>
+        );
       case 'admin-settings':
-        return <AdminSettingsView key="admin-settings" />;
+        return (
+          <ErrorBoundary>
+            <AdminSettingsView key="admin-settings" />
+          </ErrorBoundary>
+        );
       default:
-        return <AdminStatsView key="admin-stats" />;
+        return (
+          <ErrorBoundary>
+            <AdminStatsView key="admin-stats" />
+          </ErrorBoundary>
+        );
     }
   };
 
@@ -100,23 +125,59 @@ const Index = () => {
 
     switch (activeTab) {
       case 'info':
-        return <InfoView key="info" />;
+        return (
+          <ErrorBoundary>
+            <InfoView key="info" />
+          </ErrorBoundary>
+        );
       case 'vpn':
-        return <VPNView key="vpn" />;
+        return (
+          <ErrorBoundary>
+            <VPNView key="vpn" />
+          </ErrorBoundary>
+        );
       case 'channels':
-        return <ChannelsView key="channels" />;
+        return (
+          <ErrorBoundary>
+            <ChannelsView key="channels" />
+          </ErrorBoundary>
+        );
       case 'promotion':
-        return <PromotionView key="promotion" />;
+        return (
+          <ErrorBoundary>
+            <PromotionView key="promotion" />
+          </ErrorBoundary>
+        );
       case 'bots':
-        return <BotsView key="bots" />;
+        return (
+          <ErrorBoundary>
+            <BotsView key="bots" />
+          </ErrorBoundary>
+        );
       case 'referral':
-        return <ReferralProgramView key="referral" />;
+        return (
+          <ErrorBoundary>
+            <ReferralProgramView key="referral" />
+          </ErrorBoundary>
+        );
       case 'profile':
-        return <ProfileView key="profile" onNavigate={handleTabChange} onEnterAdminMode={handleEnterAdminMode} />;
+        return (
+          <ErrorBoundary>
+            <ProfileView key="profile" onNavigate={handleTabChange} onEnterAdminMode={handleEnterAdminMode} />
+          </ErrorBoundary>
+        );
       case 'subscription':
-        return <SubscriptionView key="subscription" />;
+        return (
+          <ErrorBoundary>
+            <SubscriptionView key="subscription" />
+          </ErrorBoundary>
+        );
       default:
-        return <InfoView key="info" />;
+        return (
+          <ErrorBoundary>
+            <InfoView key="info" />
+          </ErrorBoundary>
+        );
     }
   };
 

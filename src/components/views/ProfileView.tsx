@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, User, Coins, Settings, Crown } from 'lucide-react';
 import { useTelegramContext } from '@/components/TelegramProvider';
 import { useProfile, ExtendedUserProfile } from '@/hooks/useProfile';
 import { useSupportTickets, Ticket } from '@/hooks/useSupportTickets';
-import { InteractiveBackground } from '@/components/3d/InteractiveBackground';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { BalanceCards } from '@/components/profile/BalanceCards';
 
@@ -18,6 +18,17 @@ import SupportChatView from '@/components/profile/SupportChatView';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { hapticFeedback } from '@/lib/telegram';
+
+// Ленивая загрузка InteractiveBackground с обработкой ошибок
+const LazyInteractiveBackground = lazy(() =>
+  import('@/components/3d/InteractiveBackground').then(module => ({
+    default: module.SafeInteractiveBackground
+  })).catch(() => ({
+    default: ({ children, className }: { children: React.ReactNode, className: string }) => (
+      <div className={className}>{children}</div>
+    )
+  }))
+);
 
 interface ProfileViewProps {
   onNavigate?: (tab: string) => void;
@@ -68,7 +79,7 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
   useEffect(() => {
     if (tickets && tickets.length > 0) {
       // Находим первый незакрытый тикет (не closed и не resolved)
-      const openTicket = tickets.find(ticket => 
+      const openTicket = tickets.find(ticket =>
         ticket.status !== 'closed' && ticket.status !== 'resolved'
       );
       if (openTicket) {
@@ -147,147 +158,410 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
     }
   };
 
+  // Компонент для резервного фона (на случай ошибки InteractiveBackground)
+  const FallbackBackground = ({ children, className }: { children: React.ReactNode, className: string }) => (
+    <div className={className}>{children}</div>
+  );
+
   return (
-    <InteractiveBackground className="px-4 pb-24" intensity={0.9}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="mt-6 space-y-6 page-enter"
-      >
-        {/* Header */}
-        <PageHeader
-          icon="user"
-          title="Личный кабинет"
-          subtitle="Управление вашим профилем и настройками"
-        />
-
-        {/* Profile Header */}
-        <ProfileHeader
-          profile={displayProfile as ExtendedUserProfile}
-          telegramUser={telegramUser}
-          onEditClick={null} // Отключаем редактирование через ProfileHeader
-        />
-
-        {/* User Info Card */}
-        <UserInfoCard profile={displayProfile as ExtendedUserProfile} />
-
-        {/* Balance Cards */}
-        <BalanceCards balance={displayBalance} />
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            variant="glass"
-            className="h-20 w-full justify-start px-4"
-            onClick={() => setIsEditModalOpen(true)}
-          >
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-primary/15 flex items-center justify-center">
-                <User className="h-5 w-5 text-primary" />
-              </div>
-              <div className="text-left">
-                <div className="text-sm font-semibold">О себе</div>
-                <div className="text-xs text-muted-foreground">Профиль и контакты</div>
-              </div>
-            </div>
-          </Button>
-
-          <Button
-            variant="gradient"
-            className="h-20 w-full justify-start px-4"
-            onClick={() => hapticFeedback('medium')}
-          >
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-white/15 flex items-center justify-center">
-                <Coins className="h-5 w-5" />
-              </div>
-              <div className="text-left">
-                <div className="text-sm font-semibold">Пополнить</div>
-                <div className="text-xs text-white/80">Баланс и подписки</div>
-              </div>
-            </div>
-          </Button>
-        </div>
-
-        {/* Services Status Section */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold px-1 flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Мои услуги
-          </h2>
-
-          {/* VPN Status */}
-          <VPNStatusCard
-            vpnKey={vpnKey}
-            onNavigate={handleNavigate}
+    <ErrorBoundary fallback={({ error }) => (
+      <div className="px-4 pb-24">
+        <div className="mt-6 space-y-6 page-enter">
+          {/* Header */}
+          <PageHeader
+            icon="user"
+            title="Личный кабинет"
+            subtitle="Управление вашим профилем и настройками"
           />
 
-          {/* Channel Status */}
-          <ChannelStatusCard
-            channel={channel}
-            onNavigate={handleNavigate}
-          />
-
-          {/* Bot Status */}
-          <BotStatusCard
-            bot={userBot}
-            subscriptionExpiresAt={subscription?.expires_at || null}
-            onNavigate={handleNavigate}
-          />
-        </div>
-
-        {/* Admin Panel Button */}
-        {isAdmin && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Button
-              onClick={handleEnterAdminMode}
-              variant="gradient"
-              className="w-full py-6"
-            >
-              <Crown className="w-5 h-5 mr-2" />
-              Админ-панель
-            </Button>
-          </motion.div>
-        )}
-
-        {/* Support Chat View */}
-        {displayProfile && (
-          <SupportChatView
-            activeTicket={activeTicket}
-            onCloseChat={handleCloseChat}
-            newlyCreatedTicket={newlyCreatedTicket}
-          />
-        )}
-
-        {/* Support Ticket Button */}
-        {(!activeTicket || activeTicket.status === 'closed') && (
-          <div className="pt-4">
-            <SupportTicketButton
-              profileId={displayProfile?.id || null}
-              onTicketCreated={(ticket) => {
-                // Обновляем список тикетов при создании нового
-                if (displayProfile?.id) {
-                  fetchTickets(displayProfile.id);
-                }
-                // Сохраняем информацию о новом тикете для отображения уведомления
-                setNewlyCreatedTicket(ticket);
-              }}
+          {/* Показываем основной контент без 3D фона */}
+          <div className="space-y-6">
+            <ProfileHeader
+              profile={displayProfile as ExtendedUserProfile}
+              telegramUser={telegramUser}
+              onEditClick={null} // Отключаем редактирование через ProfileHeader
             />
-          </div>
-        )}
-      </motion.div>
 
-      {/* Edit Profile Modal */}
-      <EditProfileModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        profile={displayProfile as ExtendedUserProfile}
-        onSave={updateProfile}
-      />
-    </InteractiveBackground>
+            {/* User Info Card */}
+            <UserInfoCard profile={displayProfile as ExtendedUserProfile} />
+
+            {/* Balance Cards */}
+            <BalanceCards balance={displayBalance} />
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="glass"
+                className="h-20 w-full justify-start px-4"
+                onClick={() => setIsEditModalOpen(true)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-primary/15 flex items-center justify-center">
+                    <User className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-semibold">О себе</div>
+                    <div className="text-xs text-muted-foreground">Профиль и контакты</div>
+                  </div>
+                </div>
+              </Button>
+
+              <Button
+                variant="gradient"
+                className="h-20 w-full justify-start px-4"
+                onClick={() => hapticFeedback('medium')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-white/15 flex items-center justify-center">
+                    <Coins className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-semibold">Пополнить</div>
+                    <div className="text-xs text-white/80">Баланс и подписки</div>
+                  </div>
+                </div>
+              </Button>
+            </div>
+
+            {/* Services Status Section */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold px-1 flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Мои услуги
+              </h2>
+
+              {/* VPN Status */}
+              <VPNStatusCard
+                vpnKey={vpnKey}
+                onNavigate={handleNavigate}
+              />
+
+              {/* Channel Status */}
+              <ChannelStatusCard
+                channel={channel}
+                onNavigate={handleNavigate}
+              />
+
+              {/* Bot Status */}
+              <BotStatusCard
+                bot={userBot}
+                subscriptionExpiresAt={subscription?.expires_at || null}
+                onNavigate={handleNavigate}
+              />
+            </div>
+
+            {/* Admin Panel Button */}
+            {isAdmin && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <Button
+                  onClick={handleEnterAdminMode}
+                  variant="gradient"
+                  className="w-full py-6"
+                >
+                  <Crown className="w-5 h-5 mr-2" />
+                  Админ-панель
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Support Chat View */}
+            {displayProfile && (
+              <SupportChatView
+                activeTicket={activeTicket}
+                onCloseChat={handleCloseChat}
+                newlyCreatedTicket={newlyCreatedTicket}
+              />
+            )}
+
+            {/* Support Ticket Button */}
+            {(!activeTicket || activeTicket.status === 'closed') && (
+              <div className="pt-4">
+                <SupportTicketButton
+                  profileId={displayProfile?.id || null}
+                  onTicketCreated={(ticket) => {
+                    // Обновляем список тикетов при создании нового
+                    if (displayProfile?.id) {
+                      fetchTickets(displayProfile.id);
+                    }
+                    // Сохраняем информацию о новом тикете для отображения уведомления
+                    setNewlyCreatedTicket(ticket);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )}>
+      <Suspense fallback={
+        <div className="px-4 pb-24">
+          <div className="mt-6 space-y-6 page-enter">
+            {/* Header */}
+            <PageHeader
+              icon="user"
+              title="Личный кабинет"
+              subtitle="Управление вашим профилем и настройками"
+            />
+
+            {/* Показываем основной контент без 3D фона */}
+            <div className="space-y-6">
+              <ProfileHeader
+                profile={displayProfile as ExtendedUserProfile}
+                telegramUser={telegramUser}
+                onEditClick={null} // Отключаем редактирование через ProfileHeader
+              />
+
+              {/* User Info Card */}
+              <UserInfoCard profile={displayProfile as ExtendedUserProfile} />
+
+              {/* Balance Cards */}
+              <BalanceCards balance={displayBalance} />
+
+              {/* Quick Actions */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="glass"
+                  className="h-20 w-full justify-start px-4"
+                  onClick={() => setIsEditModalOpen(true)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-2xl bg-primary/15 flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-sm font-semibold">О себе</div>
+                      <div className="text-xs text-muted-foreground">Профиль и контакты</div>
+                    </div>
+                  </div>
+                </Button>
+
+                <Button
+                  variant="gradient"
+                  className="h-20 w-full justify-start px-4"
+                  onClick={() => hapticFeedback('medium')}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-2xl bg-white/15 flex items-center justify-center">
+                      <Coins className="h-5 w-5" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-sm font-semibold">Пополнить</div>
+                      <div className="text-xs text-white/80">Баланс и подписки</div>
+                    </div>
+                  </div>
+                </Button>
+              </div>
+
+              {/* Services Status Section */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold px-1 flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  Мои услуги
+                </h2>
+
+                {/* VPN Status */}
+                <VPNStatusCard
+                  vpnKey={vpnKey}
+                  onNavigate={handleNavigate}
+                />
+
+                {/* Channel Status */}
+                <ChannelStatusCard
+                  channel={channel}
+                  onNavigate={handleNavigate}
+                />
+
+                {/* Bot Status */}
+                <BotStatusCard
+                  bot={userBot}
+                  subscriptionExpiresAt={subscription?.expires_at || null}
+                  onNavigate={handleNavigate}
+                />
+              </div>
+
+              {/* Admin Panel Button */}
+              {isAdmin && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <Button
+                    onClick={handleEnterAdminMode}
+                    variant="gradient"
+                    className="w-full py-6"
+                  >
+                    <Crown className="w-5 h-5 mr-2" />
+                    Админ-панель
+                  </Button>
+                </motion.div>
+              )}
+
+              {/* Support Chat View */}
+              {displayProfile && (
+                <SupportChatView
+                  activeTicket={activeTicket}
+                  onCloseChat={handleCloseChat}
+                  newlyCreatedTicket={newlyCreatedTicket}
+                />
+              )}
+
+              {/* Support Ticket Button */}
+              {(!activeTicket || activeTicket.status === 'closed') && (
+                <div className="pt-4">
+                  <SupportTicketButton
+                    profileId={displayProfile?.id || null}
+                    onTicketCreated={(ticket) => {
+                      // Обновляем список тикетов при создании нового
+                      if (displayProfile?.id) {
+                        fetchTickets(displayProfile.id);
+                      }
+                      // Сохраняем информацию о новом тикете для отображения уведомления
+                      setNewlyCreatedTicket(ticket);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      }>
+        <LazyInteractiveBackground className="px-4 pb-24" intensity={0.9}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mt-6 space-y-6 page-enter"
+          >
+            {/* Header */}
+            <PageHeader
+              icon="user"
+              title="Личный кабинет"
+              subtitle="Управление вашим профилем и настройками"
+            />
+
+            {/* Profile Header */}
+            <ProfileHeader
+              profile={displayProfile as ExtendedUserProfile}
+              telegramUser={telegramUser}
+              onEditClick={null} // Отключаем редактирование через ProfileHeader
+            />
+
+            {/* User Info Card */}
+            <UserInfoCard profile={displayProfile as ExtendedUserProfile} />
+
+            {/* Balance Cards */}
+            <BalanceCards balance={displayBalance} />
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="glass"
+                className="h-20 w-full justify-start px-4"
+                onClick={() => setIsEditModalOpen(true)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-primary/15 flex items-center justify-center">
+                    <User className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-semibold">О себе</div>
+                    <div className="text-xs text-muted-foreground">Профиль и контакты</div>
+                  </div>
+                </div>
+              </Button>
+
+              <Button
+                variant="gradient"
+                className="h-20 w-full justify-start px-4"
+                onClick={() => hapticFeedback('medium')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-white/15 flex items-center justify-center">
+                    <Coins className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-semibold">Пополнить</div>
+                    <div className="text-xs text-white/80">Баланс и подписки</div>
+                  </div>
+                </div>
+              </Button>
+            </div>
+
+            {/* Services Status Section */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold px-1 flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Мои услуги
+              </h2>
+
+              {/* VPN Status */}
+              <VPNStatusCard
+                vpnKey={vpnKey}
+                onNavigate={handleNavigate}
+              />
+
+              {/* Channel Status */}
+              <ChannelStatusCard
+                channel={channel}
+                onNavigate={handleNavigate}
+              />
+
+              {/* Bot Status */}
+              <BotStatusCard
+                bot={userBot}
+                subscriptionExpiresAt={subscription?.expires_at || null}
+                onNavigate={handleNavigate}
+              />
+            </div>
+
+            {/* Admin Panel Button */}
+            {isAdmin && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <Button
+                  onClick={handleEnterAdminMode}
+                  variant="gradient"
+                  className="w-full py-6"
+                >
+                  <Crown className="w-5 h-5 mr-2" />
+                  Админ-панель
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Support Chat View */}
+            {displayProfile && (
+              <SupportChatView
+                activeTicket={activeTicket}
+                onCloseChat={handleCloseChat}
+                newlyCreatedTicket={newlyCreatedTicket}
+              />
+            )}
+
+            {/* Support Ticket Button */}
+            {(!activeTicket || activeTicket.status === 'closed') && (
+              <div className="pt-4">
+                <SupportTicketButton
+                  profileId={displayProfile?.id || null}
+                  onTicketCreated={(ticket) => {
+                    // Обновляем список тикетов при создании нового
+                    if (displayProfile?.id) {
+                      fetchTickets(displayProfile.id);
+                    }
+                    // Сохраняем информацию о новом тикете для отображения уведомления
+                    setNewlyCreatedTicket(ticket);
+                  }}
+                />
+              </div>
+            )}
+          </motion.div>
+        </LazyInteractiveBackground>
+      </Suspense>
+    </ErrorBoundary>
   );
 };

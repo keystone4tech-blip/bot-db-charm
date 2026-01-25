@@ -10,6 +10,7 @@ import { useState } from 'react';
 import SplashScreen from './components/SplashScreen';
 import { TelegramProvider } from './components/TelegramProvider';
 import { MainAuth } from './components/Auth/MainAuth';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const queryClient = new QueryClient();
 
@@ -21,27 +22,29 @@ const App = () => {
   };
 
   return (
-    <TelegramProvider>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              {showSplash ? (
-                <SplashScreen onFinish={handleSplashFinish} />
-              ) : (
-                <Routes>
-                  <Route path="/auth" element={<MainAuth />} />
-                  <Route path="/" element={<Index />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              )}
-            </BrowserRouter>
-          </TooltipProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </TelegramProvider>
+    <ErrorBoundary>
+      <TelegramProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                {showSplash ? (
+                  <SplashScreen onFinish={handleSplashFinish} />
+                ) : (
+                  <Routes>
+                    <Route path="/auth" element={<MainAuth />} />
+                    <Route path="/" element={<Index />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                )}
+              </BrowserRouter>
+            </TooltipProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </TelegramProvider>
+    </ErrorBoundary>
   );
 };
 

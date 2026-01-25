@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
 import { Copy, Edit3, User } from "lucide-react";
-import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useRef, useState, lazy } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import type { Mesh } from "three";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { ParticleField } from "@/components/3d/ParticleField";
 import { LightRays } from "@/components/3d/LightRays";
 import { Button } from "@/components/ui/button";
@@ -53,25 +54,38 @@ function AvatarOrb({ url }: { url?: string }) {
   );
 }
 
-function ProfileAvatar3D({ url, className }: { url?: string; className?: string }) {
-  const dpr = useMemo(() => (typeof window === "undefined" ? 1 : Math.min(1.5, window.devicePixelRatio || 1)), []);
-
-  return (
-    <div className={cn("relative h-20 w-20 overflow-hidden rounded-2xl", className)}>
-      <div className="absolute inset-0 rounded-2xl bg-[var(--gradient-gold)] opacity-30 blur-xl" />
-      <div className="absolute inset-0 rounded-2xl border border-border/60 bg-background/20 backdrop-blur-sm" />
-      <div className="absolute inset-[1px] overflow-hidden rounded-[15px]">
-        <Canvas dpr={dpr} camera={{ position: [0, 0, 2.4], fov: 52 }} gl={{ alpha: true, antialias: true }}>
-          <ambientLight intensity={0.75} />
-          <directionalLight position={[2.5, 2, 3]} intensity={1.1} />
-          <Suspense fallback={null}>
-            <AvatarOrb url={url} />
-          </Suspense>
-        </Canvas>
+// Ленивая загрузка 3D компонента с обработкой ошибок
+const LazyProfileAvatar3D = lazy(() =>
+  import("./ProfileAvatar3D").catch(() => ({
+    default: ({ url, className }: { url?: string; className?: string }) => (
+      <div className={cn("relative h-20 w-20 rounded-2xl bg-secondary/30 flex items-center justify-center", className)}>
+        <User className="h-8 w-8 text-muted-foreground" />
       </div>
+    )
+  }))
+);
+
+// Компонент для резервного аватара
+const FallbackAvatar = ({ url, className }: { url?: string; className?: string }) => {
+  return (
+    <div className={cn("relative h-20 w-20 rounded-2xl bg-secondary/30 flex items-center justify-center", className)}>
+      {url ? (
+        <img
+          src={url}
+          alt="Avatar"
+          className="h-full w-full object-cover rounded-2xl"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.onerror = null;
+            target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23D4A574'/%3E%3Ccircle cx='50' cy='40' r='20' fill='white'/%3E%3Ccircle cx='50' cy='80' r='30' fill='white'/%3E%3C/svg%3E";
+          }}
+        />
+      ) : (
+        <User className="h-8 w-8 text-muted-foreground" />
+      )}
     </div>
   );
-}
+};
 
 export const ProfileHeader = ({ profile, telegramUser, onEditClick }: ProfileHeaderProps) => {
   const fullName = profile?.first_name
@@ -98,7 +112,15 @@ export const ProfileHeader = ({ profile, telegramUser, onEditClick }: ProfileHea
       <div className="pointer-events-none absolute inset-0 bg-noise" />
 
       <div className="relative z-10 flex items-center gap-4">
-        <ProfileAvatar3D url={avatarUrl} />
+        <ErrorBoundary fallback={() => <FallbackAvatar url={avatarUrl} />}>
+          <Suspense fallback={
+            <div className="relative h-20 w-20 rounded-2xl bg-secondary/30 flex items-center justify-center">
+              <User className="h-8 w-8 text-muted-foreground" />
+            </div>
+          }>
+            <LazyProfileAvatar3D url={avatarUrl} />
+          </Suspense>
+        </ErrorBoundary>
 
         <div className="flex-1 min-w-0">
           <h2 className="text-xl font-extrabold tracking-tight truncate">{fullName}</h2>
