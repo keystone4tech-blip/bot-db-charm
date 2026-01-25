@@ -12,10 +12,10 @@ import { cn } from '@/lib/utils';
 
 import { PageHeader } from '@/components/ui/PageHeader';
 
-export const VPNView = () => {
+import { useProfile } from '@/hooks/useProfile';
 
-  // Заглушка для VPN ключа - в реальной реализации загружать из useProfile
-  const vpnKey = null as { key: string; serverLocation: string; expiresAt: Date; status: string; isTrial: boolean } | null;
+export const VPNView = () => {
+  const { vpnKey, isLoading, error } = useProfile();
 
   const hasSubscription = !!vpnKey && vpnKey.status === 'active';
 
@@ -112,7 +112,7 @@ export const VPNView = () => {
       </motion.div>
 
       {/* Пробный период информации */}
-      {hasSubscription && vpnKey?.isTrial && (
+      {hasSubscription && vpnKey?.is_trial && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -155,9 +155,9 @@ export const VPNView = () => {
             </div>
             <div className="space-y-4">
               <div className="p-4 bg-secondary/30 rounded-xl">
-                <p className="text-sm font-mono break-all">{vpnKey?.key}</p>
+                <p className="text-sm font-mono break-all">{vpnKey?.key_value}</p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Срок действия: до {vpnKey?.expiresAt.toLocaleDateString('ru-RU')}
+                  Срок действия: до {vpnKey?.expires_at ? new Date(vpnKey.expires_at).toLocaleDateString('ru-RU') : 'не ограничен'}
                 </p>
               </div>
 
@@ -166,7 +166,7 @@ export const VPNView = () => {
                 <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
                   <li>Скачайте приложение OpenVPN или WireGuard</li>
                   <li>Импортируйте конфигурационный файл или введите ключ вручную</li>
-                  <li>Подключитесь к серверу {vpnKey?.serverLocation}</li>
+                  <li>Подключитесь к серверу {vpnKey?.server_location}</li>
                 </ol>
               </div>
 
@@ -177,7 +177,7 @@ export const VPNView = () => {
                 </Button>
                 <Button
                   className="flex-1 gold-gradient text-white"
-                  onClick={() => navigator.clipboard.writeText(vpnKey?.key || '')}
+                  onClick={() => navigator.clipboard.writeText(vpnKey?.key_value || '')}
                 >
                   <Copy className="w-4 h-4 mr-2" />
                   Копировать

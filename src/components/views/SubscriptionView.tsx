@@ -105,7 +105,10 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
+import { useProfile } from '@/hooks/useProfile';
+
 export const SubscriptionView = () => {
+  const { subscription } = useProfile();
   const [selectedPlan, setSelectedPlan] = useState<string>('pro');
 
   const handleSelectPlan = (planId: string) => {
@@ -114,6 +117,9 @@ export const SubscriptionView = () => {
   };
 
   const selectedPlanData = plans.find(p => p.id === selectedPlan);
+
+  // Проверяем, есть ли активная подписка
+  const hasActiveSubscription = subscription && subscription.is_active;
 
   return (
     <motion.div
@@ -126,12 +132,56 @@ export const SubscriptionView = () => {
       <PageHeader
         icon="zap"
         title="Подписка"
-        subtitle="Выберите план для вашего бизнеса"
+        subtitle={hasActiveSubscription ? "Ваш текущий план" : "Выберите план для вашего бизнеса"}
       />
+
+      {/* Current Subscription Info */}
+      {hasActiveSubscription && subscription && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card className="bg-gradient-to-br from-green-500/5 to-emerald-500/5 border-green-500/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-green-500" />
+                Текущая подписка
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-lg">{subscription.plan_name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {subscription.expires_at
+                      ? `Действует до: ${new Date(subscription.expires_at).toLocaleDateString('ru-RU')}`
+                      : 'Бессрочная подписка'}
+                  </p>
+                </div>
+                <Badge variant="default" className="bg-green-500/20 text-green-500">
+                  Активна
+                </Badge>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="p-3 bg-secondary/30 rounded-xl">
+                  <div className="text-sm text-muted-foreground">Тип</div>
+                  <div className="font-semibold">{subscription.plan_type}</div>
+                </div>
+                <div className="p-3 bg-secondary/30 rounded-xl">
+                  <div className="text-sm text-muted-foreground">Цена</div>
+                  <div className="font-semibold">{subscription.price} ₽</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Plan Includes Summary */}
       {selectedPlanData && (
-        <motion.div 
+        <motion.div
           variants={itemVariants}
           className="bg-card rounded-2xl p-4 border border-primary/30"
         >
@@ -180,7 +230,7 @@ export const SubscriptionView = () => {
         {plans.map((plan) => {
           const Icon = plan.icon;
           const isSelected = selectedPlan === plan.id;
-          
+
           return (
             <motion.div
               key={plan.id}
@@ -190,8 +240,8 @@ export const SubscriptionView = () => {
               onClick={() => handleSelectPlan(plan.id)}
               className={cn(
                 "relative bg-card rounded-2xl p-5 border-2 transition-all duration-300 cursor-pointer",
-                isSelected 
-                  ? "border-primary shadow-card-gold" 
+                isSelected
+                  ? "border-primary shadow-card-gold"
                   : "border-border hover:border-primary/30"
               )}
             >
@@ -206,7 +256,7 @@ export const SubscriptionView = () => {
               )}
 
               <div className="flex items-start gap-4">
-                <motion.div 
+                <motion.div
                   className={cn(
                     "icon-container shrink-0",
                     isSelected && "animate-pulse-gold"
@@ -216,14 +266,14 @@ export const SubscriptionView = () => {
                 >
                   <Icon className="w-5 h-5 text-primary" />
                 </motion.div>
-                
+
                 <div className="flex-1">
                   <div className="flex items-baseline gap-2 mb-3">
                     <h3 className="font-semibold text-lg">{plan.name}</h3>
                     <span className="text-2xl font-bold">{plan.price}₽</span>
                     <span className="text-muted-foreground text-sm">/{plan.period}</span>
                   </div>
-                  
+
                   <div className="space-y-2">
                     {plan.features.map((feature, featureIndex) => (
                       <motion.div
@@ -260,7 +310,7 @@ export const SubscriptionView = () => {
       </div>
 
       {/* Additional Info */}
-      <motion.div 
+      <motion.div
         variants={itemVariants}
         className="text-center text-sm text-muted-foreground py-4"
       >

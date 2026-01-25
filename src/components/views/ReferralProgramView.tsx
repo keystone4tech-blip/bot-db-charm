@@ -18,8 +18,11 @@ interface ReferralProgramViewProps {
   onNavigate?: (tab: string) => void;
 }
 
+import { useProfile } from '@/hooks/useProfile';
+
 export const ReferralProgramView = (_props: ReferralProgramViewProps) => {
   const { authProfile, authReferralStats } = useTelegramContext();
+  const { referralStats } = useProfile(); // Используем данные из хука профиля
   const [copied, setCopied] = useState(false);
   const [shareSupported, setShareSupported] = useState(false);
 
@@ -27,15 +30,15 @@ export const ReferralProgramView = (_props: ReferralProgramViewProps) => {
     setShareSupported(!!navigator.share);
   }, []);
 
-  // Используем данные из контекста
-  const totalReferrals = authReferralStats?.total_referrals || 0;
-  const totalEarnings = authReferralStats?.total_earnings || 0;
+  // Используем данные из хука профиля, если они доступны, иначе из контекста
+  const totalReferrals = referralStats?.total_referrals || authReferralStats?.total_referrals || 0;
+  const totalEarnings = referralStats?.total_earnings || authReferralStats?.total_earnings || 0;
   const levelCounts = [
-    { level: 1, count: authReferralStats?.level_1_count || 0, color: 'bg-blue-500', reward: '1.00', rewardCoins: 100 },
-    { level: 2, count: authReferralStats?.level_2_count || 0, color: 'bg-green-500', reward: '0.50', rewardCoins: 50 },
-    { level: 3, count: authReferralStats?.level_3_count || 0, color: 'bg-purple-500', reward: '0.25', rewardCoins: 25 },
-    { level: 4, count: authReferralStats?.level_4_count || 0, color: 'bg-yellow-500', reward: '0.10', rewardCoins: 10 },
-    { level: 5, count: authReferralStats?.level_5_count || 0, color: 'bg-red-500', reward: '0.05', rewardCoins: 5 },
+    { level: 1, count: referralStats?.level_1_count || authReferralStats?.level_1_count || 0, color: 'bg-blue-500', reward: '1.00', rewardCoins: 100 },
+    { level: 2, count: referralStats?.level_2_count || authReferralStats?.level_2_count || 0, color: 'bg-green-500', reward: '0.50', rewardCoins: 50 },
+    { level: 3, count: referralStats?.level_3_count || authReferralStats?.level_3_count || 0, color: 'bg-purple-500', reward: '0.25', rewardCoins: 25 },
+    { level: 4, count: referralStats?.level_4_count || authReferralStats?.level_4_count || 0, color: 'bg-yellow-500', reward: '0.10', rewardCoins: 10 },
+    { level: 5, count: referralStats?.level_5_count || authReferralStats?.level_5_count || 0, color: 'bg-red-500', reward: '0.05', rewardCoins: 5 },
   ];
   const referralLink = authProfile?.referral_code ? `https://t.me/Keystone_Tech_Robot?start=${authProfile.referral_code}` : '';
 

@@ -65,8 +65,12 @@ export const ChannelsView = () => {
   useEffect(() => {
     // В реальной реализации здесь будет загрузка каналов из API
     // Для демонстрации создадим фиктивные данные
-    
-    // Симулируем 15 обязательных каналов (5 реферальных, 5 платных, 5 новеньких)
+
+    // В будущем здесь будет вызов API для получения списка каналов
+    // const loadedChannels = await fetchRecommendedChannels();
+    // setChannels(loadedChannels);
+
+    // Пока используем фиктивные данные
     const mockChannels: Channel[] = [
       // Реферальные каналы (5 шт.)
       {
@@ -124,7 +128,7 @@ export const ChannelsView = () => {
         is_required: true,
         is_referal: true
       },
-      
+
       // Платные каналы (5 шт.)
       {
         id: 'paid1',
@@ -181,7 +185,7 @@ export const ChannelsView = () => {
         is_required: true,
         is_paid: true
       },
-      
+
       // Новенькие каналы (5 шт.)
       {
         id: 'new1',
@@ -241,7 +245,7 @@ export const ChannelsView = () => {
     ];
 
     setChannels(mockChannels);
-    
+
     // Проверяем, есть ли у пользователя канал
     if (channel) {
       const userChannelData: UserChannel = {

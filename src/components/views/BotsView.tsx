@@ -62,7 +62,11 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
+import { useProfile } from '@/hooks/useProfile';
+
 export const BotsView = () => {
+  const { userBot, isLoading, error } = useProfile();
+
   return (
     <motion.div
       className="px-4 py-6 pb-24 space-y-6"
@@ -76,6 +80,57 @@ export const BotsView = () => {
         title="Боты"
         subtitle="Создание и управление Telegram-ботами"
       />
+
+      {/* User Bot Info */}
+      {userBot && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card className="bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border-blue-500/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="w-5 h-5 text-blue-500" />
+                Мой бот
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium">{userBot.bot_name}</h3>
+                    <p className="text-sm text-muted-foreground">{userBot.bot_username}</p>
+                  </div>
+                  <Badge variant={userBot.is_active ? 'default' : 'secondary'}>
+                    {userBot.is_active ? 'Активен' : 'Неактивен'}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 bg-secondary/30 rounded-xl">
+                    <div className="text-xl font-bold text-primary">
+                      {userBot.subscribers_count || 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Подписчики</div>
+                  </div>
+                  <div className="text-center p-3 bg-secondary/30 rounded-xl">
+                    <div className="text-xl font-bold text-green-500">
+                      {userBot.messages_sent || 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Сообщений</div>
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <p className="text-sm text-muted-foreground mb-2">Описание:</p>
+                  <p className="text-sm">{userBot.description || 'Нет описания'}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Features */}
       <motion.div className="space-y-3" variants={containerVariants}>
@@ -127,7 +182,7 @@ export const BotsView = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
         >
-          Создать бота
+          {userBot ? 'Управление ботом' : 'Создать бота'}
         </motion.h3>
         <motion.p
           className="text-muted-foreground mb-4"
@@ -135,7 +190,9 @@ export const BotsView = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9 }}
         >
-          Начните создавать вашего первого Telegram-бота прямо сейчас
+          {userBot
+            ? 'Управляйте вашим Telegram-ботом и отслеживайте статистику'
+            : 'Начните создавать вашего первого Telegram-бота прямо сейчас'}
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -143,7 +200,7 @@ export const BotsView = () => {
           transition={{ delay: 1 }}
         >
           <Button className="gold-gradient text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg hover:shadow-primary/30 transition-all duration-300">
-            Создать бота
+            {userBot ? 'Управление' : 'Создать бота'}
           </Button>
         </motion.div>
       </motion.div>
