@@ -846,3 +846,102 @@ export const verifyOTPCode = async (sessionId: string, code: string): Promise<Au
      throw error;
    }
  };
+
+ /**
+  * Получение активных кампаний продвижения
+  */
+ export const getActiveCampaigns = async (userId: string) => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+     const response = await fetch(`${serverBaseUrl}/api/promotion/campaigns/${userId}`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
+
+     clearTimeout(timeoutId);
+
+     const data = await response.json().catch(() => null);
+
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить активные кампании');
+     }
+
+     return (data as any)?.campaigns || [];
+   } catch (error) {
+     console.error('Ошибка получения активных кампаний:', error);
+     throw error;
+   }
+ };
+
+ /**
+  * Получение запланированных постов
+  */
+ export const getScheduledPosts = async (userId: string) => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+     const response = await fetch(`${serverBaseUrl}/api/promotion/scheduled-posts/${userId}`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
+
+     clearTimeout(timeoutId);
+
+     const data = await response.json().catch(() => null);
+
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить запланированные посты');
+     }
+
+     return (data as any)?.posts || [];
+   } catch (error) {
+     console.error('Ошибка получения запланированных постов:', error);
+     throw error;
+   }
+ };
+
+ /**
+  * Получение статистики за неделю
+  */
+ export const getWeeklyStats = async (userId: string) => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+     const response = await fetch(`${serverBaseUrl}/api/promotion/weekly-stats/${userId}`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
+
+     clearTimeout(timeoutId);
+
+     const data = await response.json().catch(() => null);
+
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить статистику за неделю');
+     }
+
+     return (data as any)?.stats || [];
+   } catch (error) {
+     console.error('Ошибка получения статистики за неделю:', error);
+     throw error;
+   }
+ };

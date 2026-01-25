@@ -138,14 +138,8 @@ export const ReferralProgramView = (_props: ReferralProgramViewProps) => {
         setTopReferrals(topReferralsData);
       } catch (error) {
         console.error('Ошибка загрузки топ-5 рефералов:', error);
-        // В случае ошибки используем фиктивные данные
-        setTopReferrals([
-          { rank: 1, name: 'Алексей К.', referrals: 125, earnings: 1250.50, position: 'gold' },
-          { rank: 2, name: 'Мария С.', referrals: 98, earnings: 980.25, position: 'silver' },
-          { rank: 3, name: 'Дмитрий П.', referrals: 87, earnings: 870.75, position: 'bronze' },
-          { rank: 4, name: 'Елена В.', referrals: 76, earnings: 760.50, position: 'regular' },
-          { rank: 5, name: 'Сергей Н.', referrals: 65, earnings: 650.25, position: 'regular' },
-        ]);
+        // В случае ошибки не используем фиктивные данные, а оставляем пустой массив
+        setTopReferrals([]);
       }
     };
 
@@ -274,32 +268,40 @@ export const ReferralProgramView = (_props: ReferralProgramViewProps) => {
               <h3 className="font-semibold">Топ рефералов</h3>
             </div>
             <div className="space-y-3">
-              {topReferrals.map((user) => (
-                <motion.div
-                  key={user.rank}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + user.rank * 0.05 }}
-                  className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-accent/30 transition-colors"
-                >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                    user.position === 'gold' ? 'bg-yellow-500 text-white' :
-                    user.position === 'silver' ? 'bg-gray-400 text-white' :
-                    user.position === 'bronze' ? 'bg-amber-700 text-white' :
-                    'bg-secondary text-foreground'
-                  }`}>
-                    {user.rank}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium">{user.name}</div>
-                    <div className="text-sm text-muted-foreground">{user.referrals} рефералов</div>
-                  </div>
-                  <div className="text-sm font-medium flex items-center gap-1">
-                    +{user.earnings.toFixed(2)}
-                    <Coins className="w-4 h-4 text-yellow-500" />
-                  </div>
-                </motion.div>
-              ))}
+              {topReferrals.length > 0 ? (
+                topReferrals.map((user) => (
+                  <motion.div
+                    key={user.rank}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + user.rank * 0.05 }}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-accent/30 transition-colors"
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                      user.position === 'gold' ? 'bg-yellow-500 text-white' :
+                      user.position === 'silver' ? 'bg-gray-400 text-white' :
+                      user.position === 'bronze' ? 'bg-amber-700 text-white' :
+                      'bg-secondary text-foreground'
+                    }`}>
+                      {user.rank}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">{user.name}</div>
+                      <div className="text-sm text-muted-foreground">{user.referrals} рефералов</div>
+                    </div>
+                    <div className="text-sm font-medium flex items-center gap-1">
+                      +{user.earnings.toFixed(2)}
+                      <Coins className="w-4 h-4 text-yellow-500" />
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="text-center py-6">
+                  <BarChart3 className="w-12 h-12 mx-auto text-muted-foreground opacity-50 mb-3" />
+                  <p className="text-muted-foreground">Нет данных о топ рефералах</p>
+                  <p className="text-sm text-muted-foreground mt-1">Данные появятся, когда у вас будет больше рефералов</p>
+                </div>
+              )}
             </div>
           </Card>
         </motion.div>

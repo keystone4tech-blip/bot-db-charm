@@ -27,14 +27,8 @@ export const VPNView = () => {
         setVpnServers(servers);
       } catch (err) {
         console.error('Ошибка загрузки VPN-серверов:', err);
-        // В случае ошибки используем фиктивные данные
-        setVpnServers([
-          { id: 'us_ny', name: 'США - Нью-Йорк', flag: '🇺🇸', ping: '12ms', status: 'online' },
-          { id: 'de_berlin', name: 'Германия - Берлин', flag: '🇩🇪', ping: '45ms', status: 'online' },
-          { id: 'jp_tokyo', name: 'Япония - Токио', flag: '🇯🇵', ping: '89ms', status: 'online' },
-          { id: 'sg_singapore', name: 'Сингапур', flag: '🇸🇬', ping: '102ms', status: 'online' },
-          { id: 'nl_amsterdam', name: 'Нидерланды - Амстердам', flag: '🇳🇱', ping: '38ms', status: 'online' },
-        ]);
+        // В случае ошибки не отображаем фиктивные данные, а оставляем пустой массив
+        setVpnServers([]);
       }
     };
 
@@ -285,38 +279,49 @@ export const VPNView = () => {
             <h3 className="font-semibold">Доступные серверы</h3>
           </div>
           <div className="space-y-3">
-            {vpnServers.map((server, index) => (
-              <motion.div
-                key={server.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 + index * 0.05 }}
-                className={`flex items-center justify-between p-4 rounded-xl border ${
-                  server.status === 'online' ? 'border-border' : 'border-border opacity-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{server.flag}</span>
-                  <div>
-                    <h4 className="font-medium">{server.name}</h4>
-                    <p className="text-sm text-muted-foreground">{server.ping}</p>
+            {vpnServers.length > 0 ? (
+              vpnServers.map((server, index) => (
+                <motion.div
+                  key={server.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + index * 0.05 }}
+                  className={`flex items-center justify-between p-4 rounded-xl border ${
+                    server.status === 'online' ? 'border-border' : 'border-border opacity-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{server.flag}</span>
+                    <div>
+                      <h4 className="font-medium">{server.name}</h4>
+                      <p className="text-sm text-muted-foreground">{server.ping}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {server.status === 'online' ? (
-                    <Badge variant="default" className="bg-green-500/10 text-green-500">
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      Онлайн
-                    </Badge>
-                  ) : (
-                    <Badge variant="destructive" className="bg-red-500/10 text-red-500">
-                      <XCircle className="w-3 h-3 mr-1" />
-                      Оффлайн
-                    </Badge>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+                  <div className="flex items-center gap-2">
+                    {server.status === 'online' ? (
+                      <Badge variant="default" className="bg-green-500/10 text-green-500">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Онлайн
+                      </Badge>
+                    ) : (
+                      <Badge variant="destructive" className="bg-red-500/10 text-red-500">
+                        <XCircle className="w-3 h-3 mr-1" />
+                        Оффлайн
+                      </Badge>
+                    )}
+                    <div className="text-xs text-muted-foreground">
+                      Загрузка: {server.load}%
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <Server className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground mb-2">Серверы временно недоступны</p>
+                <p className="text-sm text-muted-foreground">Скоро будут добавлены новые серверы</p>
+              </div>
+            )}
           </div>
         </Card>
       </motion.div>

@@ -149,6 +149,23 @@ CREATE TABLE IF NOT EXISTS support_messages (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- VPN_SERVERS (VPN серверы)
+CREATE TABLE IF NOT EXISTS vpn_servers (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  location VARCHAR(255) NOT NULL,
+  country_code CHAR(2) NOT NULL,
+  flag VARCHAR(10) NOT NULL,
+  ping VARCHAR(10),
+  status VARCHAR(20) DEFAULT 'online',
+  load INTEGER DEFAULT 0,
+  protocols TEXT[],
+  ipv6_supported BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ИНДЕКСЫ (критично для производительности!)
 CREATE INDEX IF NOT EXISTS idx_profiles_telegram_id ON profiles(telegram_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_referral_code ON profiles(referral_code);
@@ -164,3 +181,55 @@ CREATE INDEX IF NOT EXISTS idx_vpn_keys_user_id ON vpn_keys(user_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON support_tickets(user_id);
 CREATE INDEX IF NOT EXISTS idx_support_messages_ticket_id ON support_messages(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_vpn_servers_status ON vpn_servers(status);
+CREATE INDEX IF NOT EXISTS idx_vpn_servers_country ON vpn_servers(country_code);
+CREATE INDEX IF NOT EXISTS idx_vpn_servers_location ON vpn_servers(location);
+
+-- Вставка тестовых данных для VPN-серверов
+INSERT INTO vpn_servers (id, name, location, country_code, flag, ping, status, load, protocols, ipv6_supported) VALUES
+('us_ny', 'США - Нью-Йорк', 'New York, USA', 'US', '🇺🇸', '12ms', 'online', 45, '{OpenVPN, WireGuard}', true) ON CONFLICT (id) DO NOTHING,
+('de_berlin', 'Германия - Берлин', 'Berlin, Germany', 'DE', '🇩🇪', '45ms', 'online', 23, '{OpenVPN, WireGuard}', true) ON CONFLICT (id) DO NOTHING,
+('jp_tokyo', 'Япония - Токио', 'Tokyo, Japan', 'JP', '🇯🇵', '89ms', 'online', 67, '{OpenVPN, WireGuard}', false) ON CONFLICT (id) DO NOTHING,
+('sg_singapore', 'Сингапур', 'Singapore', 'SG', '🇸🇬', '102ms', 'online', 34, '{OpenVPN, WireGuard}', true) ON CONFLICT (id) DO NOTHING,
+('nl_amsterdam', 'Нидерланды - Амстердам', 'Amsterdam, Netherlands', 'NL', '🇳🇱', '38ms', 'online', 51, '{OpenVPN, WireGuard}', true) ON CONFLICT (id) DO NOTHING;
+
+-- PROMOTION_CAMPAIGNS (Кампании продвижения)
+CREATE TABLE IF NOT EXISTS promotion_campaigns (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  campaign_type VARCHAR(50) DEFAULT 'post_promotion',
+  status VARCHAR(20) DEFAULT 'draft',
+  target_audience TEXT,
+  budget DECIMAL(10,2),
+  start_date TIMESTAMP,
+  end_date TIMESTAMP,
+  impressions INTEGER DEFAULT 0,
+  conversions INTEGER DEFAULT 0,
+  result TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- SCHEDULED_POSTS (Запланированные посты)
+CREATE TABLE IF NOT EXISTS scheduled_posts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  content TEXT,
+  scheduled_time TIMESTAMP NOT NULL,
+  status VARCHAR(20) DEFAULT 'scheduled',
+  channel_id VARCHAR(255),
+  posted_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ИНДЕКСЫ для таблиц продвижения
+CREATE INDEX IF NOT EXISTS idx_promotion_campaigns_user_id ON promotion_campaigns(user_id);
+CREATE INDEX IF NOT EXISTS idx_promotion_campaigns_status ON promotion_campaigns(status);
+CREATE INDEX IF NOT EXISTS idx_scheduled_posts_user_id ON scheduled_posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_scheduled_posts_scheduled_time ON scheduled_posts(scheduled_time);
+CREATE INDEX IF NOT EXISTS idx_scheduled_posts_status ON scheduled_posts(status);
