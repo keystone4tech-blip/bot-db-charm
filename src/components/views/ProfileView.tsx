@@ -57,14 +57,12 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
   const displayProfile = profile || authProfile;
   const displayBalance = balance || authBalance;
 
-  // Загружаем тикеты при загрузке профиля (один раз)
+  // Загружаем тикеты при загрузке профиля
   useEffect(() => {
     if (displayProfile?.id) {
-      fetchTickets(displayProfile.id).catch(err => {
-        console.error('Ошибка загрузки тикетов:', err);
-      });
+      fetchTickets(displayProfile.id);
     }
-  }, [displayProfile?.id]);
+  }, [displayProfile?.id, fetchTickets]);
 
   // Проверяем, есть ли активные тикеты
   useEffect(() => {
@@ -106,8 +104,7 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
     );
   }
 
-  if (error && !displayProfile) {
-    // Показываем ошибку только если нет профиля вообще (ни из API, ни из контекста)
+  if (error && !authProfile) {
     return (
       <div className="px-4 pb-24 flex items-center justify-center min-h-[60vh]">
         <motion.div

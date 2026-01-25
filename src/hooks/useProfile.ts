@@ -166,45 +166,30 @@ export const useProfile = (): ProfileHookReturn => {
         if (cancelled) return;
 
         if (profileRes.status === 'fulfilled' && profileRes.value) {
-          // Проверяем что профиль не пустой перед обновлением
-          const hasData = profileRes.value.id || profileRes.value.telegram_id;
-          if (hasData) {
-            const nextProfile = normalizeProfile({
-              ...profileRes.value,
-              telegram_username: telegramUser?.username ?? profileRes.value.telegram_username,
-              first_name: telegramUser?.first_name ?? profileRes.value.first_name,
-              last_name: telegramUser?.last_name ?? profileRes.value.last_name,
-              avatar_url: telegramUser?.photo_url ?? profileRes.value.avatar_url,
-            });
+          const nextProfile = normalizeProfile({
+            ...profileRes.value,
+            telegram_username: telegramUser?.username ?? profileRes.value.telegram_username,
+            first_name: telegramUser?.first_name ?? profileRes.value.first_name,
+            last_name: telegramUser?.last_name ?? profileRes.value.last_name,
+            avatar_url: telegramUser?.photo_url ?? profileRes.value.avatar_url,
+          });
 
-            setProfile(nextProfile);
-            setReferralLink(nextProfile.referral_code ? `https://t.me/Keystone_Tech_Robot?start=${nextProfile.referral_code}` : null);
-          }
+          setProfile(nextProfile);
+          setReferralLink(nextProfile.referral_code ? `https://t.me/Keystone_Tech_Robot?start=${nextProfile.referral_code}` : null);
         } else if (profileRes.status === 'rejected') {
           console.error('Ошибка загрузки профиля:', profileRes.reason);
-          // Не перезаписываем profile при ошибке - сохраняем данные из authProfile
         }
 
         if (balanceRes.status === 'fulfilled' && balanceRes.value) {
-          // Проверяем что баланс имеет данные перед обновлением
-          const hasBalanceData = balanceRes.value.user_id || balanceRes.value.id;
-          if (hasBalanceData) {
-            setBalance(balanceRes.value);
-          }
+          setBalance(balanceRes.value);
         } else if (balanceRes.status === 'rejected') {
           console.error('Ошибка загрузки баланса:', balanceRes.reason);
-          // Не перезаписываем balance при ошибке - сохраняем данные из authBalance
         }
 
         if (referralRes.status === 'fulfilled' && referralRes.value) {
-          // Проверяем что статистика имеет данные перед обновлением
-          const hasReferralData = referralRes.value.user_id || referralRes.value.id;
-          if (hasReferralData) {
-            setReferralStats(referralRes.value);
-          }
+          setReferralStats(referralRes.value);
         } else if (referralRes.status === 'rejected') {
           console.error('Ошибка загрузки рефералов:', referralRes.reason);
-          // Не перезаписываем referralStats при ошибке - сохраняем данные из authReferralStats
         }
 
         const [vpnResponse, channelResponse, botResponse, subscriptionResponse] = await Promise.allSettled([

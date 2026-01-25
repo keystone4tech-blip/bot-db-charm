@@ -21,14 +21,12 @@ const SupportChatView = ({ activeTicket, onCloseChat, newlyCreatedTicket }: Supp
   const { messages, sendMessage, fetchMessages, updateTicketStatus } = useSupportTickets();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Загружаем сообщения при открытии чата (один раз)
+  // Загружаем сообщения при открытии чата
   useEffect(() => {
     if (activeTicket) {
-      fetchMessages(activeTicket.id).catch(err => {
-        console.error('Ошибка загрузки сообщений:', err);
-      });
+      fetchMessages(activeTicket.id);
     }
-  }, [activeTicket?.id]);
+  }, [activeTicket, fetchMessages]);
 
   // Состояние для отображения уведомления о создании тикета
   const [showCreationNotification, setShowCreationNotification] = useState(false);
