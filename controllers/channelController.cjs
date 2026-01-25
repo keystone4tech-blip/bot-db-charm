@@ -1,4 +1,4 @@
-const { getUserChannels, createChannel } = require('../services/channelService.cjs');;
+const { getUserChannels, createChannel, getRecommendedChannels } = require('../services/channelService.cjs');;
 
 async function handleGetUserChannels(req, res, next) {
   try {
@@ -28,7 +28,21 @@ async function handleCreateChannel(req, res, next) {
   }
 }
 
+async function handleGetRecommendedChannels(req, res, next) {
+  try {
+    const channels = await getRecommendedChannels();
+
+    res.json({
+      success: true,
+      channels,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   handleGetUserChannels,
   handleCreateChannel,
+  handleGetRecommendedChannels,
 };

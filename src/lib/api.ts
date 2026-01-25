@@ -747,3 +747,102 @@ export const verifyOTPCode = async (sessionId: string, code: string): Promise<Au
      throw error;
    }
  };
+
+ /**
+  * Получение рекомендованных каналов
+  */
+ export const getRecommendedChannels = async () => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+     const response = await fetch(`${serverBaseUrl}/api/recommended-channels`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
+
+     clearTimeout(timeoutId);
+
+     const data = await response.json().catch(() => null);
+
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить рекомендованные каналы');
+     }
+
+     return (data as any)?.channels || [];
+   } catch (error) {
+     console.error('Ошибка получения рекомендованных каналов:', error);
+     throw error;
+   }
+ };
+
+ /**
+  * Получение доступных VPN-серверов
+  */
+ export const getVPNServers = async () => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+     const response = await fetch(`${serverBaseUrl}/api/vpn-servers`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
+
+     clearTimeout(timeoutId);
+
+     const data = await response.json().catch(() => null);
+
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить VPN-серверы');
+     }
+
+     return (data as any)?.servers || [];
+   } catch (error) {
+     console.error('Ошибка получения VPN-серверов:', error);
+     throw error;
+   }
+ };
+
+ /**
+  * Получение топ-5 рефералов
+  */
+ export const getTopReferrals = async () => {
+   try {
+     const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+
+     const controller = new AbortController();
+     const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+     const response = await fetch(`${serverBaseUrl}/api/top-referrals`, {
+       method: 'GET',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       signal: controller.signal,
+     });
+
+     clearTimeout(timeoutId);
+
+     const data = await response.json().catch(() => null);
+
+     if (!response.ok) {
+       throw new Error((data as any)?.error || 'Не удалось получить топ-5 рефералов');
+     }
+
+     return (data as any)?.referrals || [];
+   } catch (error) {
+     console.error('Ошибка получения топ-5 рефералов:', error);
+     throw error;
+   }
+ };

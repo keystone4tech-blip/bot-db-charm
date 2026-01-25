@@ -127,14 +127,30 @@ export const ReferralProgramView = (_props: ReferralProgramViewProps) => {
     return () => clearInterval(timer);
   }, []);
 
-  // Пример данных для топ-5 рефералов
-  const topReferrals = [
-    { rank: 1, name: 'Алексей К.', referrals: 125, earnings: 1250.50, position: 'gold' },
-    { rank: 2, name: 'Мария С.', referrals: 98, earnings: 980.25, position: 'silver' },
-    { rank: 3, name: 'Дмитрий П.', referrals: 87, earnings: 870.75, position: 'bronze' },
-    { rank: 4, name: 'Елена В.', referrals: 76, earnings: 760.50, position: 'regular' },
-    { rank: 5, name: 'Сергей Н.', referrals: 65, earnings: 650.25, position: 'regular' },
-  ];
+  // Данные для топ-5 рефералов
+  const [topReferrals, setTopReferrals] = useState([]);
+
+  useEffect(() => {
+    const fetchTopReferrals = async () => {
+      try {
+        // В реальной реализации здесь будет вызов API для получения топ-5 рефералов
+        const topReferralsData = await getTopReferrals();
+        setTopReferrals(topReferralsData);
+      } catch (error) {
+        console.error('Ошибка загрузки топ-5 рефералов:', error);
+        // В случае ошибки используем фиктивные данные
+        setTopReferrals([
+          { rank: 1, name: 'Алексей К.', referrals: 125, earnings: 1250.50, position: 'gold' },
+          { rank: 2, name: 'Мария С.', referrals: 98, earnings: 980.25, position: 'silver' },
+          { rank: 3, name: 'Дмитрий П.', referrals: 87, earnings: 870.75, position: 'bronze' },
+          { rank: 4, name: 'Елена В.', referrals: 76, earnings: 760.50, position: 'regular' },
+          { rank: 5, name: 'Сергей Н.', referrals: 65, earnings: 650.25, position: 'regular' },
+        ]);
+      }
+    };
+
+    fetchTopReferrals();
+  }, []);
 
   return (
     <InteractiveBackground className="px-4 pb-24" intensity={0.85}>

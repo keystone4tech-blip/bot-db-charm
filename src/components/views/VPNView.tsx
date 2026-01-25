@@ -13,9 +13,33 @@ import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 import { useProfile } from '@/hooks/useProfile';
+import { getVPNServers } from '@/lib/api';
+import { useState, useEffect } from 'react';
 
 export const VPNView = () => {
   const { vpnKey, isLoading, error } = useProfile();
+  const [vpnServers, setVpnServers] = useState([]);
+
+  useEffect(() => {
+    const fetchVPNServers = async () => {
+      try {
+        const servers = await getVPNServers();
+        setVpnServers(servers);
+      } catch (err) {
+        console.error('Ошибка загрузки VPN-серверов:', err);
+        // В случае ошибки используем фиктивные данные
+        setVpnServers([
+          { id: 'us_ny', name: 'США - Нью-Йорк', flag: '🇺🇸', ping: '12ms', status: 'online' },
+          { id: 'de_berlin', name: 'Германия - Берлин', flag: '🇩🇪', ping: '45ms', status: 'online' },
+          { id: 'jp_tokyo', name: 'Япония - Токио', flag: '🇯🇵', ping: '89ms', status: 'online' },
+          { id: 'sg_singapore', name: 'Сингапур', flag: '🇸🇬', ping: '102ms', status: 'online' },
+          { id: 'nl_amsterdam', name: 'Нидерланды - Амстердам', flag: '🇳🇱', ping: '38ms', status: 'online' },
+        ]);
+      }
+    };
+
+    fetchVPNServers();
+  }, []);
 
   const hasSubscription = !!vpnKey && vpnKey.status === 'active';
 
@@ -261,13 +285,7 @@ export const VPNView = () => {
             <h3 className="font-semibold">Доступные серверы</h3>
           </div>
           <div className="space-y-3">
-            {[
-              { id: 1, name: 'США - Нью-Йорк', flag: '🇺🇸', ping: '12ms', status: 'online' },
-              { id: 2, name: 'Германия - Берлин', flag: '🇩🇪', ping: '45ms', status: 'online' },
-              { id: 3, name: 'Япония - Токио', flag: '🇯🇵', ping: '89ms', status: 'online' },
-              { id: 4, name: 'Сингапур', flag: '🇸🇬', ping: '102ms', status: 'online' },
-              { id: 5, name: 'Нидерланды - Амстердам', flag: '🇳🇱', ping: '38ms', status: 'online' },
-            ].map((server, index) => (
+            {vpnServers.map((server, index) => (
               <motion.div
                 key={server.id}
                 initial={{ opacity: 0, x: -20 }}

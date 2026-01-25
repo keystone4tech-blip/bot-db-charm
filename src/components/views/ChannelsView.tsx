@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { useTelegramContext } from '@/components/TelegramProvider';
 import { useProfile } from '@/hooks/useProfile';
 import { cn } from '@/lib/utils';
+import { getRecommendedChannels } from '@/lib/api';
 
 interface Channel {
   id: string;
@@ -63,202 +64,34 @@ export const ChannelsView = () => {
 
   // Загружаем каналы при загрузке компонента
   useEffect(() => {
-    // В реальной реализации здесь будет загрузка каналов из API
-    // Для демонстрации создадим фиктивные данные
+    // Загружаем рекомендованные каналы из API
+    const fetchRecommendedChannels = async () => {
+      try {
+        // В реальной реализации здесь будет вызов API для получения списка каналов
+        const loadedChannels = await getRecommendedChannels();
+        setChannels(loadedChannels);
 
-    // В будущем здесь будет вызов API для получения списка каналов
-    // const loadedChannels = await fetchRecommendedChannels();
-    // setChannels(loadedChannels);
-
-    // Пока используем фиктивные данные
-    const mockChannels: Channel[] = [
-      // Реферальные каналы (5 шт.)
-      {
-        id: 'ref1',
-        name: 'Tech News Daily',
-        username: '@technews_daily',
-        description: 'Ежедневные новости технологий и IT',
-        subscribers: 15000,
-        status: 'active',
-        joined_at: '2024-01-15T10:30:00Z',
-        is_required: true,
-        is_referal: true
-      },
-      {
-        id: 'ref2',
-        name: 'Crypto Insights',
-        username: '@crypto_insights',
-        description: 'Анализ криптовалютного рынка',
-        subscribers: 8500,
-        status: 'active',
-        joined_at: '2024-01-20T14:45:00Z',
-        is_required: true,
-        is_referal: true
-      },
-      {
-        id: 'ref3',
-        name: 'AI Trends',
-        username: '@ai_trends',
-        description: 'Новости и тренды в области ИИ',
-        subscribers: 12000,
-        status: 'active',
-        joined_at: '2024-01-25T09:15:00Z',
-        is_required: true,
-        is_referal: true
-      },
-      {
-        id: 'ref4',
-        name: 'Dev Digest',
-        username: '@dev_digest',
-        description: 'Еженедельный дайджест для разработчиков',
-        subscribers: 7200,
-        status: 'active',
-        joined_at: '2024-02-01T11:30:00Z',
-        is_required: true,
-        is_referal: true
-      },
-      {
-        id: 'ref5',
-        name: 'Startup Stories',
-        username: '@startup_stories',
-        description: 'Истории успешных стартапов',
-        subscribers: 9800,
-        status: 'active',
-        joined_at: '2024-02-05T16:20:00Z',
-        is_required: true,
-        is_referal: true
-      },
-
-      // Платные каналы (5 шт.)
-      {
-        id: 'paid1',
-        name: 'Premium Tech',
-        username: '@premium_tech',
-        description: 'Эксклюзивные материалы о технологиях',
-        subscribers: 25000,
-        status: 'active',
-        joined_at: '2024-01-10T08:00:00Z',
-        is_required: true,
-        is_paid: true
-      },
-      {
-        id: 'paid2',
-        name: 'Business Insider',
-        username: '@business_insider',
-        description: 'Бизнес новости и аналитика',
-        subscribers: 18500,
-        status: 'active',
-        joined_at: '2024-01-12T12:15:00Z',
-        is_required: true,
-        is_paid: true
-      },
-      {
-        id: 'paid3',
-        name: 'Marketing Guru',
-        username: '@marketing_guru',
-        description: 'Советы по маркетингу и продвижению',
-        subscribers: 14200,
-        status: 'active',
-        joined_at: '2024-01-18T15:40:00Z',
-        is_required: true,
-        is_paid: true
-      },
-      {
-        id: 'paid4',
-        name: 'Design Inspiration',
-        username: '@design_inspiration',
-        description: 'Ежедневные вдохновляющие дизайны',
-        subscribers: 11500,
-        status: 'active',
-        joined_at: '2024-01-22T13:25:00Z',
-        is_required: true,
-        is_paid: true
-      },
-      {
-        id: 'paid5',
-        name: 'Finance Tips',
-        username: '@finance_tips',
-        description: 'Советы по финансам и инвестициям',
-        subscribers: 22000,
-        status: 'active',
-        joined_at: '2024-01-28T10:10:00Z',
-        is_required: true,
-        is_paid: true
-      },
-
-      // Новенькие каналы (5 шт.)
-      {
-        id: 'new1',
-        name: 'Fresh Tech Ideas',
-        username: '@fresh_tech_ideas',
-        description: 'Новые идеи в мире технологий',
-        subscribers: 1200,
-        status: 'active',
-        joined_at: '2024-03-01T09:00:00Z',
-        is_required: false,
-        is_new: true
-      },
-      {
-        id: 'new2',
-        name: 'Code Tutorials',
-        username: '@code_tutorials',
-        description: 'Обучающие видео по программированию',
-        subscribers: 850,
-        status: 'active',
-        joined_at: '2024-03-02T14:30:00Z',
-        is_required: false,
-        is_new: true
-      },
-      {
-        id: 'new3',
-        name: 'Gaming Updates',
-        username: '@gaming_updates',
-        description: 'Новости игровой индустрии',
-        subscribers: 2100,
-        status: 'active',
-        joined_at: '2024-03-03T11:15:00Z',
-        is_required: false,
-        is_new: true
-      },
-      {
-        id: 'new4',
-        name: 'Health & Wellness',
-        username: '@health_wellness',
-        description: 'Советы по здоровому образу жизни',
-        subscribers: 1800,
-        status: 'active',
-        joined_at: '2024-03-04T16:45:00Z',
-        is_required: false,
-        is_new: true
-      },
-      {
-        id: 'new5',
-        name: 'Travel Diaries',
-        username: '@travel_diaries',
-        description: 'Путешествия по всему миру',
-        subscribers: 3200,
-        status: 'active',
-        joined_at: '2024-03-05T12:20:00Z',
-        is_required: false,
-        is_new: true
+        // Проверяем, есть ли у пользователя канал
+        if (channel) {
+          const userChannelData: UserChannel = {
+            id: channel.id,
+            name: channel.channel_title || 'Мой канал',
+            username: channel.channel_username || `@${channel.id}`,
+            description: 'Мой Telegram канал',
+            balance: 0,
+            subscribers: channel.subscribers_count || 0,
+            status: channel.is_verified ? 'active' : 'pending'
+          };
+          setUserChannel(userChannelData);
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки каналов:', error);
+        // В случае ошибки можно установить пустой массив или обработать ошибку каким-то образом
+        setChannels([]);
       }
-    ];
+    };
 
-    setChannels(mockChannels);
-
-    // Проверяем, есть ли у пользователя канал
-    if (channel) {
-      const userChannelData: UserChannel = {
-        id: channel.id,
-        name: channel.channel_title || 'Мой канал',
-        username: channel.channel_username || `@${channel.id}`,
-        description: 'Мой Telegram канал',
-        balance: 0,
-        subscribers: channel.subscribers_count || 0,
-        status: channel.is_verified ? 'active' : 'pending'
-      };
-      setUserChannel(userChannelData);
-    }
+    fetchRecommendedChannels();
   }, [channel]);
 
   const handleSubscribe = async (channelId: string) => {

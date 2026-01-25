@@ -62,29 +62,13 @@ const itemVariants = {
 };
 
 export const InfoView = () => {
-  // Используем статические данные для безопасности
-  const fallbackStats = {
-    totalUsers: 12543,
-    activeVpnKeys: 3420,
-    activeChannels: 892,
-    activeSubscriptions: 2156
-  };
-
   const { stats: platformStats, isLoading, error, isUserActive } = usePlatformStats(false, 30000, true); // Disable auto-refresh, enable smart refresh
 
-  // Используем данные из API или fallback данные
-  const extendedPlatformStats = {
-    totalUsers: platformStats?.totalUsers || fallbackStats.totalUsers,
-    activeVpnKeys: platformStats?.activeVpnKeys || fallbackStats.activeVpnKeys,
-    activeChannels: platformStats?.activeChannels || fallbackStats.activeChannels,
-    activeSubscriptions: platformStats?.activeSubscriptions || fallbackStats.activeSubscriptions
-  };
-
   const stats = [
-    { value: formatNumber(extendedPlatformStats.totalUsers), label: 'Пользователей' },
-    { value: formatNumber(extendedPlatformStats.activeVpnKeys), label: 'VPN ключей' },
-    { value: formatNumber(extendedPlatformStats.activeChannels), label: 'Каналов/групп' },
-    { value: formatNumber(extendedPlatformStats.activeSubscriptions), label: 'Подписок' },
+    { value: formatNumber(platformStats?.totalUsers || 0), label: 'Пользователей' },
+    { value: formatNumber(platformStats?.activeVpnKeys || 0), label: 'VPN ключей' },
+    { value: formatNumber(platformStats?.activeChannels || 0), label: 'Каналов/групп' },
+    { value: formatNumber(platformStats?.activeSubscriptions || 0), label: 'Подписок' },
     { value: '100%', label: 'Гарантия' },
     { value: '100%', label: 'Безопасность' },
   ];
