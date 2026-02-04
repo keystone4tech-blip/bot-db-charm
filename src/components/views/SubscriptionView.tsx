@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { hapticFeedback } from '@/lib/telegram';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface Plan {
   id: string;
@@ -118,8 +120,8 @@ export const SubscriptionView = () => {
 
   const selectedPlanData = plans.find(p => p.id === selectedPlan);
 
-  // Проверяем, есть ли активная подписка
-  const hasActiveSubscription = subscription && subscription.is_active;
+  // Проверяем, есть ли активная подписка (status === 'active')
+  const hasActiveSubscription = subscription && subscription.status === 'active';
 
   return (
     <motion.div

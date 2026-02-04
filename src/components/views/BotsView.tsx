@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
-import { Bot, Zap, Users, MessageSquare, Shield, ChevronRight, Sparkles, Target, TrendingUp, Loader2 } from 'lucide-react';
+import { Bot, Zap, Users, MessageSquare, Shield, ChevronRight, Sparkles, Target, TrendingUp } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 const features = [
   {
@@ -100,7 +101,7 @@ export const BotsView = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-medium">{userBot.bot_name}</h3>
-                    <p className="text-sm text-muted-foreground">{userBot.bot_username}</p>
+                    <p className="text-sm text-muted-foreground">@{userBot.bot_username || 'не указан'}</p>
                   </div>
                   <Badge variant={userBot.is_active ? 'default' : 'secondary'}>
                     {userBot.is_active ? 'Активен' : 'Неактивен'}
@@ -110,21 +111,16 @@ export const BotsView = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-3 bg-secondary/30 rounded-xl">
                     <div className="text-xl font-bold text-primary">
-                      {userBot.subscribers_count || 0}
+                      {userBot.bot_type || 'standard'}
                     </div>
-                    <div className="text-xs text-muted-foreground">Подписчики</div>
+                    <div className="text-xs text-muted-foreground">Тип бота</div>
                   </div>
                   <div className="text-center p-3 bg-secondary/30 rounded-xl">
                     <div className="text-xl font-bold text-green-500">
-                      {userBot.messages_sent || 0}
+                      {userBot.is_active ? '✓' : '✗'}
                     </div>
-                    <div className="text-xs text-muted-foreground">Сообщений</div>
+                    <div className="text-xs text-muted-foreground">Статус</div>
                   </div>
-                </div>
-
-                <div className="pt-4">
-                  <p className="text-sm text-muted-foreground mb-2">Описание:</p>
-                  <p className="text-sm">{userBot.description || 'Нет описания'}</p>
                 </div>
               </div>
             </CardContent>

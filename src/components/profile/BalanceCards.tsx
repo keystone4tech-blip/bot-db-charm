@@ -74,7 +74,7 @@ function BalanceStatCard({ stat, index }: { stat: Stat; index: number }) {
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className={cn("shrink-0 rounded-2xl p-2.5", stat.bg)}>
-              <Icon className="h-5 w-5" style={{ color: stat.color }} />
+              <Icon className="h-5 w-5" />
             </div>
 
             <div className="min-w-0 flex-1">
@@ -83,7 +83,7 @@ function BalanceStatCard({ stat, index }: { stat: Stat; index: number }) {
               <div className="mt-1 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1 min-w-0">
                   <NumberCounter value={stat.value} decimals={2} className="text-base font-extrabold tracking-tight" />
-                  <CurrencyIcon className="h-4 w-4" style={{ color: stat.color }} />
+                  <CurrencyIcon className="h-4 w-4" />
                 </div>
                 <div className={cn("flex items-center gap-1 text-[11px] font-semibold", trendColor)}>
                   <TrendIcon className="h-3.5 w-3.5" />
