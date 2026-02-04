@@ -20,13 +20,11 @@ export const MainAuth = ({ onAuthSuccess }: MainAuthProps) => {
   const [currentMethod, setCurrentMethod] = useState<AuthMethod>(AuthMethod.TELEGRAM);
 
   const handleRegisterSuccess = (userData: any) => {
-    // Обработка успешной регистрации
     console.log('Registration successful:', userData);
     onAuthSuccess?.(userData);
   };
 
   const handleLoginSuccess = (userData: any) => {
-    // Обработка успешного входа
     console.log('Login successful:', userData);
     onAuthSuccess?.(userData);
   };
@@ -37,6 +35,7 @@ export const MainAuth = ({ onAuthSuccess }: MainAuthProps) => {
         return (
           <RegisterWithEmail
             onSwitchToTelegram={() => setCurrentMethod(AuthMethod.TELEGRAM)}
+            onSwitchToLogin={() => setCurrentMethod(AuthMethod.EMAIL_LOGIN)}
             onRegisterSuccess={handleRegisterSuccess}
           />
         );
@@ -69,21 +68,9 @@ export const MainAuth = ({ onAuthSuccess }: MainAuthProps) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md">
         {renderCurrentView()}
-
-        {/* Показываем переключатели только если не на экране Telegram */}
-        {currentMethod !== AuthMethod.TELEGRAM && (
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => setCurrentMethod(AuthMethod.TELEGRAM)}
-              className="text-blue-500 hover:underline"
-            >
-              Войти через Telegram
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
