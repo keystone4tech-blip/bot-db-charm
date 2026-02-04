@@ -127,23 +127,19 @@ export const ReferralProgramView = (_props: ReferralProgramViewProps) => {
     return () => clearInterval(timer);
   }, []);
 
-  // Данные для топ-5 рефералов
-  const [topReferrals, setTopReferrals] = useState([]);
+  // Данные для топ-5 рефералов - пока используем пустой массив до реализации API
+  const [topReferrals, setTopReferrals] = useState<Array<{
+    rank: number;
+    name: string;
+    referrals: number;
+    earnings: number;
+    position: 'gold' | 'silver' | 'bronze' | null;
+  }>>([]);
 
+  // TODO: Реализовать API для получения топ рефералов
   useEffect(() => {
-    const fetchTopReferrals = async () => {
-      try {
-        // В реальной реализации здесь будет вызов API для получения топ-5 рефералов
-        const topReferralsData = await getTopReferrals();
-        setTopReferrals(topReferralsData);
-      } catch (error) {
-        console.error('Ошибка загрузки топ-5 рефералов:', error);
-        // В случае ошибки не используем фиктивные данные, а оставляем пустой массив
-        setTopReferrals([]);
-      }
-    };
-
-    fetchTopReferrals();
+    // Пока API не реализован, оставляем пустой массив
+    setTopReferrals([]);
   }, []);
 
   return (

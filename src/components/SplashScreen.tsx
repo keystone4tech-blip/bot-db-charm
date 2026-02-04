@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useTelegramAuth } from '@/hooks/useTelegramAuth';
+import { isTelegramWebApp } from '@/lib/telegram';
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -10,6 +11,7 @@ interface SplashScreenProps {
 const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   const [progress, setProgress] = useState(0);
   const [currentMessage, setCurrentMessage] = useState('Загрузка...');
+  const finishCalledRef = useRef(false);
   
   const { isAuthenticated, isLoading: isAuthLoading, error: authError, profile: authProfile } = useTelegramAuth();
 
@@ -20,46 +22,75 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
     'Почти готово...'
   ];
 
+  const finishSplash = useCallback(() => {
+    if (!finishCalledRef.current) {
+      finishCalledRef.current = true;
+      onFinish();
+    }
+  }, [onFinish]);
+
   useEffect(() => {
-    // Прогресс загрузки
+    // Прогресс загрузки - быстрее
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(progressInterval);
           return 100;
         }
-        return Math.min(100, prev + 2);
+        return Math.min(100, prev + 4); // Быстрее загрузка
       });
-    }, 50);
+    }, 40);
 
     // Смена сообщений
     const messageInterval = setInterval(() => {
-      const currentIndex = Math.floor((progress / 100) * messages.length);
-      setCurrentMessage(messages[currentIndex] || messages[messages.length - 1]);
-    }, 200);
-
-    // Завершение через 4 секунды максимум
-    const maxTimer = setTimeout(() => {
-      setProgress(100);
-    }, 4000);
+      setCurrentMessage(prev => {
+        const currentIndex = messages.indexOf(prev);
+        const nextIndex = (currentIndex + 1) % messages.length;
+        return messages[nextIndex];
+      });
+    }, 600);
 
     return () => {
       clearInterval(progressInterval);
       clearInterval(messageInterval);
-      clearTimeout(maxTimer);
     };
   }, []);
 
+  // Жёсткий таймаут - всегда завершаем через 3 секунды
   useEffect(() => {
-    // Завершаем загрузку когда аутентификация завершена И прогресс достиг 80%
-    if ((progress >= 80 || progress === 100) && !isAuthLoading && (authError || (isAuthenticated && authProfile))) {
-      const timer = setTimeout(() => {
-        onFinish();
-      }, 500);
+    const maxTimer = setTimeout(() => {
+      console.log('SplashScreen: Force finishing after timeout');
+      finishSplash();
+    }, 3000);
 
+    return () => clearTimeout(maxTimer);
+  }, [finishSplash]);
+
+  // Проверяем условия для завершения
+  useEffect(() => {
+    const isTelegram = isTelegramWebApp();
+    
+    // Для браузера - сразу завершаем если загрузка завершена
+    if (!isTelegram && !isAuthLoading && progress >= 50) {
+      console.log('SplashScreen: Browser mode, finishing early');
+      const timer = setTimeout(finishSplash, 300);
       return () => clearTimeout(timer);
     }
-  }, [progress, isAuthLoading, isAuthenticated, authError, authProfile, onFinish]);
+    
+    // Для Telegram - завершаем когда аутентификация готова ИЛИ есть ошибка
+    if (isTelegram && !isAuthLoading && (authError || isAuthenticated) && progress >= 60) {
+      console.log('SplashScreen: Telegram mode, auth complete');
+      const timer = setTimeout(finishSplash, 300);
+      return () => clearTimeout(timer);
+    }
+    
+    // Если прогресс достиг 100% - всегда завершаем
+    if (progress >= 100) {
+      console.log('SplashScreen: Progress complete, finishing');
+      const timer = setTimeout(finishSplash, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [progress, isAuthLoading, isAuthenticated, authError, finishSplash]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
@@ -73,11 +104,11 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
           className="w-24 h-24 mx-auto mb-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center"
           animate={{ 
             rotate: progress === 100 ? 360 : 0,
-            scale: [1, 1.1, 1] 
+            scale: [1, 1.05, 1] 
           }}
           transition={{ 
-            rotate: { duration: 2, ease: "easeInOut" },
-            scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+            rotate: { duration: 1, ease: "easeInOut" },
+            scale: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
           }}
         >
           <span className="text-4xl">🚀</span>
@@ -85,10 +116,10 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
 
         {/* Заголовок */}
         <h1 className="text-2xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-          TG Автоматизация
+          Keystone Tech
         </h1>
         <p className="text-muted-foreground mb-8">
-          Умное продвижение вашего Telegram канала
+          VPN & Telegram Bot Management
         </p>
 
         {/* Прогресс бар */}
@@ -97,7 +128,7 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
             className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
           />
         </div>
 
@@ -109,29 +140,30 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
         {/* Сообщение */}
         <motion.p
           key={currentMessage}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
           className="text-sm text-muted-foreground"
         >
           {currentMessage}
         </motion.p>
 
-        {/* Ошибка аутентификации */}
+        {/* Ошибка аутентификации - показываем но не блокируем */}
         {authError && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg"
+            className="mt-6 p-4 bg-muted/50 border border-border rounded-lg"
           >
-            <p className="text-sm text-destructive mb-3">
-              Ошибка аутентификации: {authError}
+            <p className="text-sm text-muted-foreground mb-3">
+              Продолжаем в гостевом режиме
             </p>
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => window.location.reload()}
+              onClick={finishSplash}
             >
-              Перезагрузить
+              Продолжить
             </Button>
           </motion.div>
         )}

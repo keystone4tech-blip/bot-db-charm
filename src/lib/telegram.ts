@@ -2,14 +2,7 @@
 import WebApp from '@twa-dev/sdk';
 import { mockWebApp } from './telegramMock';
 
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp: any;
-    };
-  }
-}
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let tgInstance: any;
 
 // Проверяем сначала наличие настоящей Telegram WebApp SDK
