@@ -1,10 +1,11 @@
 // src/components/Auth/LoginWithEmail.tsx
 import { useState } from 'react';
-import { loginWithEmail, sendOTP, verifyOTP } from '@/lib/api';
+import { loginWithEmailSupabase } from '@/lib/supabase-api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 
 interface LoginWithEmailProps {
   onSwitchToTelegram?: () => void;
@@ -13,77 +14,40 @@ interface LoginWithEmailProps {
 }
 
 export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLoginSuccess }: LoginWithEmailProps) => {
-  const [loginMethod, setLoginMethod] = useState<'password' | 'otp'>('password');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    otp: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setError('');
   };
 
-  const handlePasswordLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const result = await loginWithEmail({
-        email: formData.email,
-        password: formData.password
-      });
+      const result = await loginWithEmailSupabase(formData.email, formData.password);
 
-      if (result.success) {
+      if (result.success && result.profile) {
         onLoginSuccess?.(result.profile);
       } else {
-        setError(result.error || 'Ошибка входа');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Произошла ошибка');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSendOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const result = await sendOTP(formData.email);
-
-      if (result.success) {
-        setOtpSent(true);
-        setLoginMethod('otp');
-      } else {
-        setError(result.error || 'Не удалось отправить OTP');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Произошла ошибка');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const result = await verifyOTP(formData.email, formData.otp);
-
-      if (result.success) {
-        onLoginSuccess?.(result.profile);
-      } else {
-        setError(result.error || 'Неверный OTP');
+        // Обрабатываем различные ошибки Supabase
+        const errorMessage = result.error || 'Ошибка входа';
+        if (errorMessage.includes('Invalid login credentials')) {
+          setError('Неверный email или пароль');
+        } else if (errorMessage.includes('Email not confirmed')) {
+          setError('Email не подтверждён. Проверьте почту для подтверждения');
+        } else {
+          setError(errorMessage);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Произошла ошибка');
@@ -93,168 +57,96 @@ export const LoginWithEmail = ({ onSwitchToTelegram, onSwitchToRegister, onLogin
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Вход по почте</CardTitle>
-        <CardDescription>Войдите в свой аккаунт, используя адрес электронной почты</CardDescription>
+    <Card className="w-full max-w-md border-border/50 bg-card/95 backdrop-blur">
+      <CardHeader className="space-y-1 pb-4">
+        <CardTitle className="text-xl">Вход</CardTitle>
+        <CardDescription>Войдите в свой аккаунт</CardDescription>
       </CardHeader>
       
-      {loginMethod === 'password' ? (
-        <form onSubmit={handlePasswordLogin}>
-          <CardContent className="space-y-4">
-            {error && <div className="text-red-500 text-sm">{error}</div>}
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Электронная почта</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Введите вашу электронную почту"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          {error && (
+            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Пароль</Label>
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="email">Электронная почта</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="example@mail.ru"
+              value={formData.email}
+              onChange={handleChange}
+              className="bg-background/50"
+              autoComplete="email"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="password">Пароль</Label>
+            <div className="relative">
               <Input
                 id="password"
                 name="password"
-                type="password"
-                placeholder="Введите ваш пароль"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Введите пароль"
                 value={formData.password}
                 onChange={handleChange}
+                className="bg-background/50 pr-10"
+                autoComplete="current-password"
                 required
               />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-2">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Вход...' : 'Войти по паролю'}
-            </Button>
-            
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleSendOTP}
-              type="button"
-              disabled={loading}
-            >
-              Вход по OTP
-            </Button>
-            
-            <div className="flex justify-between w-full pt-2">
-              <Button
-                variant="ghost"
-                onClick={onSwitchToRegister}
+              <button
                 type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
-                Регистрация
-              </Button>
-              
-              <Button
-                variant="ghost"
-                onClick={onSwitchToTelegram}
-                type="button"
-              >
-                Вход через Telegram
-              </Button>
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
-          </CardFooter>
-        </form>
-      ) : (
-        <form onSubmit={handleVerifyOTP}>
-          <CardContent className="space-y-4">
-            {error && <div className="text-red-500 text-sm">{error}</div>}
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Электронная почта</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Введите вашу электронную почту"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                disabled={otpSent}
-              />
-            </div>
-            
-            {!otpSent ? (
-              <div className="pt-4">
-                <Button 
-                  type="button" 
-                  className="w-full" 
-                  onClick={handleSendOTP}
-                  disabled={loading}
-                >
-                  Отправить OTP
-                </Button>
-              </div>
-            ) : (
+          </div>
+        </CardContent>
+        
+        <CardFooter className="flex flex-col space-y-3 pt-2">
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="otp">Одноразовый пароль</Label>
-                  <Input
-                    id="otp"
-                    name="otp"
-                    type="text"
-                    value={formData.otp}
-                    onChange={handleChange}
-                    required
-                    placeholder="Введите 6-значный код"
-                  />
-                </div>
-                
-                <div className="pt-2">
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={loading}
-                  >
-                    Подтвердить OTP
-                  </Button>
-                </div>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Вход...
               </>
+            ) : (
+              'Войти'
             )}
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-2">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setLoginMethod('password');
-                setOtpSent(false);
-              }}
+          </Button>
+          
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Нет аккаунта?</span>
+            <button
               type="button"
-              disabled={loading}
+              onClick={onSwitchToRegister}
+              className="text-primary hover:underline"
             >
-              Вернуться к входу по паролю
+              Зарегистрироваться
+            </button>
+          </div>
+          
+          {onSwitchToTelegram && (
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={onSwitchToTelegram}
+              type="button"
+            >
+              Войти через Telegram
             </Button>
-            
-            <div className="flex justify-between w-full pt-2">
-              <Button
-                variant="ghost"
-                onClick={onSwitchToRegister}
-                type="button"
-              >
-                Регистрация
-              </Button>
-              
-              <Button
-                variant="ghost"
-                onClick={onSwitchToTelegram}
-                type="button"
-              >
-                Вход через Telegram
-              </Button>
-            </div>
-          </CardFooter>
-        </form>
-      )}
+          )}
+        </CardFooter>
+      </form>
     </Card>
   );
 };
