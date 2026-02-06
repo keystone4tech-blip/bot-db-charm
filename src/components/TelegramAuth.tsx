@@ -41,9 +41,9 @@ export const TelegramAuth = ({
 
   if (isAuthLoading) {
     return (
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-border/50 bg-card/95 backdrop-blur">
         <CardContent className="flex justify-center items-center h-40">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </CardContent>
       </Card>
     );
@@ -51,12 +51,12 @@ export const TelegramAuth = ({
 
   if (authError) {
     return (
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-border/50 bg-card/95 backdrop-blur">
         <CardHeader>
-          <CardTitle>Ошибка аутентификации Telegram</CardTitle>
+          <CardTitle>Ошибка аутентификации</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-red-500">{authError}</p>
+          <p className="text-destructive">{authError}</p>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <Button onClick={refetchAuth} className="w-full">
@@ -76,14 +76,16 @@ export const TelegramAuth = ({
 
   if (isAuthenticated && authProfile) {
     return (
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-border/50 bg-card/95 backdrop-blur">
         <CardHeader>
           <CardTitle>С возвращением!</CardTitle>
         </CardHeader>
         <CardContent>
           <p>Вы вошли как:</p>
           <p className="font-semibold">{authProfile.first_name} {authProfile.last_name}</p>
-          <p className="text-sm text-gray-500">@{authProfile.telegram_username}</p>
+          {authProfile.telegram_username && (
+            <p className="text-sm text-muted-foreground">@{authProfile.telegram_username}</p>
+          )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <Button 
@@ -101,66 +103,63 @@ export const TelegramAuth = ({
           >
             Продолжить работу
           </Button>
-          <Button
-            variant="outline"
-            onClick={onSwitchToEmailLogin}
-            className="w-full"
-          >
-            Перейти к аккаунту по почте
-          </Button>
         </CardFooter>
       </Card>
     );
   }
 
+  // Браузерный режим - показываем опции входа
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md border-border/50 bg-card/95 backdrop-blur">
       <CardHeader>
-        <CardTitle>Аутентификация через Telegram</CardTitle>
+        <CardTitle>Добро пожаловать!</CardTitle>
         <CardDescription>
-          Откройте это приложение через нашего Telegram-бота для входа
+          Выберите способ входа в систему
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-          <p className="text-center">🔒 Безопасная аутентификация через Telegram</p>
+        <div className="bg-muted/50 p-4 rounded-lg text-center">
+          <p className="text-sm text-muted-foreground">
+            🔒 Безопасная аутентификация
+          </p>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-2">
+      <CardFooter className="flex flex-col space-y-3">
         <Button
           onClick={() => window.location.href = 'https://t.me/Keystone_Tech_Robot'}
           className="w-full"
+          variant="default"
         >
           Открыть Telegram-бота
         </Button>
         
-        <div className="flex justify-between w-full pt-2">
-         <Button
-           variant="outline"
-           onClick={onSwitchToEmailRegister}
-           className="w-[48%]"
-         >
-           Регистрация по почте
-         </Button>
+        <div className="flex gap-2 w-full">
+          <Button
+            variant="outline"
+            onClick={onSwitchToEmailRegister}
+            className="flex-1"
+          >
+            Регистрация
+          </Button>
 
-         <Button
-           variant="outline"
-           onClick={onSwitchToEmailLogin}
-           className="w-[48%]"
-         >
-           Вход по почте
-         </Button>
+          <Button
+            variant="outline"
+            onClick={onSwitchToEmailLogin}
+            className="flex-1"
+          >
+            Вход
+          </Button>
         </div>
 
-        <div className="flex justify-center w-full pt-2">
-         <Button
-           variant="link"
-           onClick={onSwitchToOTPAuth}
-           className="text-sm text-blue-500 hover:underline"
-         >
-           Войти по ID/никнейму
-         </Button>
-        </div>
+        {onSwitchToOTPAuth && (
+          <Button
+            variant="link"
+            onClick={onSwitchToOTPAuth}
+            className="text-sm"
+          >
+            Войти по ID/никнейму
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
