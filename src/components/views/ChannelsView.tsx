@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { useTelegramContext } from '@/components/TelegramProvider';
 import { useProfile } from '@/hooks/useProfile';
 import { cn } from '@/lib/utils';
-import { getRecommendedChannels } from '@/lib/api';
+// Recommended channels loaded from Supabase (stub for now)
 
 interface Channel {
   id: string;
@@ -68,7 +68,7 @@ export const ChannelsView = () => {
     const fetchRecommendedChannels = async () => {
       try {
         // В реальной реализации здесь будет вызов API для получения списка каналов
-        const loadedChannels = await getRecommendedChannels();
+        const loadedChannels: any[] = []; // TODO: load from Supabase
         setChannels(loadedChannels);
 
         // Проверяем, есть ли у пользователя канал

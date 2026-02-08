@@ -4,11 +4,7 @@ import { hapticFeedback } from '@/lib/telegram';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useTelegramContext } from '@/components/TelegramProvider';
 import { useState, useEffect } from 'react';
-import {
-  getActiveCampaigns,
-  getScheduledPosts,
-  getWeeklyStats
-} from '@/lib/api';
+// Campaign/promotion functions - stubs (previously from local API)
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -42,11 +38,10 @@ export const PromotionView = () => {
         setError(null);
 
         // Загружаем все данные параллельно
-        const [campaignsData, postsData, statsData] = await Promise.all([
-          getActiveCampaigns(authProfile.id),
-          getScheduledPosts(authProfile.id),
-          getWeeklyStats(authProfile.id)
-        ]);
+        // TODO: load from Supabase when promotion tables exist
+        const campaignsData: any[] = [];
+        const postsData: any[] = [];
+        const statsData: any[] = [];
 
         setCampaigns(campaignsData);
         setScheduledPosts(postsData);

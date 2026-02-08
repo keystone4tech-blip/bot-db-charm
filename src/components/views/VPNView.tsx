@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 import { useProfile } from '@/hooks/useProfile';
-import { getVPNServers } from '@/lib/api';
+// VPN servers loaded from Supabase (stub for now)
 import { useState, useEffect } from 'react';
 
 export const VPNView = () => {
@@ -23,7 +23,7 @@ export const VPNView = () => {
   useEffect(() => {
     const fetchVPNServers = async () => {
       try {
-        const servers = await getVPNServers();
+        const servers: any[] = []; // TODO: load from Supabase when VPN servers table exists
         setVpnServers(servers);
       } catch (err) {
         console.error('Ошибка загрузки VPN-серверов:', err);
@@ -130,7 +130,7 @@ export const VPNView = () => {
       </motion.div>
 
       {/* Пробный период информации */}
-      {hasSubscription && vpnKey?.is_trial && (
+      {hasSubscription && (vpnKey as any)?.is_trial && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

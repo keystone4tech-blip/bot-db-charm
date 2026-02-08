@@ -8,15 +8,15 @@ import {
   type UserBalance,
   type UserBot,
   type VPNKey,
-  getUserBalance,
+  getProfile,
+  getBalance,
+  getReferralStats,
+  getVPNKeys,
+  getTelegramChannels,
   getUserBots,
-  getUserChannels,
-  getUserProfile,
-  getUserReferralStats,
-  getUserSubscriptions,
-  getUserVPNKeys,
-  updateUserProfile as apiUpdateUserProfile,
-} from '@/lib/api';
+  getSubscriptions,
+  updateProfile as apiUpdateProfileFn,
+} from '@/lib/supabase-api';
 import { useTelegramContext } from '@/components/TelegramProvider';
 
 export type ExtendedUserProfile = ApiExtendedUserProfile;
@@ -158,9 +158,9 @@ export const useProfile = (): ProfileHookReturn => {
     const load = async () => {
       try {
         const [profileRes, balanceRes, referralRes] = await Promise.allSettled([
-          getUserProfile(userId),
-          getUserBalance(userId),
-          getUserReferralStats(userId),
+          getProfile(userId),
+          getBalance(userId),
+          getReferralStats(userId),
         ]);
 
         if (cancelled) return;
@@ -193,10 +193,10 @@ export const useProfile = (): ProfileHookReturn => {
         }
 
         const [vpnResponse, channelResponse, botResponse, subscriptionResponse] = await Promise.allSettled([
-          getUserVPNKeys(userId),
-          getUserChannels(userId),
+          getVPNKeys(userId),
+          getTelegramChannels(userId),
           getUserBots(userId),
-          getUserSubscriptions(userId),
+          getSubscriptions(userId),
         ]);
 
         if (cancelled) return;
@@ -276,7 +276,7 @@ export const useProfile = (): ProfileHookReturn => {
       setProfile(optimistic);
 
       try {
-        const updated = await apiUpdateUserProfile(profile.id, updates);
+        const updated = await apiUpdateProfileFn(profile.id, updates);
         const normalized = normalizeProfile(updated);
         setProfile(normalized);
         setReferralLink(normalized.referral_code ? `https://t.me/Keystone_Tech_Robot?start=${normalized.referral_code}` : null);
