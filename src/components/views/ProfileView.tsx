@@ -1,5 +1,6 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
+import { InstallAppCard } from '@/components/InstallAppCard';
 import { Loader2, User, Coins, Settings, Crown } from 'lucide-react';
 import { useTelegramContext } from '@/components/TelegramProvider';
 import { useProfile, ExtendedUserProfile } from '@/hooks/useProfile';
@@ -516,6 +517,9 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
                 onNavigate={handleNavigate}
               />
             </div>
+
+            {/* Install App */}
+            <InstallAppCard />
 
             {/* Admin Panel Button */}
             {isAdmin && (

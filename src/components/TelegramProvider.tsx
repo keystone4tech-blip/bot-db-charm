@@ -1,15 +1,12 @@
-import { createContext, useContext, ReactNode, useEffect } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 import { useTelegram, TelegramUser } from '@/hooks/useTelegram';
 import { useTelegramAuth, AuthProfile, AuthBalance, AuthReferralStats } from '@/hooks/useTelegramAuth';
-import { Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface TelegramContextType {
   user: TelegramUser | null;
   theme: 'light' | 'dark';
   isReady: boolean;
   isTelegram: boolean;
-  // Auth state
   isAuthenticated: boolean;
   isAuthLoading: boolean;
   authError: string | null;
@@ -23,7 +20,7 @@ interface TelegramContextType {
 
 const TelegramContext = createContext<TelegramContextType>({
   user: null,
-  theme: 'light',
+  theme: 'dark',
   isReady: false,
   isTelegram: false,
   isAuthenticated: false,
@@ -70,34 +67,7 @@ export const TelegramProvider = ({ children }: TelegramProviderProps) => {
     setAuthenticated,
   };
 
-  // Don't show loading screen here since SplashScreen handles it
-  // Show error screen if auth failed
-  if (telegram.isTelegram && authError && !isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center max-w-sm"
-        >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/20 flex items-center justify-center">
-            <span className="text-3xl">⚠️</span>
-          </div>
-          <h2 className="text-lg font-semibold mb-2">Ошибка авторизации</h2>
-          <p className="text-muted-foreground text-sm mb-4">{authError}</p>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={refetchAuth}
-            className="px-6 py-2 gold-gradient rounded-xl text-primary-foreground font-medium"
-          >
-            Попробовать снова
-          </motion.button>
-        </motion.div>
-      </div>
-    );
-  }
-
+  // Don't block the app on Telegram auth errors — let SplashScreen and routing handle it
   return (
     <TelegramContext.Provider value={contextValue}>
       {children}

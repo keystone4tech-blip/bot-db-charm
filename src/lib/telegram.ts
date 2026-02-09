@@ -1,16 +1,13 @@
 // Telegram WebApp SDK integration
 import WebApp from '@twa-dev/sdk';
-import { mockWebApp } from './telegramMock';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let tgInstance: any;
 
-// Проверяем сначала наличие настоящей Telegram WebApp SDK
+// Check for real Telegram WebApp first
 if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-  // Используем настоящий SDK
   tgInstance = window.Telegram.WebApp;
 } else {
-  // Используем настоящий SDK в браузере (он будет использовать mock в dev-режиме)
   tgInstance = WebApp;
 }
 
@@ -18,16 +15,19 @@ export const tg = tgInstance;
 
 export const isTelegramWebApp = (): boolean => {
   try {
-    // Проверяем наличие initData - это надежный способ определить,
-    // работает ли приложение в настоящем Telegram WebApp
-    return tg.initData !== '';
-  } catch {
-    // В режиме разработки может не быть initData, но мы всё равно хотим,
-    // чтобы приложение работало, поэтому проверим другие признаки
-    if (process.env.NODE_ENV === 'development') {
-      // В разработке считаем, что мы в Telegram, если у нас есть mock или SDK загружен
+    // Check for real initData — only present in actual Telegram WebApp
+    if (tg.initData && tg.initData !== '') {
       return true;
     }
+    // Also check for Telegram-specific URL params
+    if (typeof window !== 'undefined') {
+      const url = window.location.href;
+      if (url.includes('tgWebAppData') || url.includes('tgWebAppVersion')) {
+        return true;
+      }
+    }
+    return false;
+  } catch {
     return false;
   }
 };
@@ -38,7 +38,7 @@ export const getTelegramUser = () => {
 };
 
 export const getTelegramTheme = () => {
-  if (!isTelegramWebApp()) return 'light';
+  if (!isTelegramWebApp()) return 'dark';
   return tg.colorScheme;
 };
 
@@ -92,26 +92,21 @@ export const showTelegramConfirm = (message: string): Promise<boolean> => {
   });
 };
 
-// Функция для получения параметра из URL
 export const getUrlParameter = (name: string): string | null => {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(name);
 };
 
-// Функция для получения реферального кода из всех возможных источников
 export const getReferralCode = (): string | null => {
-  // Сначала проверяем параметр из Telegram WebApp
   if (typeof window !== 'undefined' && typeof tg !== 'undefined' && tg.initDataUnsafe?.start_param) {
     return tg.initDataUnsafe.start_param;
   }
 
-  // Затем проверяем URL-параметр startapp (для WebApp, открытого через inline-кнопку)
   const urlStartParam = getUrlParameter('startapp');
   if (urlStartParam && urlStartParam !== 'main') {
     return urlStartParam;
   }
 
-  // Также проверяем общий параметр referral или ref
   const urlRefParam = getUrlParameter('referral') || getUrlParameter('ref');
   if (urlRefParam) {
     return urlRefParam;
@@ -120,5 +115,4 @@ export const getReferralCode = (): string | null => {
   return null;
 };
 
-// Export the library
 export default tg;
