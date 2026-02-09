@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useTelegramAuth } from '@/hooks/useTelegramAuth';
@@ -8,18 +8,70 @@ interface SplashScreenProps {
   onFinish: () => void;
 }
 
+const CyberGrid = () => (
+  <div className="absolute inset-0 overflow-hidden">
+    {/* Perspective grid */}
+    <div className="absolute bottom-0 left-0 right-0 h-[60%]" style={{ perspective: '500px' }}>
+      <motion.div
+        className="w-full h-full origin-bottom"
+        style={{
+          transform: 'rotateX(60deg)',
+          backgroundImage: `
+            linear-gradient(hsl(183 100% 50% / 0.15) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(183 100% 50% / 0.15) 1px, transparent 1px)
+          `,
+          backgroundSize: '60px 40px',
+        }}
+        animate={{ backgroundPositionY: ['0px', '40px'] }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+      />
+    </div>
+    {/* Ambient glow */}
+    <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,hsl(183_100%_50%/0.08)_0%,transparent_70%)]" />
+    <div className="absolute top-1/4 left-1/3 w-[300px] h-[300px] rounded-full bg-[radial-gradient(circle,hsl(307_100%_50%/0.05)_0%,transparent_70%)]" />
+  </div>
+);
+
+const HexShape = ({ delay, x, y, size }: { delay: number; x: string; y: string; size: number }) => (
+  <motion.div
+    className="absolute"
+    style={{ left: x, top: y }}
+    initial={{ opacity: 0, scale: 0, rotate: 0 }}
+    animate={{
+      opacity: [0, 0.6, 0.3],
+      scale: [0.5, 1, 0.8],
+      rotate: [0, 90, 180],
+    }}
+    transition={{
+      duration: 4,
+      delay,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    }}
+  >
+    <div
+      className="border border-primary/30"
+      style={{
+        width: size,
+        height: size,
+        clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+      }}
+    />
+  </motion.div>
+);
+
 const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   const [progress, setProgress] = useState(0);
-  const [currentMessage, setCurrentMessage] = useState('Загрузка...');
+  const [currentMessage, setCurrentMessage] = useState('Инициализация...');
   const finishCalledRef = useRef(false);
-  
-  const { isAuthenticated, isLoading: isAuthLoading, error: authError, profile: authProfile } = useTelegramAuth();
+
+  const { isAuthenticated, isLoading: isAuthLoading, error: authError } = useTelegramAuth();
 
   const messages = [
-    'Подготовка к запуску...',
-    'Загрузка компонентов...',
-    'Инициализация системы...',
-    'Почти готово...'
+    'Подключение к серверу...',
+    'Загрузка модулей...',
+    'Синхронизация данных...',
+    'Система готова...',
   ];
 
   const finishSplash = useCallback(() => {
@@ -30,25 +82,23 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   }, [onFinish]);
 
   useEffect(() => {
-    // Прогресс загрузки - быстрее
     const progressInterval = setInterval(() => {
-      setProgress(prev => {
+      setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(progressInterval);
           return 100;
         }
-        return Math.min(100, prev + 4); // Быстрее загрузка
+        return Math.min(100, prev + 3);
       });
     }, 40);
 
-    // Смена сообщений
     const messageInterval = setInterval(() => {
-      setCurrentMessage(prev => {
+      setCurrentMessage((prev) => {
         const currentIndex = messages.indexOf(prev);
         const nextIndex = (currentIndex + 1) % messages.length;
         return messages[nextIndex];
       });
-    }, 600);
+    }, 700);
 
     return () => {
       clearInterval(progressInterval);
@@ -56,113 +106,146 @@ const SplashScreen = ({ onFinish }: SplashScreenProps) => {
     };
   }, []);
 
-  // Жёсткий таймаут - всегда завершаем через 3 секунды
   useEffect(() => {
     const maxTimer = setTimeout(() => {
-      console.log('SplashScreen: Force finishing after timeout');
       finishSplash();
     }, 3000);
-
     return () => clearTimeout(maxTimer);
   }, [finishSplash]);
 
-  // Проверяем условия для завершения
   useEffect(() => {
-    const isTelegram = isTelegramWebApp();
-    
-    // Для браузера - сразу завершаем если загрузка завершена
-    if (!isTelegram && !isAuthLoading && progress >= 50) {
-      console.log('SplashScreen: Browser mode, finishing early');
+    const isTg = isTelegramWebApp();
+    if (!isTg && !isAuthLoading && progress >= 50) {
       const timer = setTimeout(finishSplash, 300);
       return () => clearTimeout(timer);
     }
-    
-    // Для Telegram - завершаем когда аутентификация готова ИЛИ есть ошибка
-    if (isTelegram && !isAuthLoading && (authError || isAuthenticated) && progress >= 60) {
-      console.log('SplashScreen: Telegram mode, auth complete');
+    if (isTg && !isAuthLoading && (authError || isAuthenticated) && progress >= 60) {
       const timer = setTimeout(finishSplash, 300);
       return () => clearTimeout(timer);
     }
-    
-    // Если прогресс достиг 100% - всегда завершаем
     if (progress >= 100) {
-      console.log('SplashScreen: Progress complete, finishing');
       const timer = setTimeout(finishSplash, 200);
       return () => clearTimeout(timer);
     }
   }, [progress, isAuthLoading, isAuthenticated, authError, finishSplash]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      <CyberGrid />
+
+      {/* Floating hex shapes */}
+      <HexShape delay={0} x="10%" y="20%" size={40} />
+      <HexShape delay={0.5} x="80%" y="15%" size={30} />
+      <HexShape delay={1} x="70%" y="70%" size={50} />
+      <HexShape delay={1.5} x="15%" y="75%" size={35} />
+
+      {/* Scanlines overlay */}
+      <div className="absolute inset-0 pointer-events-none scanline opacity-30" />
+
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="text-center max-w-sm w-full"
+        className="text-center max-w-sm w-full relative z-10"
       >
-        {/* Логотип/Иконка */}
+        {/* Logo */}
         <motion.div
-          className="w-24 h-24 mx-auto mb-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center"
-          animate={{ 
-            rotate: progress === 100 ? 360 : 0,
-            scale: [1, 1.05, 1] 
-          }}
-          transition={{ 
-            rotate: { duration: 1, ease: "easeInOut" },
-            scale: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
-          }}
+          className="w-28 h-28 mx-auto mb-8 relative"
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
         >
-          <span className="text-4xl">🚀</span>
+          <div className="absolute inset-0 rounded-full border-2 border-primary/40" />
+          <div className="absolute inset-2 rounded-full border border-accent/30" />
+          <motion.div
+            className="absolute inset-4 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center backdrop-blur-sm"
+            animate={{ boxShadow: ['0 0 20px hsl(183 100% 50% / 0.2)', '0 0 40px hsl(183 100% 50% / 0.4)', '0 0 20px hsl(183 100% 50% / 0.2)'] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <motion.span
+              className="text-3xl"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              ⚡
+            </motion.span>
+          </motion.div>
+          {/* Orbiting dot */}
+          <motion.div
+            className="absolute w-2 h-2 rounded-full bg-primary"
+            style={{ top: '50%', left: '50%' }}
+            animate={{
+              x: [0, 52, 0, -52, 0],
+              y: [-52, 0, 52, 0, -52],
+            }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          />
         </motion.div>
 
-        {/* Заголовок */}
-        <h1 className="text-2xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-          Keystone Tech
-        </h1>
-        <p className="text-muted-foreground mb-8">
-          VPN & Telegram Bot Management
-        </p>
+        {/* Title */}
+        <motion.h1
+          className="text-3xl font-bold mb-2 tracking-wider"
+          style={{ fontFamily: 'Orbitron, sans-serif' }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <span className="gold-gradient-text">KEYSTONE</span>
+          <span className="text-foreground"> TECH</span>
+        </motion.h1>
+        <motion.p
+          className="text-muted-foreground mb-8 text-sm tracking-widest uppercase"
+          style={{ fontFamily: 'Rajdhani, sans-serif' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          Telegram Automation Platform
+        </motion.p>
 
-        {/* Прогресс бар */}
-        <div className="w-full bg-secondary/30 rounded-full h-2 mb-4 overflow-hidden">
+        {/* Progress bar */}
+        <div className="w-full h-1 bg-secondary/50 rounded-full mb-3 overflow-hidden relative">
           <motion.div
-            className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
+            className="h-full rounded-full"
+            style={{
+              background: 'linear-gradient(90deg, hsl(183 100% 50%), hsl(307 100% 50%), hsl(183 100% 50%))',
+              backgroundSize: '200% 100%',
+            }}
             initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.2 }}
+            animate={{
+              width: `${progress}%`,
+              backgroundPosition: ['0% 0%', '100% 0%'],
+            }}
+            transition={{
+              width: { duration: 0.2 },
+              backgroundPosition: { duration: 2, repeat: Infinity, ease: 'linear' },
+            }}
+          />
+          {/* Glow on progress tip */}
+          <motion.div
+            className="absolute top-0 h-full w-8 bg-gradient-to-r from-transparent to-primary/50 blur-sm"
+            style={{ left: `${Math.max(0, progress - 5)}%` }}
           />
         </div>
 
-        {/* Процент */}
-        <p className="text-sm text-muted-foreground mb-4">
-          {Math.round(progress)}%
-        </p>
+        <div className="flex justify-between items-center mb-6">
+          <motion.p
+            key={currentMessage}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 0.7, x: 0 }}
+            className="text-xs text-muted-foreground font-mono"
+          >
+            {currentMessage}
+          </motion.p>
+          <p className="text-xs text-primary font-mono">{Math.round(progress)}%</p>
+        </div>
 
-        {/* Сообщение */}
-        <motion.p
-          key={currentMessage}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-          className="text-sm text-muted-foreground"
-        >
-          {currentMessage}
-        </motion.p>
-
-        {/* Ошибка аутентификации - показываем но не блокируем */}
         {authError && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-6 p-4 bg-muted/50 border border-border rounded-lg"
+            className="mt-4 p-4 bg-secondary/50 border border-border rounded-lg"
           >
-            <p className="text-sm text-muted-foreground mb-3">
-              Продолжаем в гостевом режиме
-            </p>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={finishSplash}
-            >
+            <p className="text-sm text-muted-foreground mb-3">Продолжаем в гостевом режиме</p>
+            <Button variant="outline" size="sm" onClick={finishSplash}>
               Продолжить
             </Button>
           </motion.div>

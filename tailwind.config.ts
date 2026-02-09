@@ -16,7 +16,8 @@ const config = {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        sans: ['Rajdhani', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        cyber: ['Orbitron', 'Rajdhani', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
