@@ -163,166 +163,73 @@ export const authenticateTelegram = async (
   referralCode?: string | null
 ): Promise<AuthResponse> => {
   try {
-    console.log('🔐 Supabase Telegram Auth:', { telegramUser, referralCode });
+    console.log('🔐 Telegram Auth via edge function:', { telegramUser, referralCode });
 
-    // 1. Проверяем, существует ли профиль с таким telegram_id
+    // Import tg to get initData for validation
+    const { tg, isTelegramWebApp } = await import('@/lib/telegram');
+    
+    const initData = isTelegramWebApp() ? tg.initData : null;
+    
+    if (initData) {
+      // Use the edge function which has service role access (bypasses RLS)
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/telegram-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+          'apikey': supabaseKey,
+        },
+        body: JSON.stringify({
+          initData,
+          referralCode,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Ошибка авторизации через Telegram');
+      }
+
+      console.log('✅ Auth successful via edge function:', { profileId: result.profile?.id });
+
+      return {
+        success: true,
+        profile: result.profile as UserProfile,
+        balance: result.balance as UserBalance | undefined,
+        referralStats: result.referralStats as ReferralStats | undefined,
+        role: result.role || 'user',
+      };
+    }
+
+    // Fallback: no initData available (shouldn't happen in real Telegram WebApp)
+    console.warn('No initData available, falling back to direct query');
+    
+    // Try to find existing profile by telegram_id using anon key (will work for SELECT if RLS allows)
     const { data: existingProfile, error: findError } = await supabase
       .from('profiles')
       .select('*')
       .eq('telegram_id', telegramUser.id)
       .maybeSingle();
 
-    if (findError && findError.code !== 'PGRST116') {
+    if (findError) {
       console.error('Error finding profile:', findError);
-      throw new Error('Ошибка поиска профиля');
+      throw new Error('Ошибка поиска профиля. Откройте приложение через Telegram.');
     }
 
-    let profile: UserProfile;
-    let isNewUser = false;
-
-    if (existingProfile) {
-      // Обновляем существующий профиль
-      const { data: updatedProfile, error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          telegram_username: telegramUser.username || null,
-          first_name: telegramUser.first_name || null,
-          last_name: telegramUser.last_name || null,
-          avatar_url: telegramUser.photo_url || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existingProfile.id)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error('Error updating profile:', updateError);
-        throw new Error('Ошибка обновления профиля');
-      }
-
-      profile = updatedProfile as UserProfile;
-    } else {
-      // Создаём новый профиль
-      isNewUser = true;
-      
-      // Ищем реферера по коду
-      let referredBy: string | null = null;
-      if (referralCode) {
-        const { data: referrer } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('referral_code', referralCode)
-          .maybeSingle();
-        
-        if (referrer) {
-          referredBy = referrer.id;
-        }
-      }
-
-      const { data: newProfile, error: insertError } = await supabase
-        .from('profiles')
-        .insert({
-          telegram_id: telegramUser.id,
-          telegram_username: telegramUser.username || null,
-          first_name: telegramUser.first_name || null,
-          last_name: telegramUser.last_name || null,
-          avatar_url: telegramUser.photo_url || null,
-          referral_code: generateReferralCode(),
-          referred_by: referredBy,
-        })
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error('Error creating profile:', insertError);
-        throw new Error('Ошибка создания профиля');
-      }
-
-      profile = newProfile as UserProfile;
-
-      // Создаём баланс для нового пользователя
-      await supabase.from('balances').insert({
-        user_id: profile.id,
-        internal_balance: 0,
-        external_balance: 0,
-        total_earned: 0,
-        total_withdrawn: 0,
-      });
-
-      // Создаём статистику рефералов
-      await supabase.from('referral_stats').insert({
-        user_id: profile.id,
-        total_referrals: 0,
-        total_earnings: 0,
-        level_1_count: 0,
-        level_2_count: 0,
-        level_3_count: 0,
-        level_4_count: 0,
-        level_5_count: 0,
-      });
-
-      // Создаём реферальную связь если есть реферер
-      if (referredBy) {
-        await supabase.from('referrals').insert({
-          referrer_id: referredBy,
-          referred_id: profile.id,
-          level: 1,
-          earnings: 0,
-          is_active: true,
-        });
-
-        // Обновляем статистику реферера вручную
-        const { data: currentStats } = await supabase
-          .from('referral_stats')
-          .select('total_referrals, level_1_count')
-          .eq('user_id', referredBy)
-          .maybeSingle();
-
-        if (currentStats) {
-          await supabase
-            .from('referral_stats')
-            .update({
-              total_referrals: (currentStats.total_referrals || 0) + 1,
-              level_1_count: (currentStats.level_1_count || 0) + 1,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('user_id', referredBy);
-        }
-      }
+    if (!existingProfile) {
+      throw new Error('Профиль не найден. Откройте приложение через Telegram бота.');
     }
-
-    // 2. Получаем баланс
-    const { data: balance } = await supabase
-      .from('balances')
-      .select('*')
-      .eq('user_id', profile.id)
-      .maybeSingle();
-
-    // 3. Получаем статистику рефералов
-    const { data: referralStats } = await supabase
-      .from('referral_stats')
-      .select('*')
-      .eq('user_id', profile.id)
-      .maybeSingle();
-
-    // 4. Получаем роль пользователя
-    const { data: userRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', profile.id)
-      .maybeSingle();
-
-    console.log('✅ Auth successful:', { profileId: profile.id, isNewUser });
 
     return {
       success: true,
-      profile,
-      balance: balance as UserBalance | undefined,
-      referralStats: referralStats as ReferralStats | undefined,
-      role: userRole?.role || 'user',
+      profile: existingProfile as UserProfile,
     };
   } catch (error) {
-    console.error('❌ Supabase auth error:', error);
+    console.error('❌ Telegram auth error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Ошибка аутентификации',

@@ -42,47 +42,32 @@ export const usePlatformStats = (autoRefresh: boolean = false, refreshInterval: 
       setIsLoading(true);
       setError(null);
 
-      // Fetch counts from Supabase tables in parallel
-      const [
-        profilesRes,
-        botsRes,
-        subscriptionsRes,
-        vpnKeysRes,
-        channelsRes,
-        transactionsRes,
-      ] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('user_bots').select('id', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-        supabase.from('vpn_keys').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-        supabase.from('telegram_channels').select('id', { count: 'exact', head: true }),
-        supabase.from('transactions').select('id', { count: 'exact', head: true }),
-      ]);
+      // Call platform-stats edge function which uses service role (bypasses RLS)
+      const { data, error: fnError } = await supabase.functions.invoke('platform-stats');
 
-      setStats({
-        totalUsers: profilesRes.count || 0,
-        activeBots: botsRes.count || 0,
-        activeSubscriptions: subscriptionsRes.count || 0,
-        activeVpnKeys: vpnKeysRes.count || 0,
-        activeChannels: channelsRes.count || 0,
-        monthlyRevenue: 0,
-        totalTransactions: transactionsRes.count || 0,
-      });
+      if (fnError) {
+        throw fnError;
+      }
 
-      // Fetch recent profiles as activity
-      const { data: recentProfiles } = await supabase
-        .from('profiles')
-        .select('id, first_name, telegram_username, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5);
+      if (data?.stats) {
+        setStats({
+          totalUsers: data.stats.totalUsers || 0,
+          activeBots: data.stats.activeBots || 0,
+          activeSubscriptions: data.stats.activeSubscriptions || 0,
+          activeVpnKeys: data.stats.activeVpnKeys || 0,
+          activeChannels: 0,
+          monthlyRevenue: data.stats.monthlyRevenue || 0,
+          totalTransactions: data.stats.totalTransactions || 0,
+        });
+      }
 
-      if (recentProfiles) {
-        const formatted: RecentActivity[] = recentProfiles.map((p) => ({
-          id: p.id,
-          action: 'Регистрация',
-          user: p.first_name || p.telegram_username || 'Пользователь',
-          time: p.created_at || '',
-          type: 'user' as const,
+      if (data?.recentActivity) {
+        const formatted: RecentActivity[] = data.recentActivity.map((a: any) => ({
+          id: a.id,
+          action: a.action,
+          user: a.user,
+          time: a.created_at || '',
+          type: a.type as RecentActivity['type'],
         }));
         setRecentActivity(formatted);
       }
