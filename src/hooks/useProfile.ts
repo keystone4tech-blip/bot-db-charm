@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 import {
   type ExtendedUserProfile as ApiExtendedUserProfile,
@@ -8,13 +9,6 @@ import {
   type UserBalance,
   type UserBot,
   type VPNKey,
-  getProfile,
-  getBalance,
-  getReferralStats,
-  getVPNKeys,
-  getTelegramChannels,
-  getUserBots,
-  getSubscriptions,
   updateProfile as apiUpdateProfileFn,
 } from '@/lib/supabase-api';
 import { useTelegramContext } from '@/components/TelegramProvider';
@@ -157,77 +151,43 @@ export const useProfile = (): ProfileHookReturn => {
 
     const load = async () => {
       try {
-        const [profileRes, balanceRes, referralRes] = await Promise.allSettled([
-          getProfile(userId),
-          getBalance(userId),
-          getReferralStats(userId),
-        ]);
+        // Use edge function to bypass RLS (works for Telegram users without Supabase session)
+        const { data, error: fnError } = await supabase.functions.invoke('user-profile-data', {
+          body: { profileId: userId },
+        });
 
         if (cancelled) return;
 
-        if (profileRes.status === 'fulfilled' && profileRes.value) {
-          const nextProfile = normalizeProfile({
-            ...profileRes.value,
-            telegram_username: telegramUser?.username ?? profileRes.value.telegram_username,
-            first_name: telegramUser?.first_name ?? profileRes.value.first_name,
-            last_name: telegramUser?.last_name ?? profileRes.value.last_name,
-            avatar_url: telegramUser?.photo_url ?? profileRes.value.avatar_url,
-          });
+        if (fnError) {
+          console.error('Error loading profile data via edge function:', fnError);
+          // Don't overwrite initial data from auth response
+          return;
+        }
 
+        if (data?.profile) {
+          const nextProfile = normalizeProfile({
+            ...data.profile,
+            telegram_username: telegramUser?.username ?? data.profile.telegram_username,
+            first_name: telegramUser?.first_name ?? data.profile.first_name,
+            last_name: telegramUser?.last_name ?? data.profile.last_name,
+            avatar_url: telegramUser?.photo_url ?? data.profile.avatar_url,
+          });
           setProfile(nextProfile);
           setReferralLink(nextProfile.referral_code ? `https://t.me/Keystone_Tech_Robot?start=${nextProfile.referral_code}` : null);
-        } else if (profileRes.status === 'rejected') {
-          console.error('Ошибка загрузки профиля:', profileRes.reason);
         }
 
-        if (balanceRes.status === 'fulfilled' && balanceRes.value) {
-          setBalance(balanceRes.value);
-        } else if (balanceRes.status === 'rejected') {
-          console.error('Ошибка загрузки баланса:', balanceRes.reason);
+        if (data?.balance) {
+          setBalance(data.balance);
         }
 
-        if (referralRes.status === 'fulfilled' && referralRes.value) {
-          setReferralStats(referralRes.value);
-        } else if (referralRes.status === 'rejected') {
-          console.error('Ошибка загрузки рефералов:', referralRes.reason);
+        if (data?.referralStats) {
+          setReferralStats(data.referralStats);
         }
 
-        const [vpnResponse, channelResponse, botResponse, subscriptionResponse] = await Promise.allSettled([
-          getVPNKeys(userId),
-          getTelegramChannels(userId),
-          getUserBots(userId),
-          getSubscriptions(userId),
-        ]);
-
-        if (cancelled) return;
-
-        if (vpnResponse.status === 'fulfilled') {
-          setVpnKey(vpnResponse.value?.[0] ?? null);
-        } else {
-          console.error('Ошибка при получении VPN ключей:', vpnResponse.reason);
-          setVpnKey(null);
-        }
-
-        if (channelResponse.status === 'fulfilled') {
-          setChannel(channelResponse.value?.[0] ?? null);
-        } else {
-          console.error('Ошибка при получении каналов:', channelResponse.reason);
-          setChannel(null);
-        }
-
-        if (botResponse.status === 'fulfilled') {
-          setUserBot(botResponse.value?.[0] ?? null);
-        } else {
-          console.error('Ошибка при получении ботов:', botResponse.reason);
-          setUserBot(null);
-        }
-
-        if (subscriptionResponse.status === 'fulfilled') {
-          setSubscription(subscriptionResponse.value?.[0] ?? null);
-        } else {
-          console.error('Ошибка при получении подписок:', subscriptionResponse.reason);
-          setSubscription(null);
-        }
+        setVpnKey(data?.vpnKey ?? null);
+        setChannel(data?.channel ?? null);
+        setUserBot(data?.userBot ?? null);
+        setSubscription(data?.subscription ?? null);
       } catch (err) {
         console.error('Ошибка загрузки данных профиля:', err);
         if (!cancelled) {

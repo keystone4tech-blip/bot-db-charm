@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { authenticateTelegram, loginWithEmailSupabase, checkAuthSession, updateProfile, type UserProfile, type UserBalance, type ReferralStats } from '@/lib/supabase-api';
+import { authenticateTelegram, checkAuthSession, type UserProfile, type UserBalance, type ReferralStats } from '@/lib/supabase-api';
 import { tg, isTelegramWebApp, getReferralCode } from '@/lib/telegram';
 import { supabaseAuth } from '@/lib/supabaseAuth';
 import { toast } from 'sonner';
@@ -131,10 +131,7 @@ export const useTelegramAuth = () => {
     try {
       const session = await checkAuthSession();
       if (session?.user) {
-        // We have a session, try to load profile
-        const result = await loginWithEmailSupabase(session.user.email!, '');
-        // This will fail with wrong password, but we can use session directly
-        // Instead, just load profile by user_id
+        // We have a session, load profile directly by user_id
         const { supabase } = await import('@/integrations/supabase/client');
         const { data: profile } = await supabase
           .from('profiles')
@@ -143,30 +140,35 @@ export const useTelegramAuth = () => {
           .maybeSingle();
 
         if (profile) {
-          const { data: balance } = await supabase
-            .from('balances')
-            .select('*')
-            .eq('user_id', profile.id)
-            .maybeSingle();
-
-          const { data: referralStats } = await supabase
-            .from('referral_stats')
-            .select('*')
-            .eq('user_id', profile.id)
-            .maybeSingle();
-
-          const { data: userRole } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', profile.id)
-            .maybeSingle();
+          // Use edge function to get full data (bypasses RLS for related tables)
+          const { data: fullData } = await supabase.functions.invoke('user-profile-data', {
+            body: { profileId: profile.id },
+          });
 
           setAuthenticated({
-            profile: profile as AuthProfile,
-            balance: balance as AuthBalance,
-            referralStats: referralStats as AuthReferralStats,
-            role: userRole?.role || 'user',
+            profile: (fullData?.profile || profile) as AuthProfile,
+            balance: fullData?.balance as AuthBalance,
+            referralStats: fullData?.referralStats as AuthReferralStats,
+            role: 'user',
           });
+
+          // Also fetch role
+          if (fullData?.profile) {
+            const { data: userRole } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', profile.id)
+              .maybeSingle();
+            
+            if (userRole) {
+              setAuthenticated({
+                profile: (fullData.profile || profile) as AuthProfile,
+                balance: fullData.balance as AuthBalance,
+                referralStats: fullData.referralStats as AuthReferralStats,
+                role: userRole.role || 'user',
+              });
+            }
+          }
           return;
         }
       }
@@ -198,7 +200,7 @@ export const useTelegramAuth = () => {
   useEffect(() => {
     const { data: { subscription } } = supabaseAuth.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user && !authState.isAuthenticated) {
-        // User just signed in via email
+        // User just signed in via email — profile query uses RLS with auth.uid()
         const { supabase } = await import('@/integrations/supabase/client');
         const { data: profile } = await supabase
           .from('profiles')
@@ -207,22 +209,15 @@ export const useTelegramAuth = () => {
           .maybeSingle();
 
         if (profile) {
-          const { data: balance } = await supabase
-            .from('balances')
-            .select('*')
-            .eq('user_id', profile.id)
-            .maybeSingle();
-
-          const { data: referralStats } = await supabase
-            .from('referral_stats')
-            .select('*')
-            .eq('user_id', profile.id)
-            .maybeSingle();
+          // Use edge function for full data
+          const { data: fullData } = await supabase.functions.invoke('user-profile-data', {
+            body: { profileId: profile.id },
+          });
 
           setAuthenticated({
-            profile: profile as AuthProfile,
-            balance: balance as AuthBalance,
-            referralStats: referralStats as AuthReferralStats,
+            profile: (fullData?.profile || profile) as AuthProfile,
+            balance: (fullData?.balance || null) as AuthBalance,
+            referralStats: (fullData?.referralStats || null) as AuthReferralStats,
           });
         }
       } else if (event === 'SIGNED_OUT') {
