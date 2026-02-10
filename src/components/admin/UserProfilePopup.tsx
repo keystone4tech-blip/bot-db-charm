@@ -15,7 +15,6 @@ import {
   Wallet,
   Users,
   Crown,
-  Shield,
   Bot,
   Key,
   CreditCard,
@@ -25,6 +24,7 @@ import {
   AtSign,
   Loader2,
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UserProfileData {
   profile: {
@@ -98,20 +98,25 @@ export const UserProfilePopup = ({ userId, isOpen, onClose, userName }: UserProf
       setLoading(true);
       setError(null);
 
-      const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
-      const response = await fetch(
-        `${serverBaseUrl}/api/admin-user-profile?user_id=${userId}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const [profileRes, balanceRes, referralRes, subsRes, vpnRes, botsRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
+        supabase.from('balances').select('*').eq('user_id', userId).maybeSingle(),
+        supabase.from('referral_stats').select('*').eq('user_id', userId).maybeSingle(),
+        supabase.from('subscriptions').select('id, plan_name, status, expires_at').eq('user_id', userId),
+        supabase.from('vpn_keys').select('id, server_location, status, expires_at').eq('user_id', userId),
+        supabase.from('user_bots').select('id, bot_name, is_active').eq('user_id', userId),
+      ]);
 
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to fetch user data');
+      if (!profileRes.data) throw new Error('Профиль не найден');
 
-      setUserData(result);
+      setUserData({
+        profile: profileRes.data as any,
+        balance: balanceRes.data as any,
+        referral_stats: referralRes.data as any,
+        subscriptions: (subsRes.data || []) as any,
+        vpn_keys: (vpnRes.data || []) as any,
+        bots: (botsRes.data || []) as any,
+      });
     } catch (err) {
       console.error('Error fetching user data:', err);
       setError('Ошибка загрузки данных пользователя');
@@ -163,7 +168,6 @@ export const UserProfilePopup = ({ userId, isOpen, onClose, userName }: UserProf
         ) : userData ? (
           <ScrollArea className="max-h-[60vh] pr-2">
             <div className="space-y-4">
-              {/* User Header */}
               <div className="flex items-center gap-4">
                 <Avatar className="w-16 h-16">
                   <AvatarImage src={userData.profile.avatar_url || undefined} />
@@ -195,7 +199,6 @@ export const UserProfilePopup = ({ userId, isOpen, onClose, userName }: UserProf
 
               <Separator />
 
-              {/* Contact Info */}
               {(userData.profile.email || userData.profile.phone) && (
                 <Card>
                   <CardContent className="p-3 space-y-2">
@@ -216,7 +219,6 @@ export const UserProfilePopup = ({ userId, isOpen, onClose, userName }: UserProf
                 </Card>
               )}
 
-              {/* Balance */}
               <Card>
                 <CardContent className="p-3 space-y-2">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -244,7 +246,6 @@ export const UserProfilePopup = ({ userId, isOpen, onClose, userName }: UserProf
                 </CardContent>
               </Card>
 
-              {/* Referrals */}
               <Card>
                 <CardContent className="p-3 space-y-2">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -282,7 +283,6 @@ export const UserProfilePopup = ({ userId, isOpen, onClose, userName }: UserProf
                 </CardContent>
               </Card>
 
-              {/* Subscriptions */}
               <Card>
                 <CardContent className="p-3 space-y-2">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -313,7 +313,6 @@ export const UserProfilePopup = ({ userId, isOpen, onClose, userName }: UserProf
                 </CardContent>
               </Card>
 
-              {/* VPN Keys */}
               <Card>
                 <CardContent className="p-3 space-y-2">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -337,7 +336,6 @@ export const UserProfilePopup = ({ userId, isOpen, onClose, userName }: UserProf
                 </CardContent>
               </Card>
 
-              {/* Bots */}
               <Card>
                 <CardContent className="p-3 space-y-2">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -361,7 +359,6 @@ export const UserProfilePopup = ({ userId, isOpen, onClose, userName }: UserProf
                 </CardContent>
               </Card>
 
-              {/* Registration Date */}
               <div className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
                 <Calendar className="w-3 h-3" />
                 Зарегистрирован: {formatDate(userData.profile.created_at)}

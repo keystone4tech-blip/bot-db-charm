@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-
-const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Ticket {
   id: string;
@@ -13,7 +12,6 @@ export interface Ticket {
   priority: string;
   created_at: string;
   updated_at: string;
-  // User profile info for admin view
   user_profile?: {
     id: string;
     telegram_id: number;
@@ -46,25 +44,20 @@ export const useSupportTickets = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Загрузка тикетов пользователя - возвращает массив
   const fetchTickets = useCallback(async (userId: string): Promise<Ticket[]> => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(
-        `${SERVER_BASE_URL}/api/support-tickets/${userId}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const result = await response.json();
+      const { data, error: dbError } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-      if (!response.ok) throw new Error(result.error || 'Failed to fetch tickets');
+      if (dbError) throw dbError;
 
-      const ticketsList = result.tickets || [];
+      const ticketsList = (data || []) as unknown as Ticket[];
       setTickets(ticketsList);
       return ticketsList;
     } catch (err) {
@@ -76,22 +69,19 @@ export const useSupportTickets = () => {
     }
   }, []);
 
-  // Загрузка всех тикетов (для администратора)
   const fetchAllTickets = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${SERVER_BASE_URL}/api/support-tickets`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const result = await response.json();
+      const { data, error: dbError } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (!response.ok) throw new Error(result.error || 'Failed to fetch tickets');
+      if (dbError) throw dbError;
 
-      setTickets(result.tickets || []);
+      setTickets((data || []) as unknown as Ticket[]);
     } catch (err) {
       console.error('Error fetching all tickets:', err);
       setError('Ошибка загрузки тикетов');
@@ -101,10 +91,9 @@ export const useSupportTickets = () => {
   }, []);
 
   type FetchMessagesOptions = {
-    background?: boolean; // не показываем "Загрузка сообщений..." при авто-обновлениях
+    background?: boolean;
   };
 
-  // Загрузка сообщений для тикета
   const fetchMessages = useCallback(async (ticketId: string, options: FetchMessagesOptions = {}) => {
     const { background = false } = options;
 
@@ -114,16 +103,15 @@ export const useSupportTickets = () => {
       }
       setError(null);
 
-      const response = await fetch(`${SERVER_BASE_URL}/api/support-chat/${ticketId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const result = await response.json();
+      const { data, error: dbError } = await supabase
+        .from('ticket_messages')
+        .select('*')
+        .eq('ticket_id', ticketId)
+        .order('created_at', { ascending: true });
 
-      if (!response.ok) throw new Error(result.error || 'Failed to fetch messages');
+      if (dbError) throw dbError;
 
-      const incoming: ChatMessage[] = (result.messages || []).map((m: ChatMessage) => ({
+      const incoming: ChatMessage[] = (data || []).map((m: any) => ({
         ...m,
         message_type: m.message_type ?? 'text',
       }));
@@ -132,7 +120,6 @@ export const useSupportTickets = () => {
         const existing = prev[ticketId] || [];
         const systemMessages = existing.filter((m) => m.message_type === 'system');
 
-        // Если из бэка пришло пусто, не затираем локальные системные сообщения ("Тикет создан")
         if (incoming.length === 0) {
           return {
             ...prev,
@@ -140,7 +127,6 @@ export const useSupportTickets = () => {
           };
         }
 
-        // Сливаем: системные сверху + сообщения из бэка (без дублей)
         const byId = new Map<string, ChatMessage>();
         for (const m of systemMessages) byId.set(m.id, m);
         for (const m of incoming) byId.set(m.id, m);
@@ -163,35 +149,34 @@ export const useSupportTickets = () => {
     }
   }, []);
 
-  // Создание нового тикета
   const createTicket = async (userId: string, category: string, subject: string, message: string): Promise<Ticket> => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${SERVER_BASE_URL}/api/support-tickets`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user_id: userId, category, subject, message }),
-      });
+      const { data, error: dbError } = await supabase
+        .from('support_tickets')
+        .insert({
+          user_id: userId,
+          category,
+          subject,
+          message,
+          priority: 'medium',
+        })
+        .select()
+        .single();
 
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to create ticket');
+      if (dbError) throw dbError;
 
-      const newTicket = result.ticket;
-
-      // Добавляем тикет в список
+      const newTicket = data as unknown as Ticket;
       setTickets((prev) => [newTicket, ...prev]);
 
-      // Локальное системное сообщение о создании тикета (может быть затёрто fetchMessages — мы это предотвращаем)
       const systemMessage: ChatMessage = {
         id: `system-${Date.now()}`,
         ticket_id: newTicket.id,
         sender_id: 'system',
         is_admin_reply: false,
-        message: `📋 Тикет создан\n\nКатегория: ${getCategoryLabel(category)}\nТема: ${subject}\n\n${message}\n\n⏳ Ожидайте ответа от службы поддержки. Вы сможете написать сообщение после того, как поддержка ответит.`,
+        message: `📋 Тикет создан\n\nКатегория: ${getCategoryLabel(category)}\nТема: ${subject}\n\n${message}\n\n⏳ Ожидайте ответа от службы поддержки.`,
         message_type: 'system',
         created_at: new Date().toISOString(),
       };
@@ -214,7 +199,6 @@ export const useSupportTickets = () => {
     }
   };
 
-  // Отправка сообщения в чат
   const sendMessage = async (
     ticketId: string,
     senderId: string,
@@ -225,48 +209,28 @@ export const useSupportTickets = () => {
     fileName?: string
   ): Promise<ChatMessage> => {
     try {
-      const hadAdminReplyBefore = (messages[ticketId] || []).some(
-        (m) => m.is_admin_reply && (m.message_type ?? 'text') !== 'system'
-      );
-
-      const response = await fetch(`${SERVER_BASE_URL}/api/support-chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error: dbError } = await supabase
+        .from('ticket_messages')
+        .insert({
           ticket_id: ticketId,
           sender_id: senderId,
           is_admin_reply: senderType === 'admin',
           message,
-          message_type: messageType,
-          file_url: fileUrl,
-          file_name: fileName,
-        }),
-      });
+        })
+        .select()
+        .single();
 
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to send message');
+      if (dbError) throw dbError;
 
       const saved: ChatMessage = {
-        ...result.message,
-        message_type: result.message?.message_type ?? messageType,
-      };
+        ...data,
+        message_type: messageType,
+      } as unknown as ChatMessage;
 
-      // Добавляем сообщение в список
       setMessages((prev) => ({
         ...prev,
         [ticketId]: [...(prev[ticketId] || []), saved],
       }));
-
-      // Если это первое сообщение от админа — переводим тикет в in_progress (через API статуса)
-      if (senderType === 'admin' && !hadAdminReplyBefore) {
-        try {
-          await updateTicketStatus(ticketId, 'in_progress');
-        } catch (e) {
-          console.warn('Failed to update ticket status to in_progress:', e);
-        }
-      }
 
       return saved;
     } catch (err) {
@@ -277,26 +241,21 @@ export const useSupportTickets = () => {
     }
   };
 
-  // Обновление статуса тикета
   const updateTicketStatus = async (ticketId: string, status: 'open' | 'in_progress' | 'closed' | 'resolved') => {
     try {
-      const response = await fetch(`${SERVER_BASE_URL}/api/support-tickets/${ticketId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ticket_id: ticketId, status }),
-      });
+      const { data, error: dbError } = await supabase
+        .from('support_tickets')
+        .update({ status })
+        .eq('id', ticketId)
+        .select()
+        .single();
 
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to update ticket status');
+      if (dbError) throw dbError;
 
-      // Обновляем статус в локальном состоянии
       setTickets((prev) =>
-        prev.map((ticket) => (ticket.id === ticketId ? { ...ticket, status: result.ticket.status } : ticket))
+        prev.map((ticket) => (ticket.id === ticketId ? { ...ticket, status } : ticket))
       );
 
-      // Добавляем системное сообщение о закрытии тикета
       if (status === 'closed') {
         const systemMessage: ChatMessage = {
           id: `system-${Date.now()}`,
@@ -315,7 +274,7 @@ export const useSupportTickets = () => {
       }
 
       toast.success(status === 'closed' ? 'Тикет закрыт' : 'Статус обновлен');
-      return result.ticket as Ticket;
+      return data as unknown as Ticket;
     } catch (err) {
       console.error('Error updating ticket status:', err);
       setError('Ошибка обновления статуса тикета');
@@ -324,43 +283,25 @@ export const useSupportTickets = () => {
     }
   };
 
-  // Подписка на обновления чата (без "вечной" загрузки)
   const subscribeToChat = useCallback(
     (ticketId: string) => {
       let cancelled = false;
-      let lastSeenId: string | null = null;
 
-      // начальная загрузка
-      fetchMessages(ticketId).then(() => {
-        const arr = (messages[ticketId] || []).filter((m) => (m.message_type ?? 'text') !== 'system');
-        lastSeenId = arr.length ? arr[arr.length - 1].id : null;
-      });
+      fetchMessages(ticketId);
 
       const interval = setInterval(async () => {
         if (cancelled) return;
-
-        // фон: без спиннера
         await fetchMessages(ticketId, { background: true });
-
-        const arr = (messages[ticketId] || []).filter((m) => (m.message_type ?? 'text') !== 'system');
-        const latestId = arr.length ? arr[arr.length - 1].id : null;
-
-        if (latestId && latestId !== lastSeenId) {
-          lastSeenId = latestId;
-          // тут ничего не нужно — setMessages уже обновил состояние
-        }
-      }, 2000);
+      }, 3000);
 
       return () => {
         cancelled = true;
         clearInterval(interval);
       };
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [fetchMessages]
   );
 
-  // Проверка, может ли пользователь писать (только если админ уже ответил)
   const canUserReply = useCallback(
     (ticketId: string): boolean => {
       const ticketMessages = messages[ticketId] || [];
@@ -387,7 +328,6 @@ export const useSupportTickets = () => {
   };
 };
 
-// Helper function
 function getCategoryLabel(category: string): string {
   const categories: Record<string, string> = {
     'technical': 'Технические вопросы',
