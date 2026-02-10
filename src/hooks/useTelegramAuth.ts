@@ -135,7 +135,7 @@ export const useTelegramAuth = () => {
         const result = await loginWithEmailSupabase(session.user.email!, '');
         // This will fail with wrong password, but we can use session directly
         // Instead, just load profile by user_id
-        const { supabase } = await import(/* @vite-ignore */ '@/integrations/supabase/client');
+        const { supabase } = await import('@/integrations/supabase/client');
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -199,7 +199,7 @@ export const useTelegramAuth = () => {
     const { data: { subscription } } = supabaseAuth.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user && !authState.isAuthenticated) {
         // User just signed in via email
-        const { supabase } = await import(/* @vite-ignore */ '@/integrations/supabase/client');
+        const { supabase } = await import('@/integrations/supabase/client');
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
