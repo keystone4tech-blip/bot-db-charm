@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
 import { useUserActivity } from '@/hooks/useUserActivity';
 
 export interface PlatformStats {
@@ -36,7 +35,6 @@ export const usePlatformStats = (autoRefresh: boolean = false, refreshInterval: 
   const [error, setError] = useState<string | null>(null);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
 
-  // Используем хук для отслеживания активности пользователя
   const isUserActive = useUserActivity();
 
   const fetchStats = useCallback(async () => {
@@ -44,33 +42,50 @@ export const usePlatformStats = (autoRefresh: boolean = false, refreshInterval: 
       setIsLoading(true);
       setError(null);
 
-      const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3000';
+      // Fetch counts from Supabase tables in parallel
+      const [
+        profilesRes,
+        botsRes,
+        subscriptionsRes,
+        vpnKeysRes,
+        channelsRes,
+        transactionsRes,
+      ] = await Promise.all([
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('user_bots').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('vpn_keys').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('telegram_channels').select('id', { count: 'exact', head: true }),
+        supabase.from('transactions').select('id', { count: 'exact', head: true }),
+      ]);
 
-      const response = await fetch(`${serverBaseUrl}/api/platform-stats`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      setStats({
+        totalUsers: profilesRes.count || 0,
+        activeBots: botsRes.count || 0,
+        activeSubscriptions: subscriptionsRes.count || 0,
+        activeVpnKeys: vpnKeysRes.count || 0,
+        activeChannels: channelsRes.count || 0,
+        monthlyRevenue: 0,
+        totalTransactions: transactionsRes.count || 0,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch stats');
+      // Fetch recent profiles as activity
+      const { data: recentProfiles } = await supabase
+        .from('profiles')
+        .select('id, first_name, telegram_username, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (recentProfiles) {
+        const formatted: RecentActivity[] = recentProfiles.map((p) => ({
+          id: p.id,
+          action: 'Регистрация',
+          user: p.first_name || p.telegram_username || 'Пользователь',
+          time: p.created_at || '',
+          type: 'user' as const,
+        }));
+        setRecentActivity(formatted);
       }
-
-      const data = await response.json();
-
-      if (data) {
-        setStats(data.stats);
-
-        // Format time for recent activity
-        const formattedActivity: RecentActivity[] = data.recentActivity?.map((activity: any) => ({
-          ...activity,
-          time: formatDistanceToNow(new Date(activity.created_at), { addSuffix: true, locale: ru }),
-        })) || [];
-
-        setRecentActivity(formattedActivity);
-      }
-
     } catch (err) {
       console.error('Error fetching platform stats:', err);
       setError('Ошибка загрузки статистики');
@@ -79,12 +94,10 @@ export const usePlatformStats = (autoRefresh: boolean = false, refreshInterval: 
     }
   }, []);
 
-  // Загрузка данных при монтировании компонента
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
 
-  // Умное обновление данных в зависимости от активности пользователя
   useEffect(() => {
     if (!autoRefresh || (useSmartRefresh && !isUserActive)) {
       return;
@@ -109,7 +122,6 @@ export const usePlatformStats = (autoRefresh: boolean = false, refreshInterval: 
   };
 };
 
-// Format large numbers for display
 export const formatNumber = (num: number): string => {
   if (num >= 1000000) {
     return `${(num / 1000000).toFixed(1)}M+`;
@@ -120,7 +132,6 @@ export const formatNumber = (num: number): string => {
   return num.toLocaleString('ru-RU');
 };
 
-// Format currency
 export const formatCurrency = (amount: number): string => {
   return `₽${amount.toLocaleString('ru-RU')}`;
 };
