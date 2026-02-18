@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { profileId } = await req.json()
+    const { profileId, publicView } = await req.json()
 
     if (!profileId) {
       return new Response(
@@ -23,6 +23,27 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, serviceRoleKey)
+
+    // If publicView, only return public profile info (for referrer viewing)
+    if (publicView) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, telegram_username, avatar_url, referral_code, created_at')
+        .eq('id', profileId)
+        .single()
+
+      if (profileError) {
+        return new Response(
+          JSON.stringify({ error: 'Profile not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      return new Response(
+        JSON.stringify({ profile }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     // Fetch all user data in parallel
     const [profileRes, balanceRes, referralStatsRes, vpnRes, channelsRes, botsRes, subscriptionsRes] = await Promise.all([
@@ -43,6 +64,17 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Fetch referrer info if available
+    let referrerInfo = null
+    if (profileRes.data?.referred_by) {
+      const { data: referrer } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, telegram_username, avatar_url, referral_code, created_at')
+        .eq('id', profileRes.data.referred_by)
+        .single()
+      referrerInfo = referrer
+    }
+
     return new Response(
       JSON.stringify({
         profile: profileRes.data,
@@ -52,6 +84,7 @@ Deno.serve(async (req) => {
         channel: channelsRes.data?.[0] || null,
         userBot: botsRes.data?.[0] || null,
         subscription: subscriptionsRes.data?.[0] || null,
+        referrerInfo,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

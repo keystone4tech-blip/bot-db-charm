@@ -46,7 +46,8 @@ function InfoRow({
 }
 
 export const UserInfoCard = ({ profile }: UserInfoCardProps) => {
-  const referralLink = profile.referral_code ? `https://t.me/Keystone_Tech_Robot?start=${profile.referral_code}` : null;
+  const referralLinkTelegram = profile.referral_code ? `https://t.me/Keystone_Tech_Robot?start=${profile.referral_code}` : null;
+  const referralLinkWebsite = profile.referral_code ? `${window.location.origin}/auth?ref=${profile.referral_code}` : null;
 
   return (
     <Card className="rounded-3xl">
@@ -80,9 +81,15 @@ export const UserInfoCard = ({ profile }: UserInfoCardProps) => {
             />
             <InfoRow
               icon={<LinkIcon className="h-4 w-4" />}
-              label="Реферальная ссылка"
-              value={referralLink ? <span className="font-mono text-xs">{referralLink}</span> : "не создана"}
-              copyValue={referralLink ?? undefined}
+              label="Реф. ссылка (Telegram)"
+              value={referralLinkTelegram ? <span className="font-mono text-xs">{referralLinkTelegram}</span> : "не создана"}
+              copyValue={referralLinkTelegram ?? undefined}
+            />
+            <InfoRow
+              icon={<LinkIcon className="h-4 w-4" />}
+              label="Реф. ссылка (Сайт)"
+              value={referralLinkWebsite ? <span className="font-mono text-xs">{referralLinkWebsite}</span> : "не создана"}
+              copyValue={referralLinkWebsite ?? undefined}
             />
             {profile.bio ? (
               <div className="rounded-2xl border border-border/50 bg-background/30 p-3">
