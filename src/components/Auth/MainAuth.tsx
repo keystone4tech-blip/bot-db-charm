@@ -14,10 +14,13 @@ export enum AuthMethod {
 
 interface MainAuthProps {
   onAuthSuccess?: (userData: any) => void;
+  referralCode?: string;
 }
 
-export const MainAuth = ({ onAuthSuccess }: MainAuthProps) => {
-  const [currentMethod, setCurrentMethod] = useState<AuthMethod>(AuthMethod.TELEGRAM);
+export const MainAuth = ({ onAuthSuccess, referralCode }: MainAuthProps) => {
+  const [currentMethod, setCurrentMethod] = useState<AuthMethod>(
+    referralCode ? AuthMethod.EMAIL_REGISTER : AuthMethod.TELEGRAM
+  );
 
   const handleRegisterSuccess = (userData: any) => {
     console.log('Registration successful:', userData);
@@ -37,6 +40,7 @@ export const MainAuth = ({ onAuthSuccess }: MainAuthProps) => {
             onSwitchToTelegram={() => setCurrentMethod(AuthMethod.TELEGRAM)}
             onSwitchToLogin={() => setCurrentMethod(AuthMethod.EMAIL_LOGIN)}
             onRegisterSuccess={handleRegisterSuccess}
+            initialReferralCode={referralCode}
           />
         );
       case AuthMethod.EMAIL_LOGIN:

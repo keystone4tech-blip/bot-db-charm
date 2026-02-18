@@ -1,5 +1,5 @@
 // src/components/Auth/RegisterWithEmail.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabaseAuth } from '@/lib/supabaseAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,20 +7,32 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
-import { Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, UserPlus, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface RegisterWithEmailProps {
   onSwitchToTelegram?: () => void;
   onSwitchToLogin?: () => void;
   onRegisterSuccess?: (userData: any) => void;
+  initialReferralCode?: string;
 }
 
-export const RegisterWithEmail = ({ onSwitchToTelegram, onSwitchToLogin, onRegisterSuccess }: RegisterWithEmailProps) => {
+// Admin fallback referral code
+const ADMIN_REFERRAL_CODE = 'GMQW2EGO';
+
+interface ReferrerPreview {
+  first_name: string | null;
+  telegram_username: string | null;
+  avatar_url: string | null;
+}
+
+export const RegisterWithEmail = ({ onSwitchToTelegram, onSwitchToLogin, onRegisterSuccess, initialReferralCode }: RegisterWithEmailProps) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
+    referralCode: initialReferralCode || '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -29,6 +41,54 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onSwitchToLogin, onRegis
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showTermsWarning, setShowTermsWarning] = useState(false);
+  const [referrerPreview, setReferrerPreview] = useState<ReferrerPreview | null>(null);
+  const [referralVerified, setReferralVerified] = useState(false);
+  const [verifyingReferral, setVerifyingReferral] = useState(false);
+
+  // Auto-verify referral code from URL
+  useEffect(() => {
+    if (initialReferralCode) {
+      verifyReferralCode(initialReferralCode);
+    }
+  }, [initialReferralCode]);
+
+  const verifyReferralCode = async (code: string) => {
+    if (!code.trim()) {
+      setReferrerPreview(null);
+      setReferralVerified(false);
+      return;
+    }
+
+    setVerifyingReferral(true);
+    try {
+      const { data } = await supabase.functions.invoke('user-profile-data', {
+        body: { profileId: code, publicView: true },
+      });
+
+      // If profileId didn't work, try by referral_code using a dedicated approach
+      // We need to search by referral_code, so let's use the edge function differently
+      const { data: searchData } = await supabase.functions.invoke('verify-referral', {
+        body: { referralCode: code.toUpperCase() },
+      });
+
+      if (searchData?.referrer) {
+        setReferrerPreview({
+          first_name: searchData.referrer.first_name,
+          telegram_username: searchData.referrer.telegram_username,
+          avatar_url: searchData.referrer.avatar_url,
+        });
+        setReferralVerified(true);
+      } else {
+        setReferrerPreview(null);
+        setReferralVerified(false);
+      }
+    } catch {
+      setReferrerPreview(null);
+      setReferralVerified(false);
+    } finally {
+      setVerifyingReferral(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -37,28 +97,19 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onSwitchToLogin, onRegis
     setShowTermsWarning(false);
   };
 
+  const handleReferralCodeBlur = () => {
+    if (formData.referralCode.trim()) {
+      verifyReferralCode(formData.referralCode);
+    }
+  };
+
   const validateForm = (): string | null => {
-    if (!formData.email) {
-      return 'Введите адрес электронной почты';
-    }
-    
+    if (!formData.email) return 'Введите адрес электронной почты';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      return 'Введите корректный адрес электронной почты';
-    }
-
-    if (!formData.password) {
-      return 'Введите пароль';
-    }
-
-    if (formData.password.length < 6) {
-      return 'Пароль должен содержать минимум 6 символов';
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      return 'Пароли не совпадают';
-    }
-
+    if (!emailRegex.test(formData.email)) return 'Введите корректный адрес электронной почты';
+    if (!formData.password) return 'Введите пароль';
+    if (formData.password.length < 6) return 'Пароль должен содержать минимум 6 символов';
+    if (formData.password !== formData.confirmPassword) return 'Пароли не совпадают';
     return null;
   };
 
@@ -68,13 +119,11 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onSwitchToLogin, onRegis
     setSuccessMessage('');
     setShowTermsWarning(false);
 
-    // Проверяем согласие с обработкой данных
     if (!agreedToTerms) {
       setShowTermsWarning(true);
       return;
     }
 
-    // Валидация формы
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
@@ -84,11 +133,17 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onSwitchToLogin, onRegis
     setLoading(true);
 
     try {
+      // Use referral code from form, or default to admin
+      const referralCode = formData.referralCode.trim() || ADMIN_REFERRAL_CODE;
+
       const { data, error: signUpError } = await supabaseAuth.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           emailRedirectTo: window.location.origin,
+          data: {
+            referral_code: referralCode,
+          },
         }
       });
 
@@ -106,19 +161,16 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onSwitchToLogin, onRegis
       }
 
       if (data.user) {
-        // Проверяем, нужно ли подтверждение email
         if (data.user.identities?.length === 0) {
           setError('Пользователь с таким email уже зарегистрирован');
           return;
         }
 
-        // Если пользователь создан и email не подтверждён
         if (!data.session) {
           setSuccessMessage('Регистрация успешна! Проверьте вашу почту для подтверждения аккаунта.');
-          setFormData({ email: '', password: '', confirmPassword: '' });
+          setFormData({ email: '', password: '', confirmPassword: '', referralCode: '' });
           setAgreedToTerms(false);
         } else {
-          // Если сессия есть (auto-confirm включен)
           onRegisterSuccess?.(data.user);
         }
       }
@@ -218,6 +270,48 @@ export const RegisterWithEmail = ({ onSwitchToTelegram, onSwitchToLogin, onRegis
             </div>
             {formData.confirmPassword && formData.password !== formData.confirmPassword && (
               <p className="text-xs text-destructive">Пароли не совпадают</p>
+            )}
+          </div>
+
+          {/* Referral Code Input */}
+          <div className="space-y-2">
+            <Label htmlFor="referralCode" className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4" />
+              Реферальный код (необязательно)
+            </Label>
+            <div className="relative">
+              <Input
+                id="referralCode"
+                name="referralCode"
+                type="text"
+                placeholder="Введите код пригласителя"
+                value={formData.referralCode}
+                onChange={handleChange}
+                onBlur={handleReferralCodeBlur}
+                className={cn(
+                  "bg-background/50 pr-10 uppercase",
+                  referralVerified && "border-green-500"
+                )}
+              />
+              {referralVerified && (
+                <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+              )}
+            </div>
+            {verifyingReferral && (
+              <p className="text-xs text-muted-foreground">Проверка кода...</p>
+            )}
+            {referrerPreview && referralVerified && (
+              <div className="flex items-center gap-2 rounded-lg bg-green-500/10 p-2 text-xs">
+                <Check className="h-3 w-3 text-green-500 shrink-0" />
+                <span>Пригласитель: <strong>{referrerPreview.first_name || 'Пользователь'}</strong>
+                  {referrerPreview.telegram_username && ` (@${referrerPreview.telegram_username})`}
+                </span>
+              </div>
+            )}
+            {!initialReferralCode && !formData.referralCode && (
+              <p className="text-xs text-muted-foreground">
+                Если у вас нет реферального кода, регистрация будет выполнена под администратором проекта
+              </p>
             )}
           </div>
 

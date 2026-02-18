@@ -138,11 +138,13 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          city: string | null
           created_at: string | null
           email: string | null
           first_name: string | null
           id: string
           last_name: string | null
+          link: string | null
           phone: string | null
           referral_code: string | null
           referral_level: number | null
@@ -155,11 +157,13 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          city?: string | null
           created_at?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
+          link?: string | null
           phone?: string | null
           referral_code?: string | null
           referral_level?: number | null
@@ -172,11 +176,13 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          city?: string | null
           created_at?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
+          link?: string | null
           phone?: string | null
           referral_code?: string | null
           referral_level?: number | null

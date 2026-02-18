@@ -269,6 +269,18 @@ export const loginWithEmailSupabase = async (email: string, password: string): P
     // Если профиль не найден, создаём новый
     let userProfile: UserProfile;
     if (!profile) {
+      // Get referral code from user metadata
+      const userReferralCode = data.user.user_metadata?.referral_code || 'GMQW2EGO';
+      
+      // Find referrer
+      let referrerId: string | null = null;
+      const { data: referrerData } = await supabase.functions.invoke('verify-referral', {
+        body: { referralCode: userReferralCode },
+      });
+      if (referrerData?.referrer) {
+        referrerId = referrerData.referrer.id;
+      }
+
       // Генерируем уникальный telegram_id для email пользователей (отрицательный, чтобы не конфликтовать)
       const tempTelegramId = -Math.floor(Date.now() / 1000);
       
@@ -280,6 +292,7 @@ export const loginWithEmailSupabase = async (email: string, password: string): P
           user_id: data.user.id,
           first_name: email.split('@')[0],
           referral_code: generateReferralCode(),
+          referred_by: referrerId,
         })
         .select()
         .single();
@@ -373,23 +386,18 @@ export const getProfile = async (userId: string): Promise<UserProfile | null> =>
 export const updateProfile = async (
   userId: string,
   updates: Partial<UserProfile>
-): Promise<UserProfile | null> => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', userId)
-    .select()
-    .single();
+): Promise<UserProfile> => {
+  // Use edge function to bypass RLS for Telegram users
+  const { data, error } = await supabase.functions.invoke('update-profile', {
+    body: { profileId: userId, updates },
+  });
 
-  if (error) {
+  if (error || !data?.profile) {
     console.error('Error updating profile:', error);
-    return null;
+    throw new Error('Ошибка обновления профиля');
   }
 
-  return data as UserProfile;
+  return data.profile as UserProfile;
 };
 
 /**

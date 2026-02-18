@@ -196,16 +196,20 @@ Deno.serve(async (req) => {
     if (!profile) {
       console.log('Creating new profile for Telegram user:', telegramUser.id)
       
-      // Find referrer if referral code provided
+      // Find referrer if referral code provided, or default to admin
+      const ADMIN_REFERRAL_CODE = 'GMQW2EGO'
+      const effectiveReferralCode = referralCode || ADMIN_REFERRAL_CODE
+      
       let referrerId: string | null = null
-      if (referralCode) {
-        const { data: referrer } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('referral_code', referralCode.toUpperCase())
-          .single()
-        
-        if (referrer) {
+      const { data: referrer } = await supabase
+        .from('profiles')
+        .select('id, telegram_id')
+        .eq('referral_code', effectiveReferralCode.toUpperCase())
+        .single()
+      
+      if (referrer) {
+        // Don't let user refer themselves
+        if (referrer.telegram_id !== telegramUser.id) {
           referrerId = referrer.id
           console.log('Found referrer:', referrerId)
         }

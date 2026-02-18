@@ -15,6 +15,7 @@ import { VPNStatusCard } from '@/components/profile/VPNStatusCard';
 import { ChannelStatusCard } from '@/components/profile/ChannelStatusCard';
 import { BotStatusCard } from '@/components/profile/BotStatusCard';
 import { UserInfoCard } from '@/components/profile/UserInfoCard';
+import { ReferrerInfoCard } from '@/components/profile/ReferrerInfoCard';
 import SupportChatView from '@/components/profile/SupportChatView';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -183,8 +184,11 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
               onEditClick={null} // Отключаем редактирование через ProfileHeader
             />
 
-            {/* User Info Card */}
-            <UserInfoCard profile={displayProfile as ExtendedUserProfile} />
+              {/* User Info Card */}
+              <UserInfoCard profile={displayProfile as ExtendedUserProfile} />
+
+              {/* Referrer Info */}
+              <ReferrerInfoCard referredBy={(displayProfile as any)?.referred_by} />
 
             {/* Balance Cards */}
             <BalanceCards balance={displayBalance} />
@@ -317,6 +321,9 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
 
               {/* User Info Card */}
               <UserInfoCard profile={displayProfile as ExtendedUserProfile} />
+
+              {/* Referrer Info */}
+              <ReferrerInfoCard referredBy={(displayProfile as any)?.referred_by} />
 
               {/* Balance Cards */}
               <BalanceCards balance={displayBalance} />
@@ -452,6 +459,9 @@ export const ProfileView = ({ onNavigate, onEnterAdminMode }: ProfileViewProps) 
 
             {/* User Info Card */}
             <UserInfoCard profile={displayProfile as ExtendedUserProfile} />
+
+            {/* Referrer Info */}
+            <ReferrerInfoCard referredBy={(displayProfile as any)?.referred_by} />
 
             {/* Balance Cards */}
             <BalanceCards balance={displayBalance} />
